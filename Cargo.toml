@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 actix-web = "4.10.2"
+bigdecimal = "0.4.7"
 chrono = "0.4.40"
 diesel = { version = "2.2.8", features = ["postgres", "uuid", "chrono", "serde_json"] }
 diesel_migrations = "2.2.0"
