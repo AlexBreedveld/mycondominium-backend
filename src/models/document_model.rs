@@ -1,12 +1,14 @@
 use super::prelude::*;
 
-#[derive(Debug, Queryable, Identifiable)]
+#[derive(Debug, Queryable, Identifiable, Validate)]
 #[diesel(table_name = documents)]
 pub struct Document {
     pub id: Uuid,
-    pub title: String,                       // max_length 150
+    #[validate(length(max = 150, message = "Title is too long"))]
+    pub title: String,
     pub description: Option<String>,
     pub file_url: String,
-    pub document_type: Option<String>,       // max_length 50
+    #[validate(length(max = 50, message = "Type is too long"))]
+    pub document_type: Option<String>,
     pub shared_at: NaiveDateTime,
 }

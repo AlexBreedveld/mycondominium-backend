@@ -1,11 +1,12 @@
 use super::prelude::*;
 
-#[derive(Debug, Queryable, Identifiable)]
+#[derive(Debug, Queryable, Identifiable, Validate)]
 #[diesel(table_name = votes)]
 pub struct Vote {
     pub id: Uuid,
     pub election_id: Uuid,
     pub resident_id: Uuid,
-    pub vote_option: String,                 // max_length 50
+    #[validate(length(max = 50, message = "Option is too long"))]
+    pub vote_option: String,
     pub voted_at: NaiveDateTime,
 }

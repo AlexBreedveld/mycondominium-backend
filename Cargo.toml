@@ -13,4 +13,7 @@ dotenvy = "0.15.7"
 serde = { version =  "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
 tokio = { version = "1.44.0", features = ["full"] }
+utoipa = { version = "5.3.1", features = ["chrono", "uuid", "actix_extras"] }
 uuid = { version =  "1.15.1", features = ["serde", "v4"] }
+validator = { version =  "0.20.0", features = ["validator_derive"] }
+validator_derive = "0.20.0"

@@ -1,12 +1,13 @@
 use super::prelude::*;
 
-#[derive(Debug, Queryable, Identifiable)]
+#[derive(Debug, Queryable, Identifiable, Validate)]
 #[diesel(table_name = residents)]
 pub struct Resident {
     pub id: Uuid,
     pub first_name: String,
     pub last_name: String,
-    pub unit_number: Option<String>,         // max_length 20
+    #[validate(length(max = 20, message = "Unit number is too long"))]
+    pub unit_number: Option<String>,
     pub address: Option<String>,
     pub phone: Option<String>,
     pub email: Option<String>,
