@@ -2,9 +2,9 @@ use diesel::{QueryResult, RunQueryDsl};
 use crate::schema::residents::dsl::residents;
 use super::prelude::*;
 
-#[derive(Queryable, Selectable, Insertable, Serialize, Deserialize, Clone, Debug, AsChangeset, Validate)]
+#[derive(Queryable, Selectable, Insertable, Serialize, Deserialize, Clone, Debug, AsChangeset, Validate, ToSchema)]
 #[diesel(table_name = crate::schema::residents)]
-pub struct Resident {
+pub struct ResidentModel {
     pub id: Uuid,
     pub first_name: String,
     pub last_name: String,
@@ -20,7 +20,7 @@ pub struct Resident {
     pub updated_at: NaiveDateTime,
 }
 
-impl DatabaseTrait for Resident {
+impl DatabaseTrait for ResidentModel {
     type Id = Uuid;
 
     fn db_insert(&self, conn: &mut PgConnection) -> QueryResult<usize> {
@@ -55,9 +55,13 @@ impl DatabaseTrait for Resident {
     fn db_delete_all(conn: &mut PgConnection) -> QueryResult<usize> {
         diesel::delete(residents).execute(conn)
     }
+
+    fn db_count_all(conn: &mut PgConnection) -> QueryResult<i64> {
+        residents.count().get_result::<i64>(conn)
+    }
 }
 
-impl DatabaseTraitVec for Vec<Resident> {
+impl DatabaseTraitVec for Vec<ResidentModel> {
     type Id = Uuid;
 
     fn db_insert(&self, conn: &mut PgConnection) -> QueryResult<usize> {
@@ -92,11 +96,15 @@ impl DatabaseTraitVec for Vec<Resident> {
     fn db_read_by_id(conn: &mut PgConnection, id: Vec<Self::Id>) -> QueryResult<Self> {
         residents
             .filter(crate::schema::residents::columns::id.eq_any(id))
-            .load::<Resident>(conn)
+            .load::<ResidentModel>(conn)
     }
 
     fn db_read_all(conn: &mut PgConnection) -> QueryResult<Self> {
-        residents.load::<Resident>(conn)
+        residents.load::<ResidentModel>(conn)
+    }
+
+    fn db_read_by_range(conn: &mut PgConnection, per_page: i64, offset: i64) -> QueryResult<Self> {
+        residents.limit(per_page).offset(offset).load::<ResidentModel>(conn)
     }
 
     fn db_delete_by_id(conn: &mut PgConnection, id: Vec<Self::Id>) -> QueryResult<usize> {

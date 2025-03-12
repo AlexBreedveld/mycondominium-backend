@@ -19,3 +19,5 @@ uuid = { version =  "1.15.1", features = ["serde", "v4"] }
 validator = { version =  "0.20.0", features = ["validator_derive"] }
 validator_derive = "0.20.0"
 log = "0.4.26"
+clap = { version = "4.5.32", features = ["derive"] }
+env_logger = "0.11.7"
