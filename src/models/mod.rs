@@ -11,3 +11,4 @@ mod reservation_model;
 mod resident_model;
 mod vehicle_model;
 mod vote_model;
+mod lib;
