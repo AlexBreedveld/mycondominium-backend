@@ -9,8 +9,10 @@ pub struct CliArgs {
 
 #[derive(Subcommand)]
 pub enum Commands {
-    /// Run the Web server
+    /// Run the Web server.
     Daemon,
     /// Generate OpenAPI-Swagger documentation.
-    GenerateSwagger
+    GenerateSwagger,
+    /// Serve only OpenAPI-Swagger documentation.
+    ServeSwagger,
 }

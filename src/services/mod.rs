@@ -17,5 +17,4 @@ pub use crate::services::prelude::*;
         (path = "/api/resident", api = resident_service::ResidentApi),
     )
 )]
-
 pub struct ApiDoc;

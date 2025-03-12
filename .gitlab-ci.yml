@@ -2,8 +2,10 @@ image: rust:latest
 
 stages:
   - test
-  - build-pages
-  - deploy
+  - build-pages-rustdoc
+  - build-pages-swagger
+  - deploy-rustdoc
+  - deploy-swagger
 
 tests:
   stage: test
@@ -13,22 +15,53 @@ tests:
     - branches
 
 # Build Page stage: Generate documentation
-doc:
-  stage: build-pages
+doc-rustdoc:
+  stage: build-pages-rustdoc
   script:
     - cargo doc
+    - mkdir swagger
+    - cargo run -- generate-swagger > ./swagger/openapi.json
   artifacts:
     paths:
       - target/doc
+      - swagger
     expire_in: 1 hour
   only:
     - main
 
-# Deploy stage: Publish docs to GitLab Pages
-pages:
-  stage: deploy
+doc-swagger:
+  image: node:latest
+  stage: build-pages-swagger
   dependencies:
-    - doc
+    - doc-rustdoc
+  script:
+    - npm install -g redoc-cli
+    - redoc-cli bundle -o public/index.html swagger/openapi.json
+  artifacts:
+    paths:
+      - public
+  only:
+    - branches
+
+# Deploy stage: Publish docs to GitLab Pages
+pages-rustdoc:
+  stage: deploy-rustdoc
+  dependencies:
+    - doc-rustdoc
+  script:
+    - mkdir public
+    - cp -r target/doc/* public/
+  artifacts:
+    paths:
+      - public
+  only:
+    - main
+
+# Deploy stage: Publish docs to GitLab Pages
+pages-swagger:
+  stage: deploy-swagger
+  dependencies:
+    - doc-swagger
   script:
     - mkdir public
     - cp -r target/doc/* public/

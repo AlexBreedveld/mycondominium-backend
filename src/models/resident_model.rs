@@ -20,6 +20,21 @@ pub struct ResidentModel {
     pub updated_at: NaiveDateTime,
 }
 
+#[derive(Queryable, Selectable, Insertable, Serialize, Deserialize, Clone, Debug, AsChangeset, Validate, ToSchema)]
+#[diesel(table_name = crate::schema::residents)]
+pub struct ResidentModelNew {
+    pub first_name: String,
+    pub last_name: String,
+    #[validate(length(max = 20, message = "Unit number is too long"))]
+    pub unit_number: Option<String>,
+    pub address: Option<String>,
+    pub phone: Option<String>,
+    pub email: Option<String>,
+    pub date_of_birth: Option<NaiveDate>,
+    pub resident_since: NaiveDateTime,
+    pub is_active: bool,
+}
+
 impl DatabaseTrait for ResidentModel {
     type Id = Uuid;
 
