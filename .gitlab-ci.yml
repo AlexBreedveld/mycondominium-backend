@@ -27,31 +27,36 @@ doc-rustdoc:
   only:
     - branches
 
-pages:
-  image: node:latest
-  stage: deploy-pages
-  dependencies:
-    - doc-rustdoc
-  script:
-    - npm install -g redoc-cli
-    - redoc-cli bundle -o public/index.html swagger/openapi.json
-  artifacts:
-    paths:
-      - public
-  only:
-    - branches
-
 # Deploy stage: Publish docs to GitLab Pages
-pages_2:
+pages:
+  needs:
+    - pages_swagger
   image: alpine:latest
   stage: deploy-pages
   dependencies:
     - doc-rustdoc
   script:
     - mkdir public
-    - cp -r target/doc/* public/
+    - mkdir public/rustdoc
+    - mkdir public/swagger
+    - cp -r target/doc/* public/rustdoc/
+    - mv ./public-swagger/* public/swagger/
   artifacts:
     paths:
       - public
+  only:
+    - branches
+
+pages_swagger:
+  image: node:latest
+  stage: deploy-pages
+  dependencies:
+    - doc-rustdoc
+  script:
+    - mkdir public-swagger
+    - npx @redocly/cli build-docs -o public-swagger/index.html swagger/openapi.json
+  artifacts:
+    paths:
+      - public-swagger
   only:
     - branches
