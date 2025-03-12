@@ -57,5 +57,6 @@ pages-swagger:
   artifacts:
     paths:
       - public-swagger
+      - target
   only:
     - branches
