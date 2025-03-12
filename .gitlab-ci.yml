@@ -1,12 +1,20 @@
 image: rust:latest
 
 stages:
-  - build
+  - test
+  - build-pages
   - deploy
 
-# Build stage: Generate documentation
+tests:
+  stage: test
+  script:
+    - cargo test --verbose
+  only:
+    - branches
+
+# Build Page stage: Generate documentation
 doc:
-  stage: build
+  stage: build-pages
   script:
     - cargo doc
   artifacts:

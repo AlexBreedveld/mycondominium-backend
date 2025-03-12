@@ -1,5 +1,6 @@
 pub mod models;
 pub mod schema;
+pub mod services;
 use std::env;
 
 pub fn establish_connection_pg() -> diesel::PgConnection {
