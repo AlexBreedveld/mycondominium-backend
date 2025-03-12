@@ -1,31 +1,62 @@
 image: rust:latest
 
 stages:
-  - build
-  - deploy
+  - test
+  - build-pages-rustdoc
+  - build-pages-swagger
+  - deploy-pages
 
-# Build stage: Generate documentation
-doc:
-  stage: build
+tests:
+  stage: test
+  script:
+    - cargo test --verbose
+  only:
+    - main
+
+# Build Page stage: Generate documentation
+doc-rustdoc:
+  stage: build-pages-rustdoc
   script:
     - cargo doc
+    - mkdir swagger
+    - cargo run -- generate-swagger > ./swagger/openapi.json
   artifacts:
     paths:
       - target/doc
+      - swagger
     expire_in: 1 hour
   only:
-    - branches
+    - main
 
 # Deploy stage: Publish docs to GitLab Pages
 pages:
-  stage: deploy
+  image: alpine:latest
+  stage: deploy-pages
   dependencies:
-    - doc
+    - pages-swagger
   script:
     - mkdir public
-    - cp -r target/doc/* public/
+    - mkdir public/rustdoc
+    - mkdir public/swagger
+    - cp -r target/doc/* public/rustdoc/
+    - mv ./public-swagger/* public/swagger/
   artifacts:
     paths:
       - public
   only:
-    - branches
+    - main
+
+pages-swagger:
+  image: node:latest
+  stage: build-pages-swagger
+  dependencies:
+    - doc-rustdoc
+  script:
+    - mkdir public-swagger
+    - npx @redocly/cli build-docs -o public-swagger/index.html swagger/openapi.json
+  artifacts:
+    paths:
+      - public-swagger
+      - target
+  only:
+    - main

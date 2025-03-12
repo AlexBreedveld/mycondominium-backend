@@ -12,6 +12,7 @@ pub trait DatabaseTrait {
         Self: Sized;
     fn db_delete_by_id(conn: &mut PgConnection, id: Self::Id) -> QueryResult<usize>;
     fn db_delete_all(conn: &mut PgConnection) -> QueryResult<usize>;
+    fn db_count_all(conn: &mut PgConnection) -> QueryResult<i64>;
 }
 
 pub trait DatabaseTraitVec {
@@ -23,6 +24,9 @@ pub trait DatabaseTraitVec {
     where
         Self: Sized;
     fn db_read_all(conn: &mut PgConnection) -> QueryResult<Self>
+    where
+        Self: Sized;
+    fn db_read_by_range(conn: &mut PgConnection, per_page: i64, offset: i64) -> QueryResult<Self>
     where
         Self: Sized;
     fn db_delete_by_id(conn: &mut PgConnection, id: Vec<Self::Id>) -> QueryResult<usize>;
