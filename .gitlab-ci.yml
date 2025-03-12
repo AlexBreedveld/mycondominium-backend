@@ -11,7 +11,7 @@ tests:
   script:
     - cargo test --verbose
   only:
-    - branches
+    - main
 
 # Build Page stage: Generate documentation
 doc-rustdoc:
@@ -26,7 +26,7 @@ doc-rustdoc:
       - swagger
     expire_in: 1 hour
   only:
-    - branches
+    - main
 
 # Deploy stage: Publish docs to GitLab Pages
 pages:
@@ -44,7 +44,7 @@ pages:
     paths:
       - public
   only:
-    - branches
+    - main
 
 pages-swagger:
   image: node:latest
@@ -59,4 +59,4 @@ pages-swagger:
       - public-swagger
       - target
   only:
-    - branches
+    - main
