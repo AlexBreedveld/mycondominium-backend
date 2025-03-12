@@ -14,7 +14,7 @@ doc:
       - target/doc
     expire_in: 1 hour
   only:
-    - branches
+    - main
 
 # Deploy stage: Publish docs to GitLab Pages
 pages:
@@ -28,4 +28,4 @@ pages:
     paths:
       - public
   only:
-    - branches
+    - main
