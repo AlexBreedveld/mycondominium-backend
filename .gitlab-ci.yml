@@ -3,6 +3,7 @@ image: rust:latest
 stages:
   - test
   - build-pages-rustdoc
+  - build-pages-swagger
   - deploy-pages
 
 tests:
@@ -29,12 +30,10 @@ doc-rustdoc:
 
 # Deploy stage: Publish docs to GitLab Pages
 pages:
-  needs:
-    - pages_swagger
   image: alpine:latest
   stage: deploy-pages
   dependencies:
-    - doc-rustdoc
+    - pages-swagger
   script:
     - mkdir public
     - mkdir public/rustdoc
@@ -47,9 +46,9 @@ pages:
   only:
     - branches
 
-pages_swagger:
+pages-swagger:
   image: node:latest
-  stage: deploy-pages
+  stage: build-pages-swagger
   dependencies:
     - doc-rustdoc
   script:
