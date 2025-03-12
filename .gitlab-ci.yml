@@ -3,9 +3,8 @@ image: rust:latest
 stages:
   - test
   - build-pages-rustdoc
-  - build-pages-swagger
-  - deploy-rustdoc
   - deploy-swagger
+  - deploy-rustdoc
 
 tests:
   stage: test
@@ -27,11 +26,11 @@ doc-rustdoc:
       - swagger
     expire_in: 1 hour
   only:
-    - main
+    - branches
 
 pages-swagger:
   image: node:latest
-  stage: build-pages-swagger
+  stage: deploy-swagger
   dependencies:
     - doc-rustdoc
   script:
