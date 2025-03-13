@@ -5,7 +5,8 @@ variables:
   # Enable colored output from Cargo.
   CARGO_TERM_COLOR: always
   # Disable TLS certificate directory for Docker-in-Docker (if needed).
-  DOCKER_TLS_CERTDIR: ""
+  DOCKER_HOST: tcp://docker:2376
+  DOCKER_TLS_CERTDIR: "/certs"
 
 # This job uses a matrix to build for multiple targets.
 build:
@@ -15,9 +16,6 @@ build:
   image: rust:latest
   services:
     - docker:dind
-  variables:
-    DOCKER_HOST: tcp://docker:2376
-    DOCKER_TLS_CERTDIR: "/certs"
   before_script:
     # Update and install dependencies required by some targets.
     - apt-get update && apt-get install -y curl build-essential pkg-config libssl-dev musl-tools ca-certificates
