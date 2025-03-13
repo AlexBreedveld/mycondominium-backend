@@ -19,7 +19,6 @@ build:
     # Update and install dependencies required by some targets.
     - apk add --no-cache curl build-base pkgconfig openssl-dev curl
     - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-    - apt-get update && apt-get install -y curl build-essential pkg-config libssl-dev musl-tools
     # Add the target if necessary.
     - rustup target add ${TARGET} || true
     # If using cross, install it via cargo-binstall.
