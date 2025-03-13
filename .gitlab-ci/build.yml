@@ -1,0 +1,46 @@
+stages:
+  - build
+
+variables:
+  # Enable colored output from Cargo.
+  CARGO_TERM_COLOR: always
+  # Disable TLS certificate directory for Docker-in-Docker (if needed).
+  DOCKER_TLS_CERTDIR: ""
+
+# This job uses a matrix to build for multiple targets.
+build:
+  stage: build
+  image: rust:latest
+  services:
+    - docker:dind
+  before_script:
+    # Update and install dependencies required by some targets.
+    - apt-get update && apt-get install -y curl build-essential pkg-config libssl-dev musl-tools
+    # Add the target if necessary.
+    - rustup target add ${TARGET} || true
+    # If using cross, install it via cargo-binstall.
+    - |
+      if [ "${COMMAND}" = "cross" ]; then
+        echo "Installing cross..."
+        curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+        cargo binstall --no-confirm cross
+      fi
+  script:
+    - echo "Building for ${NAME} (${TARGET})..."
+    - ${COMMAND} build --verbose --locked --release --target ${TARGET}
+  artifacts:
+    # Artifacts: any binary output in the target/{target}/release folder.
+    paths:
+      - target/${TARGET}/release/
+    expire_in: 1 week
+  parallel:
+    matrix:
+      - NAME: "linux"
+        TARGET: "x86_64-unknown-linux-musl"
+        COMMAND: "cross"
+      - NAME: "windows"
+        TARGET: "x86_64-pc-windows-gnu"
+        COMMAND: "cross"
+      - NAME: "macos"
+        TARGET: "x86_64-apple-darwin"
+        COMMAND: "cross"

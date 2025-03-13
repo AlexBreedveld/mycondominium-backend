@@ -5,6 +5,10 @@ stages:
   - build-pages-rustdoc
   - build-pages-swagger
   - deploy-pages
+  - build
+
+include:
+  - local: .gitlab-ci/build.yml
 
 tests:
   stage: test
