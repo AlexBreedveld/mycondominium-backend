@@ -20,24 +20,28 @@ build:
   image: rust:latest
   services:
     - docker:dind
+  variables:
+    # Enable colored output from Cargo.
+    CARGO_TERM_COLOR: always
+    # Disable TLS certificate directory for Docker-in-Docker (if needed).
+    DOCKER_HOST: tcp://docker:2375/
+    # use for much faster builds
+    DOCKER_DRIVER: overlay2
+    # ensure cross knows it's running remotely
+    CROSS_REMOTE: 1
+    DOCKER_TLS_CERTDIR: ""
   before_script:
     # Update and install dependencies required by some targets.
     - apt-get update && apt-get install -y curl build-essential pkg-config libssl-dev musl-tools ca-certificates
-    #- install -m 0755 -d /etc/apt/keyrings
-    #- curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
-    #- chmod a+r /etc/apt/keyrings/docker.asc
-    #- echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-    #- apt-get update
-    #- apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    - install -m 0755 -d /etc/apt/keyrings
+    - curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+    - chmod a+r /etc/apt/keyrings/docker.asc
+    - echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+    - apt-get update
+    - apt-get install -y docker-ce docker-ce-cli containerd.io
     # Add the target if necessary.
+    - cargo install --git="https://github.com/cross-rs/cross" --branch="main" cross
     - rustup target add ${TARGET} || true
-    # If using cross, install it via cargo-binstall.
-    - |
-      if [ "${COMMAND}" = "cross" ]; then
-        echo "Installing cross..."
-        curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
-        cargo binstall --no-confirm cross
-      fi
   script:
     - echo "Building for ${NAME} (${TARGET})..."
     - ${COMMAND} build --verbose --locked --release --target ${TARGET}
