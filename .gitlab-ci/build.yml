@@ -12,11 +12,12 @@ build:
   stage: build
   tags:
     - dind
-  image: rust:latest
+  image: docker:latest
   services:
     - docker:dind
   before_script:
     # Update and install dependencies required by some targets.
+    - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
     - apt-get update && apt-get install -y curl build-essential pkg-config libssl-dev musl-tools
     # Add the target if necessary.
     - rustup target add ${TARGET} || true
