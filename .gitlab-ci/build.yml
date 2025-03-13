@@ -6,6 +6,7 @@ variables:
   CARGO_TERM_COLOR: always
   # Disable TLS certificate directory for Docker-in-Docker (if needed).
   DOCKER_TLS_CERTDIR: "/certs"
+  DOCKER_HOST: "unix:///runner/services/docker/docker.sock"
 
 # This job uses a matrix to build for multiple targets.
 build:
