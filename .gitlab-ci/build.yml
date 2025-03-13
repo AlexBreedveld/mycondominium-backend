@@ -12,13 +12,18 @@ build:
   stage: build
   tags:
     - dind
-  image: docker:latest
+  image: rust:latest
   services:
     - docker:dind
   before_script:
     # Update and install dependencies required by some targets.
-    - apk add --no-cache curl build-base pkgconfig openssl-dev curl
-    - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+    - apt-get update && apt-get install -y curl build-essential pkg-config libssl-dev musl-tools ca-certificates
+    - install -m 0755 -d /etc/apt/keyrings
+    - curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+    - chmod a+r /etc/apt/keyrings/docker.asc
+    - echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+    - apt-get update
+    - apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
     # Add the target if necessary.
     - rustup target add ${TARGET} || true
     # If using cross, install it via cargo-binstall.
