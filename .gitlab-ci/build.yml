@@ -10,6 +10,8 @@ variables:
 # This job uses a matrix to build for multiple targets.
 build:
   stage: build
+  tags:
+    - dind
   image: rust:latest
   services:
     - docker:dind
