@@ -5,7 +5,6 @@ variables:
   # Enable colored output from Cargo.
   CARGO_TERM_COLOR: always
   # Disable TLS certificate directory for Docker-in-Docker (if needed).
-  DOCKER_HOST: tcp://docker:2376
   DOCKER_TLS_CERTDIR: "/certs"
 
 # This job uses a matrix to build for multiple targets.
