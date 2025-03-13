@@ -32,6 +32,7 @@ build:
     DOCKER_TLS_CERTDIR: ""
   before_script:
     - rustup target add ${TARGET} || true
+    - echo "$GL_ACCESS_TOKEN" | docker login $CI_REGISTRY -u $CI_DEPLOY_USER --password-stdin
   script:
     - echo "Building for ${NAME} (${TARGET})..."
     - ${COMMAND} build --verbose --locked --release --target ${TARGET}
