@@ -33,6 +33,8 @@ build:
   before_script:
     - rustup target add ${TARGET} || true
     - echo "$CI_JOB_TOKEN" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+    - cargo add pq-sys -F bundled
+    - cargo add openssl-sys -F vendored
   script:
     - echo "Building for ${NAME} (${TARGET})..."
     - ${COMMAND} build --verbose --locked --release --target ${TARGET}
