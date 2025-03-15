@@ -3,6 +3,10 @@ name = "mycondominium-backend"
 version = "0.1.0"
 edition = "2024"
 
+[target.x86_64-pc-windows-gnu]
+linker = "x86_64-w64-mingw32-gcc"
+rustflags = ["-C", "link-arg=--sysroot=/usr/x86_64-w64-mingw32"]
+
 [dependencies]
 actix-web = "4.10.2"
 bigdecimal = "0.4.7"
@@ -22,3 +26,4 @@ log = "0.4.26"
 clap = { version = "4.5.32", features = ["derive"] }
 env_logger = "0.11.7"
 utoipa-swagger-ui = { version = "9.0.0", features = ["actix-web"] }
+
