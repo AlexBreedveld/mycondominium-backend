@@ -1,5 +1,5 @@
 [target.x86_64-pc-windows-gnu]
-image = "registry.al3xdev.com:443/puc/software-engineering-v/mycondominium-backend/x86_64-pc-windows-gnu:latest"
+image = "registry.al3xdev.com:443/alex/rust-cross/x86_64-pc-windows-gnu:latest"
 [target.x86_64-unknown-linux-gnu]
 image = "registry.al3xdev.com:443/puc/software-engineering-v/mycondominium-backend:cross-rs-x86_64-unknown-linux-gnu-latest"
 [target.x86_64-unknown-linux-musl]
