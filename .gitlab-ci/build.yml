@@ -1,5 +1,6 @@
 stages:
   - build
+  - release_nightly
 
 variables:
   # Enable colored output from Cargo.
@@ -37,9 +38,12 @@ build:
     - cargo add pq-sys -F bundled
     - cargo add openssl-sys -F vendored
   script:
+    - echo "$JOB_ID_VAR=$CI_JOB_ID" >> build.env
     - echo "Building for ${NAME} (${TARGET})..."
     - ${COMMAND} build --verbose --locked --release --target ${TARGET}
   artifacts:
+    reports:
+      dotenv: build.env
     # Artifacts: any binary output in the target/{target}/release folder.
     paths:
       - target/${TARGET}/release/
@@ -49,12 +53,41 @@ build:
       - NAME: "linux-x86_64-gnu"
         TARGET: "x86_64-unknown-linux-gnu"
         COMMAND: "cross"
+        JOB_ID_VAR: "BUILD_JOB_ID_LINUX_AMD64_GNU"
       - NAME: "linux-x86_64-musl"
         TARGET: "x86_64-unknown-linux-musl"
         COMMAND: "cross"
+        JOB_ID_VAR: "BUILD_JOB_ID_LINUX_AMD64_MUSL"
       #- NAME: "windows-x86_64-gnu"
       #  TARGET: "x86_64-pc-windows-gnu"
       #  COMMAND: "cross"
       #- NAME: "macos"
       #  TARGET: "x86_64-apple-darwin"
       #  COMMAND: "cross"
+
+release_nightly:
+  stage: release_nightly
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  variables:
+    LINUX_AMD64_GLIB_BIN: "mycondominium-server-linux-gnu-amd64"
+    LINUX_AMD64_MUSL_BIN: "mycondominium-server-linux-musl-amd64"
+  needs:
+    job: build
+    artifacts: true
+  rules:
+    - if: $CI_COMMIT_BRANCH == dev
+  script:
+    - echo "running release_nightly for $TAG"
+  release:
+    name: 'Nightly Build $CI_COMMIT_SHORT_SHA'
+    description: '## MyCondominium Nightly Build $CI_COMMIT_SHORT_SHA<br />### Changelog:<br />$CI_COMMIT_MESSAGE'
+    tag_name: 'nightly'
+    ref: '$CI_COMMIT_SHA'
+    assets:
+      links:
+        - name: '$LINUX_AMD64_GLIB_BIN'
+          link_type: 'package'
+          url: '${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID_LINUX_AMD64_GNU}/artifacts/file/target/x86_64-unknown-linux-gnu/release/mycondominium-backend'
+        - name: '$LINUX_AMD64_MUSL_BIN'
+          link_type: 'package'
+          url: '${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID_LINUX_AMD64_MUSL}/artifacts/file/target/x86_64-unknown-linux-musl/release/mycondominium-backend'
