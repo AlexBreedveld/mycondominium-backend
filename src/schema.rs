@@ -1,12 +1,38 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
+    admins (id) {
+        id -> Uuid,
+        first_name -> Text,
+        last_name -> Text,
+        phone -> Nullable<Text>,
+        email -> Nullable<Text>,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+    }
+}
+
+diesel::table! {
     announcements (id) {
         id -> Uuid,
         #[max_length = 150]
         title -> Varchar,
         message -> Text,
         sent_at -> Timestamp,
+    }
+}
+
+diesel::table! {
+    auth_tokens (id) {
+        user_id -> Uuid,
+        id -> Uuid,
+        time_added -> Timestamp,
+        active -> Bool,
+        time_last_used -> Timestamp,
+        device -> Nullable<Text>,
+        browser -> Nullable<Text>,
+        version -> Nullable<Text>,
+        cpu_arch -> Nullable<Text>,
     }
 }
 
@@ -133,6 +159,17 @@ diesel::table! {
 }
 
 diesel::table! {
+    users (id) {
+        id -> Uuid,
+        entity_id -> Uuid,
+        roles -> Nullable<Text>,
+        password -> Text,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+    }
+}
+
+diesel::table! {
     vehicles (id) {
         id -> Uuid,
         resident_id -> Uuid,
@@ -157,17 +194,22 @@ diesel::table! {
     }
 }
 
+diesel::joinable!(auth_tokens -> users (user_id));
 diesel::joinable!(incidents -> residents (resident_id));
 diesel::joinable!(invoices -> residents (resident_id));
 diesel::joinable!(parcels -> residents (resident_id));
 diesel::joinable!(reservations -> common_areas (common_area_id));
 diesel::joinable!(reservations -> residents (resident_id));
+diesel::joinable!(users -> admins (entity_id));
+diesel::joinable!(users -> residents (entity_id));
 diesel::joinable!(vehicles -> residents (resident_id));
 diesel::joinable!(votes -> elections (election_id));
 diesel::joinable!(votes -> residents (resident_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
+    admins,
     announcements,
+    auth_tokens,
     common_areas,
     documents,
     elections,
@@ -177,6 +219,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     parcels,
     reservations,
     residents,
+    users,
     vehicles,
     votes,
 );

@@ -12,3 +12,6 @@ pub mod resident_model;
 pub mod vehicle_model;
 pub mod vote_model;
 mod lib;
+mod admin_model;
+mod user_model;
+mod auth_token_model;

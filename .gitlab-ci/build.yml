@@ -38,6 +38,7 @@ build:
     - cargo add openssl-sys -F vendored
   script:
     - echo "$JOB_ID_VAR=$CI_JOB_ID" >> build.env
+    - echo "RUST_APP_VERSION=$(sed -n '/^\[package\]/,/^\[/{/version/s/.*version *= *"\([^"]*\)".*/\1/p}' Cargo.toml)" >> build.env
     - echo "Building for ${NAME} (${TARGET})..."
     - ${COMMAND} build --verbose --locked --release --target ${TARGET}
   artifacts:
