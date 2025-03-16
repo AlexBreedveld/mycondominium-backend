@@ -1,6 +1,5 @@
 stages:
   - build
-  - release_nightly
 
 variables:
   # Enable colored output from Cargo.
@@ -64,30 +63,3 @@ build:
       #- NAME: "macos"
       #  TARGET: "x86_64-apple-darwin"
       #  COMMAND: "cross"
-
-release_nightly:
-  stage: release_nightly
-  image: registry.gitlab.com/gitlab-org/release-cli:latest
-  variables:
-    LINUX_AMD64_GLIB_BIN: "mycondominium-server-linux-gnu-amd64"
-    LINUX_AMD64_MUSL_BIN: "mycondominium-server-linux-musl-amd64"
-  needs:
-    job: build
-    artifacts: true
-  rules:
-    - if: $CI_COMMIT_BRANCH == "dev"
-  script:
-    - echo "running release_nightly for $TAG"
-  release:
-    name: 'Nightly Build $CI_COMMIT_SHORT_SHA'
-    description: '## MyCondominium Nightly Build $CI_COMMIT_SHORT_SHA<br />### Changelog:<br />$CI_COMMIT_MESSAGE'
-    tag_name: 'nightly'
-    ref: '$CI_COMMIT_SHA'
-    assets:
-      links:
-        - name: '$LINUX_AMD64_GLIB_BIN'
-          link_type: 'package'
-          url: '${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID_LINUX_AMD64_GNU}/artifacts/file/target/x86_64-unknown-linux-gnu/release/mycondominium-backend'
-        - name: '$LINUX_AMD64_MUSL_BIN'
-          link_type: 'package'
-          url: '${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID_LINUX_AMD64_MUSL}/artifacts/file/target/x86_64-unknown-linux-musl/release/mycondominium-backend'
