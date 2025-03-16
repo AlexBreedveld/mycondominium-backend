@@ -20,13 +20,13 @@ release_nightly:
   release:
     name: 'Nightly Build v${RUST_APP_VERSION}-${CI_COMMIT_SHORT_SHA}'
     description: description.md
-    tag_name: 'nightly'
+    tag_name: 'nightly-v${RUST_APP_VERSION}-${CI_COMMIT_SHORT_SHA}'
     ref: '$CI_COMMIT_SHA'
     assets:
       links:
-        - name: '$LINUX_AMD64_GLIB_BIN'
+        - name: '${LINUX_AMD64_GLIB_BIN}_v${RUST_APP_VERSION}-${CI_COMMIT_SHORT_SHA}'
           link_type: 'package'
           url: '${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID_LINUX_AMD64_GNU}/artifacts/raw/target/x86_64-unknown-linux-gnu/release/mycondominium-backend'
-        - name: '$LINUX_AMD64_MUSL_BIN'
+        - name: '${LINUX_AMD64_MUSL_BIN}_v${RUST_APP_VERSION}-${CI_COMMIT_SHORT_SHA}'
           link_type: 'package'
           url: '${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID_LINUX_AMD64_MUSL}/artifacts/raw/target/x86_64-unknown-linux-musl/release/mycondominium-backend'
