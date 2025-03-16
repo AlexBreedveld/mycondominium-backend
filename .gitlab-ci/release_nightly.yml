@@ -15,10 +15,10 @@ release_nightly:
   before_script:
     - export RUST_APP_VERSION=$(sed -n '/^\[package\]/,/^\[/{/version/s/.*version *= *"\([^"]*\)".*/\1/p}' Cargo.toml)
   script:
-    - echo "Running release_nightly for $CI_COMMIT_SHORT_SHA"
-    - echo -e "## MyCondominium Nightly Build ${CI_COMMIT_SHORT_SHA}\n\n---\n\n### Changelog:\n\n${CI_COMMIT_MESSAGE}" > description.md
+    - echo "Running release_nightly for v${RUST_APP_VERSION}-${CI_COMMIT_SHORT_SHA}"
+    - echo -e "## MyCondominium Nightly Build v${RUST_APP_VERSION}-${CI_COMMIT_SHORT_SHA}\n\n---\n\n### Changelog:\n\n${CI_COMMIT_MESSAGE}" > description.md
   release:
-    name: 'Nightly Build v${RUST_APP_VERSION} ${CI_COMMIT_SHORT_SHA}'
+    name: 'Nightly Build v${RUST_APP_VERSION}-${CI_COMMIT_SHORT_SHA}'
     description: description.md
     tag_name: 'nightly'
     ref: '$CI_COMMIT_SHA'
