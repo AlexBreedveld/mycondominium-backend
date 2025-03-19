@@ -2,8 +2,9 @@ use super::prelude::*;
 
 #[derive(Debug, Queryable, Identifiable, Validate)]
 #[diesel(table_name = maintenance_schedules)]
-pub struct MaintenanceSchedule {
+pub struct MaintenanceScheduleModel {
     pub id: Uuid,
+    pub community_id: Option<Uuid>,
     pub description: String,
     pub scheduled_date: NaiveDateTime,
     #[validate(length(max = 20, message = "Status is too long"))]

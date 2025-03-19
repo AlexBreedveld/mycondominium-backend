@@ -2,7 +2,7 @@ use super::prelude::*;
 
 #[derive(Debug, Queryable, Identifiable, Validate)]
 #[diesel(table_name = vehicles)]
-pub struct Vehicle {
+pub struct VehicleModel {
     pub id: Uuid,
     pub resident_id: Uuid,
     #[validate(length(max = 20, message = "License plate is too long"))]

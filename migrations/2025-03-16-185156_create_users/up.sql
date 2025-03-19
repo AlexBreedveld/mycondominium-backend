@@ -9,6 +9,6 @@ CREATE TABLE users (
                                references public.residents,
                        roles     text,
                        password  text not null,
-                           created_at TIMESTAMP NOT NULL,
-                           updated_at TIMESTAMP NOT NULL
+                       created_at TIMESTAMP NOT NULL,
+                       updated_at TIMESTAMP NOT NULL
 );

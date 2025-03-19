@@ -1,14 +1,14 @@
-use diesel::{deserialize, serialize};
 use diesel::backend::Backend;
 use diesel::deserialize::FromSql;
 use diesel::serialize::{Output, ToSql};
+use diesel::{deserialize, serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum UserRoles {
     Root,
     Admin,
     Resident,
-    Guest
+    Guest,
 }
 
 impl<DB> ToSql<diesel::sql_types::Text, DB> for UserRoles

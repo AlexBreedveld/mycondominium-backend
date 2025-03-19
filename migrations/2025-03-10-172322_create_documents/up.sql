@@ -4,5 +4,6 @@ CREATE TABLE documents (
     description TEXT,
     file_url TEXT NOT NULL,
     document_type VARCHAR(50),
-    shared_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
 );
