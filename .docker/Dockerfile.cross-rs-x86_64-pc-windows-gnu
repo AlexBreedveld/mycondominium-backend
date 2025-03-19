@@ -1,0 +1,4 @@
+FROM registry.al3xdev.com:443/alex/rust-cross/x86_64-pc-windows-gnu:latest
+LABEL registry="registry.al3xdev.com:443"
+
+RUN apt-get update && apt-get install -y mingw-w64 mingw-w64-tools gcc-mingw-w64-x86-64-win32-runtime gcc-mingw-w64-x86-64-posix-runtime gcc-mingw-w64-x86-64-posix g++-mingw-w64-x86-64-posix g++-mingw-w64-x86-64-win32 mingw-w64-common

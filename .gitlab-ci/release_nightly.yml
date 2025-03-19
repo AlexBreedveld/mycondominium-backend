@@ -1,0 +1,30 @@
+stages:
+  - release_nightly
+
+release_nightly:
+  stage: release_nightly
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  rules:
+    - if: $CI_COMMIT_BRANCH == "dev"
+  variables:
+    LINUX_AMD64_GLIB_BIN: "mycondominium-server-linux-gnu-amd64"
+    LINUX_AMD64_MUSL_BIN: "mycondominium-server-linux-musl-amd64"
+  needs:
+    job: build
+    artifacts: true
+  script:
+    - echo "Running release_nightly for v${RUST_APP_VERSION}-${CI_COMMIT_SHORT_SHA}"
+    - echo -e "## MyCondominium Nightly Build v${RUST_APP_VERSION}-${CI_COMMIT_SHORT_SHA}\n\n---\n\n### Changelog:\n\n${CI_COMMIT_MESSAGE}" > description.md
+  release:
+    name: 'Nightly Build v${RUST_APP_VERSION}-${CI_COMMIT_SHORT_SHA}'
+    description: description.md
+    tag_name: 'nightly-v${RUST_APP_VERSION}-${CI_COMMIT_SHORT_SHA}'
+    ref: '$CI_COMMIT_SHA'
+    assets:
+      links:
+        - name: '${LINUX_AMD64_GLIB_BIN}_v${RUST_APP_VERSION}-${CI_COMMIT_SHORT_SHA}'
+          link_type: 'package'
+          url: '${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID_LINUX_AMD64_GNU}/artifacts/raw/target/x86_64-unknown-linux-gnu/release/mycondominium-backend'
+        - name: '${LINUX_AMD64_MUSL_BIN}_v${RUST_APP_VERSION}-${CI_COMMIT_SHORT_SHA}'
+          link_type: 'package'
+          url: '${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID_LINUX_AMD64_MUSL}/artifacts/raw/target/x86_64-unknown-linux-musl/release/mycondominium-backend'

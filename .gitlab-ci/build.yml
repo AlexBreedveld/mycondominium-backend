@@ -1,0 +1,66 @@
+stages:
+  - build
+
+variables:
+  # Enable colored output from Cargo.
+  CARGO_TERM_COLOR: always
+  # Disable TLS certificate directory for Docker-in-Docker (if needed).
+  DOCKER_HOST: tcp://docker:2375/
+  # use for much faster builds
+  DOCKER_DRIVER: overlay2
+  # ensure cross knows it's running remotely
+  CROSS_REMOTE: 1
+  DOCKER_TLS_CERTDIR: ""
+
+# This job uses a matrix to build for multiple targets.
+build:
+  stage: build
+  tags:
+    - dind
+    - cloud-br9
+  image: registry.git.al3xdev.com:443/alex/rust-cross/rust-cross:latest
+  services:
+    - docker:dind
+  variables:
+    # Enable colored output from Cargo.
+    CARGO_TERM_COLOR: always
+    # Disable TLS certificate directory for Docker-in-Docker (if needed).
+    DOCKER_HOST: tcp://docker:2375/
+    # use for much faster builds
+    DOCKER_DRIVER: overlay2
+    # ensure cross knows it's running remotely
+    CROSS_REMOTE: 1
+    DOCKER_TLS_CERTDIR: ""
+  before_script:
+    - rustup target add ${TARGET} || true
+    - echo "$CI_JOB_TOKEN" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+    - cargo add pq-sys -F bundled
+    - cargo add openssl-sys -F vendored
+  script:
+    - echo "$JOB_ID_VAR=$CI_JOB_ID" >> build.env
+    - echo "RUST_APP_VERSION=$(sed -n '/^\[package\]/,/^\[/{/version/s/.*version *= *"\([^"]*\)".*/\1/p}' Cargo.toml)" >> build.env
+    - echo "Building for ${NAME} (${TARGET})..."
+    - ${COMMAND} build --verbose --locked --release --target ${TARGET}
+  artifacts:
+    reports:
+      dotenv: build.env
+    # Artifacts: any binary output in the target/{target}/release folder.
+    paths:
+      - target/${TARGET}/release/
+    expire_in: 1 week
+  parallel:
+    matrix:
+      - NAME: "linux-x86_64-gnu"
+        TARGET: "x86_64-unknown-linux-gnu"
+        COMMAND: "cross"
+        JOB_ID_VAR: "BUILD_JOB_ID_LINUX_AMD64_GNU"
+      - NAME: "linux-x86_64-musl"
+        TARGET: "x86_64-unknown-linux-musl"
+        COMMAND: "cross"
+        JOB_ID_VAR: "BUILD_JOB_ID_LINUX_AMD64_MUSL"
+      #- NAME: "windows-x86_64-gnu"
+      #  TARGET: "x86_64-pc-windows-gnu"
+      #  COMMAND: "cross"
+      #- NAME: "macos"
+      #  TARGET: "x86_64-apple-darwin"
+      #  COMMAND: "cross"

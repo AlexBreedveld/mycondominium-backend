@@ -5,6 +5,12 @@ stages:
   - build-pages-rustdoc
   - build-pages-swagger
   - deploy-pages
+  - build
+  - release_nightly
+
+include:
+  - local: .gitlab-ci/build.yml
+  - local: .gitlab-ci/release_nightly.yml
 
 tests:
   stage: test
