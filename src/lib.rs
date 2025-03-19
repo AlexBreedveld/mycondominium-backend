@@ -3,6 +3,9 @@ pub mod schema;
 pub mod services;
 pub mod types;
 pub mod routes;
+pub mod utils;
+pub mod internal;
+
 use std::env;
 
 pub fn establish_connection_pg() -> diesel::PgConnection {
