@@ -1,2 +1,3 @@
 /target
 /.env
+/db_ops_derive/target/

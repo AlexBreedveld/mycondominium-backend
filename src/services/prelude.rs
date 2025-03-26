@@ -7,3 +7,4 @@ pub use actix_web::{web, HttpRequest, HttpResponse};
 pub use actix_web::http::header;
 pub use diesel::PgConnection;
 pub use validator::Validate;
+pub use db_ops_derive::DbOps;
