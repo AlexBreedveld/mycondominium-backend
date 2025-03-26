@@ -6,7 +6,7 @@ use actix_web::{App, HttpServer, web};
 use clap::Parser;
 use dotenvy::dotenv;
 use log::{Level, log};
-use mycondominium_backend::routes::routes::resident_route;
+use mycondominium_backend::routes::routes::*;
 use mycondominium_backend::services::ApiDoc;
 use std::env;
 use utoipa::OpenApi;
@@ -34,6 +34,7 @@ async fn main() {
                 App::new()
                     .wrap(Logger::default())
                     .service(resident_route())
+                    .service(admin_route())
                     .service(
                         SwaggerUi::new("/docs-v1/{_:.*}")
                             .url("/api-docs/openapi.json", ApiDoc::openapi()),

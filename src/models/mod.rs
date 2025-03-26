@@ -1,4 +1,4 @@
-mod admin_model;
+pub mod admin_model;
 pub mod announcement_model;
 mod auth_token_model;
 pub mod common_area_model;

@@ -21,7 +21,7 @@ pub struct AdminModel {
     pub first_name: String,
     pub last_name: String,
     pub phone: Option<String>,
-    pub email: Option<String>,
+    pub email: String,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
@@ -31,5 +31,5 @@ pub struct AdminModelNew {
     pub first_name: String,
     pub last_name: String,
     pub phone: Option<String>,
-    pub email: Option<String>,
+    pub email: String,
 }

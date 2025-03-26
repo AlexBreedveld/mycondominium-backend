@@ -8,3 +8,4 @@ pub use db_ops_derive::DbOps;
 pub use diesel::PgConnection;
 pub use utoipa::OpenApi;
 pub use validator::Validate;
+pub use log::{Level, log};

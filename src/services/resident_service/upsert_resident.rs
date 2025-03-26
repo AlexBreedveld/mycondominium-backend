@@ -39,12 +39,12 @@ pub async fn new_resident(body: web::Json<resident_model::ResidentModelNew>) -> 
     match new_obj.db_insert(conn) {
         Ok(_) => HttpResponse::Ok().json(HttpResponseObjectEmptyEntity {
             error: false,
-            message: "User created successfully".to_string(),
+            message: "Resident created successfully".to_string(),
             entity_id: Some(new_obj.id),
         }),
         Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
             error: true,
-            message: format!("Error creating user: {}", e),
+            message: format!("Error creating resident: {}", e),
         }),
     }
 }
