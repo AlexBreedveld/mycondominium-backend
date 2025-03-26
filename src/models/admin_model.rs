@@ -1,8 +1,20 @@
-use diesel::{QueryResult, RunQueryDsl};
-use db_ops_derive::DbOps;
 use super::prelude::*;
+use db_ops_derive::DbOps;
+use diesel::{QueryResult, RunQueryDsl};
 
-#[derive(Queryable, Selectable, Insertable, Serialize, Deserialize, DbOps, Clone, Debug, AsChangeset, Validate, ToSchema)]
+#[derive(
+    Queryable,
+    Selectable,
+    Insertable,
+    Serialize,
+    Deserialize,
+    DbOps,
+    Clone,
+    Debug,
+    AsChangeset,
+    Validate,
+    ToSchema,
+)]
 #[diesel(table_name = crate::schema::admins)]
 pub struct AdminModel {
     pub id: Uuid,

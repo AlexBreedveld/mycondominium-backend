@@ -1,8 +1,20 @@
-use diesel::{QueryResult, RunQueryDsl};
-use crate::schema::users::dsl::users;
 use super::prelude::*;
+use crate::schema::users::dsl::users;
+use diesel::{QueryResult, RunQueryDsl};
 
-#[derive(Queryable, Selectable, Insertable, Serialize, Deserialize, Clone, Debug, AsChangeset, Validate, ToSchema, DbOps)]
+#[derive(
+    Queryable,
+    Selectable,
+    Insertable,
+    Serialize,
+    Deserialize,
+    Clone,
+    Debug,
+    AsChangeset,
+    Validate,
+    ToSchema,
+    DbOps,
+)]
 #[diesel(table_name = crate::schema::users)]
 pub struct UserModel {
     pub id: Uuid,

@@ -1,10 +1,22 @@
+use super::prelude::*;
 use crate::models::lib::DatabaseTrait;
 use crate::models::lib::DatabaseTraitVec;
-use diesel::{QueryResult, RunQueryDsl};
 use crate::schema::residents::dsl::residents;
-use super::prelude::*;
+use diesel::{QueryResult, RunQueryDsl};
 
-#[derive(Queryable, Selectable, Insertable, Serialize, Deserialize, Clone, Debug, AsChangeset, Validate, ToSchema, DbOps)]
+#[derive(
+    Queryable,
+    Selectable,
+    Insertable,
+    Serialize,
+    Deserialize,
+    Clone,
+    Debug,
+    AsChangeset,
+    Validate,
+    ToSchema,
+    DbOps,
+)]
 #[diesel(table_name = crate::schema::residents)]
 pub struct ResidentModel {
     pub id: Uuid,

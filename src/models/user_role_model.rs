@@ -11,6 +11,7 @@ use super::prelude::*;
     AsChangeset,
     Validate,
     ToSchema,
+    DbOps,
 )]
 #[diesel(table_name = user_roles)]
 pub struct UserRoleModel {

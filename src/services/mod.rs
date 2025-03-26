@@ -1,6 +1,6 @@
-pub mod resident_service;
-mod prelude;
 pub mod api;
+mod prelude;
+pub mod resident_service;
 
 pub use crate::services::prelude::*;
 
