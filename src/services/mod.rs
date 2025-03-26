@@ -1,6 +1,7 @@
-pub mod resident_service;
-mod prelude;
 pub mod api;
+mod prelude;
+pub mod resident_service;
+pub mod admin_service;
 
 pub use crate::services::prelude::*;
 
@@ -15,6 +16,7 @@ pub use crate::services::prelude::*;
     ),
     nest(
         (path = "/api/resident", api = resident_service::ResidentApi),
+        (path = "/api/admin", api = admin_service::AdminApi),
     )
 )]
 pub struct ApiDoc;

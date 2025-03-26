@@ -1,7 +1,6 @@
-use log::{log, Level};
-use crate::establish_connection_pg;
-use crate::models::prelude::DatabaseTrait;
 use super::*;
+use crate::establish_connection_pg;
+use log::{Level, log};
 
 #[utoipa::path(
     get,
@@ -20,10 +19,7 @@ use super::*;
         (status = 500, description = "Internal server error", body = HttpResponseObjectEmptyError)
     ),
 )]
-pub async fn get_residents(
-    query: web::Query<PaginationParams>,
-) -> HttpResponse {
-
+pub async fn get_residents(query: web::Query<PaginationParams>) -> HttpResponse {
     let page = query.page.unwrap_or(1);
     let per_page = query.per_page.unwrap_or(10);
     let offset = (page - 1) * per_page;
@@ -32,10 +28,12 @@ pub async fn get_residents(
 
     let total_items = match resident_model::ResidentModel::db_count_all(conn) {
         Ok(count) => count,
-        Err(e) => return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
-            error: true,
-            message: format!("Error getting total items: {}", e),
-        }),
+        Err(e) => {
+            return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+                error: true,
+                message: format!("Error getting total items: {}", e),
+            });
+        }
     };
 
     match Vec::<resident_model::ResidentModel>::db_read_by_range(conn, per_page, offset) {
@@ -60,7 +58,7 @@ pub async fn get_residents(
         }
         Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
             error: true,
-            message: format!("Error getting users: {}", e),
+            message: format!("Error getting residents: {}", e),
         }),
     }
 }
@@ -79,9 +77,7 @@ pub async fn get_residents(
         (status = 500, description = "Internal server error", body = HttpResponseObjectEmptyError)
     ),
 )]
-pub async fn get_resident_by_id(
-    id: web::Path<String>
-) -> HttpResponse {
+pub async fn get_resident_by_id(id: web::Path<String>) -> HttpResponse {
     let id = id.into_inner();
 
     let conn = &mut establish_connection_pg();
@@ -92,7 +88,7 @@ pub async fn get_resident_by_id(
             return HttpResponse::BadRequest().json(HttpResponseObjectEmpty {
                 error: true,
                 message: "Invalid Resident ID format".to_string(),
-            })
+            });
         }
     };
 
@@ -108,4 +104,3 @@ pub async fn get_resident_by_id(
         }),
     }
 }
-

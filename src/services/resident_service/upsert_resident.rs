@@ -12,7 +12,7 @@ use super::*;
         (status = 500, description = "Error adding resident", body = HttpResponseObjectEmptyError),
     ),
 )]
-pub async fn new_resident (body: web::Json<resident_model::ResidentModelNew>) -> HttpResponse {
+pub async fn new_resident(body: web::Json<resident_model::ResidentModelNew>) -> HttpResponse {
     let conn = &mut establish_connection_pg();
 
     let body = body.into_inner();
@@ -39,12 +39,12 @@ pub async fn new_resident (body: web::Json<resident_model::ResidentModelNew>) ->
     match new_obj.db_insert(conn) {
         Ok(_) => HttpResponse::Ok().json(HttpResponseObjectEmptyEntity {
             error: false,
-            message: "User created successfully".to_string(),
+            message: "Resident created successfully".to_string(),
             entity_id: Some(new_obj.id),
         }),
         Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
             error: true,
-            message: format!("Error creating user: {}", e),
+            message: format!("Error creating resident: {}", e),
         }),
     }
 }
@@ -66,7 +66,7 @@ pub async fn new_resident (body: web::Json<resident_model::ResidentModelNew>) ->
 )]
 pub async fn update_resident(
     id: web::Path<String>,
-    body: web::Json<resident_model::ResidentModelNew>
+    body: web::Json<resident_model::ResidentModelNew>,
 ) -> HttpResponse {
     let conn = &mut establish_connection_pg();
     let body = body.into_inner();
@@ -81,7 +81,7 @@ pub async fn update_resident(
             return HttpResponse::BadRequest().json(HttpResponseObjectEmpty {
                 error: true,
                 message: "Invalid Resident ID format".to_string(),
-            })
+            });
         }
     };
 
@@ -91,7 +91,7 @@ pub async fn update_resident(
             return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
                 error: true,
                 message: format!("Error getting resident: {}", e),
-            })
+            });
         }
     };
 
@@ -136,9 +136,7 @@ pub async fn update_resident(
         (status = 500, description = "Error deleting Resident", body = HttpResponseObjectEmptyError),
     ),
 )]
-pub async fn delete_resident(
-    id: web::Path<String>,
-) -> HttpResponse {
+pub async fn delete_resident(id: web::Path<String>) -> HttpResponse {
     let conn = &mut establish_connection_pg();
 
     let id = match Uuid::parse_str(&id) {
@@ -147,7 +145,7 @@ pub async fn delete_resident(
             return HttpResponse::BadRequest().json(HttpResponseObjectEmpty {
                 error: true,
                 message: "Invalid Resident ID format".to_string(),
-            })
+            });
         }
     };
 

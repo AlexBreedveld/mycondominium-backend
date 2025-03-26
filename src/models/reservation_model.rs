@@ -2,7 +2,7 @@ use super::prelude::*;
 
 #[derive(Debug, Queryable, Identifiable, Validate)]
 #[diesel(table_name = reservations)]
-pub struct Reservation {
+pub struct ReservationModel {
     pub id: Uuid,
     pub resident_id: Uuid,
     pub common_area_id: Uuid,

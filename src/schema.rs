@@ -6,7 +6,7 @@ diesel::table! {
         first_name -> Text,
         last_name -> Text,
         phone -> Nullable<Text>,
-        email -> Nullable<Text>,
+        email -> Text,
         created_at -> Timestamp,
         updated_at -> Timestamp,
     }
@@ -17,6 +17,7 @@ diesel::table! {
         id -> Uuid,
         #[max_length = 150]
         title -> Varchar,
+        community_id -> Nullable<Uuid>,
         message -> Text,
         sent_at -> Timestamp,
     }
@@ -42,7 +43,30 @@ diesel::table! {
         #[max_length = 100]
         name -> Varchar,
         description -> Nullable<Text>,
+        community_id -> Nullable<Uuid>,
         created_at -> Timestamp,
+    }
+}
+
+diesel::table! {
+    communities (id) {
+        id -> Uuid,
+        #[max_length = 50]
+        name -> Varchar,
+        #[max_length = 25]
+        short_name -> Nullable<Varchar>,
+        address -> Text,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+    }
+}
+
+diesel::table! {
+    document_shares (id) {
+        id -> Uuid,
+        user_id -> Uuid,
+        document_id -> Uuid,
+        read_only -> Bool,
     }
 }
 
@@ -55,13 +79,15 @@ diesel::table! {
         file_url -> Text,
         #[max_length = 50]
         document_type -> Nullable<Varchar>,
-        shared_at -> Timestamp,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
     }
 }
 
 diesel::table! {
     elections (id) {
         id -> Uuid,
+        community_id -> Nullable<Uuid>,
         #[max_length = 150]
         title -> Varchar,
         description -> Nullable<Text>,
@@ -75,6 +101,7 @@ diesel::table! {
     incidents (id) {
         id -> Uuid,
         resident_id -> Nullable<Uuid>,
+        community_id -> Nullable<Uuid>,
         description -> Text,
         #[max_length = 20]
         status -> Varchar,
@@ -88,6 +115,7 @@ diesel::table! {
     invoices (id) {
         id -> Uuid,
         resident_id -> Uuid,
+        community_id -> Nullable<Uuid>,
         issue_date -> Date,
         due_date -> Date,
         amount -> Numeric,
@@ -102,6 +130,7 @@ diesel::table! {
 diesel::table! {
     maintenance_schedules (id) {
         id -> Uuid,
+        community_id -> Nullable<Uuid>,
         description -> Text,
         scheduled_date -> Timestamp,
         #[max_length = 20]
@@ -116,6 +145,7 @@ diesel::table! {
     parcels (id) {
         id -> Uuid,
         resident_id -> Uuid,
+        community_id -> Nullable<Uuid>,
         #[max_length = 50]
         parcel_type -> Varchar,
         description -> Nullable<Text>,
@@ -159,6 +189,17 @@ diesel::table! {
 }
 
 diesel::table! {
+    user_roles (id) {
+        id -> Uuid,
+        user_id -> Uuid,
+        role -> Text,
+        community_id -> Nullable<Uuid>,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+    }
+}
+
+diesel::table! {
     users (id) {
         id -> Uuid,
         entity_id -> Uuid,
@@ -194,12 +235,23 @@ diesel::table! {
     }
 }
 
+diesel::joinable!(announcements -> communities (community_id));
 diesel::joinable!(auth_tokens -> users (user_id));
+diesel::joinable!(common_areas -> communities (community_id));
+diesel::joinable!(document_shares -> documents (document_id));
+diesel::joinable!(document_shares -> users (user_id));
+diesel::joinable!(elections -> communities (community_id));
+diesel::joinable!(incidents -> communities (community_id));
 diesel::joinable!(incidents -> residents (resident_id));
+diesel::joinable!(invoices -> communities (community_id));
 diesel::joinable!(invoices -> residents (resident_id));
+diesel::joinable!(maintenance_schedules -> communities (community_id));
+diesel::joinable!(parcels -> communities (community_id));
 diesel::joinable!(parcels -> residents (resident_id));
 diesel::joinable!(reservations -> common_areas (common_area_id));
 diesel::joinable!(reservations -> residents (resident_id));
+diesel::joinable!(user_roles -> communities (community_id));
+diesel::joinable!(user_roles -> users (user_id));
 diesel::joinable!(users -> admins (entity_id));
 diesel::joinable!(users -> residents (entity_id));
 diesel::joinable!(vehicles -> residents (resident_id));
@@ -211,6 +263,8 @@ diesel::allow_tables_to_appear_in_same_query!(
     announcements,
     auth_tokens,
     common_areas,
+    communities,
+    document_shares,
     documents,
     elections,
     incidents,
@@ -219,6 +273,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     parcels,
     reservations,
     residents,
+    user_roles,
     users,
     vehicles,
     votes,

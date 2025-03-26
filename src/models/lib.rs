@@ -1,9 +1,12 @@
-use serde::Deserializer;
 use super::prelude::*;
+use serde::Deserializer;
 
 pub trait DatabaseTrait {
-
     type Id;
+    type Table: diesel::Table;
+
+    fn table() -> Self::Table;
+
     fn db_insert(&self, conn: &mut PgConnection) -> QueryResult<usize>;
     fn db_update(&self, conn: &mut PgConnection) -> QueryResult<usize>;
     fn db_upsert(&self, conn: &mut PgConnection) -> QueryResult<usize>;
@@ -17,6 +20,10 @@ pub trait DatabaseTrait {
 
 pub trait DatabaseTraitVec {
     type Id;
+    type Table: diesel::Table;
+
+    fn table() -> Self::Table;
+
     fn db_insert(&self, conn: &mut PgConnection) -> QueryResult<usize>;
     fn db_update(&self, conn: &mut PgConnection) -> QueryResult<usize>;
     fn db_upsert(&self, conn: &mut PgConnection) -> QueryResult<usize>;
