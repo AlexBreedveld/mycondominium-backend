@@ -1,3 +1,4 @@
+use crate::internal::roles::UserRoles;
 use super::prelude::*;
 
 #[derive(
@@ -13,11 +14,11 @@ use super::prelude::*;
     ToSchema,
     DbOps,
 )]
-#[diesel(table_name = user_roles)]
+#[diesel(table_name = crate::schema::user_roles)]
 pub struct UserRoleModel {
     pub id: Uuid,
     pub user_id: Uuid,
-    pub role: String,
+    pub role: UserRoles,
     pub community_id: Option<Uuid>,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
