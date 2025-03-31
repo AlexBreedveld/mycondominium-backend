@@ -4,7 +4,7 @@ pub mod routes;
 pub mod schema;
 pub mod services;
 pub mod types;
-pub mod utils;
+pub mod utilities;
 
 use std::env;
 

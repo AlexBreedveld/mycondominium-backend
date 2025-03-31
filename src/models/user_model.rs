@@ -1,6 +1,5 @@
 use super::prelude::*;
-use crate::schema::users::dsl::users;
-use diesel::{QueryResult, RunQueryDsl};
+use crate::internal::user_types::UserTypes;
 
 #[derive(
     Queryable,
@@ -19,7 +18,9 @@ use diesel::{QueryResult, RunQueryDsl};
 pub struct UserModel {
     pub id: Uuid,
     pub entity_id: Uuid,
-    pub roles: Option<String>,
+    pub entity_type: UserTypes,
+    pub admin_id: Option<Uuid>,
+    pub resident_id: Option<Uuid>,
     pub password: String,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,

@@ -203,7 +203,10 @@ diesel::table! {
     users (id) {
         id -> Uuid,
         entity_id -> Uuid,
-        roles -> Nullable<Text>,
+        #[max_length = 10]
+        entity_type -> Varchar,
+        admin_id -> Nullable<Uuid>,
+        resident_id -> Nullable<Uuid>,
         password -> Text,
         created_at -> Timestamp,
         updated_at -> Timestamp,
@@ -252,8 +255,8 @@ diesel::joinable!(reservations -> common_areas (common_area_id));
 diesel::joinable!(reservations -> residents (resident_id));
 diesel::joinable!(user_roles -> communities (community_id));
 diesel::joinable!(user_roles -> users (user_id));
-diesel::joinable!(users -> admins (entity_id));
-diesel::joinable!(users -> residents (entity_id));
+diesel::joinable!(users -> admins (admin_id));
+diesel::joinable!(users -> residents (resident_id));
 diesel::joinable!(vehicles -> residents (resident_id));
 diesel::joinable!(votes -> elections (election_id));
 diesel::joinable!(votes -> residents (resident_id));

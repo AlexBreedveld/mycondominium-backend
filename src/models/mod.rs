@@ -1,6 +1,7 @@
 pub mod admin_model;
 pub mod announcement_model;
-mod auth_token_model;
+pub mod auth_model;
+pub mod auth_token_model;
 pub mod common_area_model;
 mod community_model;
 pub mod document_model;
@@ -14,7 +15,7 @@ pub mod parcel_model;
 pub mod prelude;
 pub mod reservation_model;
 pub mod resident_model;
-mod user_model;
-mod user_role_model;
+pub mod user_model;
+pub mod user_role_model;
 pub mod vehicle_model;
 pub mod vote_model;

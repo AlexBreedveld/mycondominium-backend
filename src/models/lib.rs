@@ -7,6 +7,7 @@ pub trait DatabaseTrait {
 
     fn table() -> Self::Table;
 
+    fn new_id(conn: &mut PgConnection) -> uuid::Uuid;
     fn db_insert(&self, conn: &mut PgConnection) -> QueryResult<usize>;
     fn db_update(&self, conn: &mut PgConnection) -> QueryResult<usize>;
     fn db_upsert(&self, conn: &mut PgConnection) -> QueryResult<usize>;

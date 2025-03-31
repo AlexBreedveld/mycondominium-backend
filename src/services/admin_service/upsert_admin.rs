@@ -1,6 +1,7 @@
-use std::io::ErrorKind;
-use crate::models::admin_model::AdminModel;
 use super::*;
+use crate::models::admin_model::AdminModel;
+use crate::utilities::auth_utils::hash_password;
+use std::io::ErrorKind;
 
 #[utoipa::path(
     post,
@@ -24,7 +25,7 @@ pub async fn new_admin(body: web::Json<admin_model::AdminModelNew>) -> HttpRespo
     }
 
     let new_obj = admin_model::AdminModel {
-        id: Uuid::new_v4(),
+        id: admin_model::AdminModel::new_id_user(conn),
         first_name: body.first_name,
         last_name: body.last_name,
         phone: body.phone,
@@ -34,16 +35,74 @@ pub async fn new_admin(body: web::Json<admin_model::AdminModelNew>) -> HttpRespo
     };
 
     match new_obj.db_insert(conn) {
-        Ok(_) => HttpResponse::Ok().json(HttpResponseObjectEmptyEntity {
-            error: false,
-            message: "Admin created successfully".to_string(),
-            entity_id: Some(new_obj.id),
-        }),
-        Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
-            error: true,
-            message: format!("Error creating admin: {}", e),
-        }),
-    }
+        Ok(_) => (),
+        Err(e) => {
+            log::error!("Error creating admin: {}", e);
+            return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: "Error creating admin".to_string(),
+            });
+        }
+    };
+
+    let hashed_password = match hash_password(body.password) {
+        Ok(passwd) => passwd,
+        Err(e) => {
+            log::error!("Error creating admin: {}", e);
+            return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: "Error creating admin".to_string(),
+            });
+        }
+    };
+
+    let new_obj_user = user_model::UserModel {
+        id: user_model::UserModel::new_id(conn),
+        entity_id: new_obj.id,
+        entity_type: UserTypes::Admin,
+        admin_id: Some(new_obj.id),
+        resident_id: None,
+        password: hashed_password,
+        created_at: chrono::Utc::now().naive_utc(),
+        updated_at: chrono::Utc::now().naive_utc(),
+    };
+
+    match new_obj_user.db_insert(conn) {
+        Ok(_) => (),
+        Err(e) => {
+            log::error!("Error creating admin: {}", e);
+            return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: "Error creating admin".to_string(),
+            });
+        }
+    };
+
+    let new_obj_user_role = user_role_model::UserRoleModel {
+        id: user_role_model::UserRoleModel::new_id(conn),
+        user_id: new_obj_user.id,
+        role: body.role,
+        community_id: body.community_id,
+        created_at: chrono::Utc::now().naive_utc(),
+        updated_at: chrono::Utc::now().naive_utc(),
+    };
+
+    match new_obj_user_role.db_insert(conn) {
+        Ok(_) => (),
+        Err(e) => {
+            log::error!("Error creating admin: {}", e);
+            return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: "Error creating admin".to_string(),
+            });
+        }
+    };
+
+    HttpResponse::Ok().json(HttpResponseObjectEmptyEntity {
+        error: false,
+        message: "Admin created successfully".to_string(),
+        entity_id: Some(new_obj.id),
+    })
 }
 
 #[utoipa::path(
@@ -91,7 +150,7 @@ pub async fn update_admin(
             });
         }
     };
-    
+
     if !check_email_valid(conn, body.email.clone(), curr_obj.email).unwrap() {
         return HttpResponse::BadRequest().json(HttpResponseObjectEmpty {
             error: true,
@@ -163,30 +222,47 @@ pub async fn delete_admin(id: web::Path<String>) -> HttpResponse {
 fn check_email_valid(
     conn: &mut PgConnection,
     req_email: String,
-    curr_email: String
+    curr_email: String,
 ) -> Result<bool, std::io::Error> {
-    
-    if req_email.trim() == curr_email.trim() { 
+    if req_email.trim() == curr_email.trim() {
         return Ok(true);
     }
-    
+
     match crate::schema::admins::table
         .filter(crate::schema::admins::email.eq(req_email.clone()))
-        .count().get_result::<i64>(conn) {
-        Ok(num) => if num != 0 { 
-            return Ok(false);
-        },
-        Err(e) => return Err(std::io::Error::new(ErrorKind::Other, "Error checking if email exists")),
+        .count()
+        .get_result::<i64>(conn)
+    {
+        Ok(num) => {
+            if num != 0 {
+                return Ok(false);
+            }
+        }
+        Err(e) => {
+            return Err(std::io::Error::new(
+                ErrorKind::Other,
+                "Error checking if email exists",
+            ));
+        }
     };
 
     match crate::schema::residents::table
         .filter(crate::schema::residents::email.eq(req_email.clone()))
-        .count().get_result::<i64>(conn) {
-        Ok(num) => if num != 0 {
-            return Ok(false);
-        },
-        Err(e) => return Err(std::io::Error::new(ErrorKind::Other, "Error checking if email exists")),
+        .count()
+        .get_result::<i64>(conn)
+    {
+        Ok(num) => {
+            if num != 0 {
+                return Ok(false);
+            }
+        }
+        Err(e) => {
+            return Err(std::io::Error::new(
+                ErrorKind::Other,
+                "Error checking if email exists",
+            ));
+        }
     };
-    
+
     Ok(true)
 }

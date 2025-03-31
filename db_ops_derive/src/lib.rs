@@ -45,6 +45,30 @@ pub fn derive_db_ops(input: TokenStream) -> TokenStream {
                 #table_path::table
             }
 
+            fn new_id(conn: &mut PgConnection) -> uuid::Uuid {
+                let mut uuid_new = uuid::Uuid::new_v4();
+                let mut exists = true;
+                let mut tries = 0;
+
+                while exists && tries < 10 {
+                    match Self::table().filter(#table_path::id.eq(uuid_new)).count().get_result::<i64>(conn) {
+                        Ok(count) => {
+                            if count == 0 {
+                                exists = false;
+                            } else {
+                                uuid_new = uuid::Uuid::new_v4();
+                            }
+                        },
+                        Err(e) => {
+                            tries += 1;
+                            uuid_new = uuid::Uuid::new_v4();
+                        }
+                    };
+                };
+
+                uuid_new
+            }
+
             fn db_insert(&self, conn: &mut PgConnection) -> QueryResult<usize> {
                 diesel::insert_into(Self::table()).values(self).execute(conn)
             }

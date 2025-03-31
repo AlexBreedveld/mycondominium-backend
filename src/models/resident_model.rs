@@ -1,8 +1,6 @@
 use super::prelude::*;
 use crate::models::lib::DatabaseTrait;
 use crate::models::lib::DatabaseTraitVec;
-use crate::schema::residents::dsl::residents;
-use diesel::{QueryResult, RunQueryDsl};
 
 #[derive(
     Queryable,
@@ -46,4 +44,44 @@ pub struct ResidentModelNew {
     pub date_of_birth: Option<NaiveDate>,
     pub resident_since: NaiveDateTime,
     pub is_active: bool,
+}
+
+impl ResidentModel {
+    pub fn new_id_user(conn: &mut PgConnection) -> uuid::Uuid {
+        let mut uuid_new = uuid::Uuid::new_v4();
+        let mut exists = true;
+        let mut tries = 0;
+
+        while exists && tries < 10 {
+            let adm_table_exists: bool = match admins::table
+                .filter(admins::columns::id.eq(uuid_new))
+                .count()
+                .get_result::<i64>(conn)
+            {
+                Ok(count) => count != 0,
+                Err(e) => {
+                    tries += 1;
+                    true
+                }
+            };
+
+            let res_table_exists: bool = match crate::schema::residents::table
+                .filter(crate::schema::residents::columns::id.eq(uuid_new))
+                .count()
+                .get_result::<i64>(conn)
+            {
+                Ok(count) => count != 0,
+                Err(e) => {
+                    tries += 1;
+                    true
+                }
+            };
+
+            if !adm_table_exists && !res_table_exists {
+                exists = false;
+            }
+        }
+
+        uuid_new
+    }
 }
