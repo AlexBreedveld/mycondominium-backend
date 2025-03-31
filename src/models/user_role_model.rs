@@ -1,5 +1,5 @@
-use crate::internal::roles::UserRoles;
 use super::prelude::*;
+use crate::internal::roles::UserRoles;
 
 #[derive(
     Queryable,

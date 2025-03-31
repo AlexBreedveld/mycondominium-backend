@@ -1,6 +1,6 @@
 use super::*;
+use crate::utilities::auth_utils::{check_password, generate_jwt_token, parse_user_agent};
 use std::io::ErrorKind;
-use crate::utils::{check_password, generate_jwt_token, parse_user_agent};
 
 #[utoipa::path(
     post,
@@ -24,16 +24,20 @@ pub async fn sign_in(body: web::Json<auth_model::AuthModel>, req: HttpRequest) -
         .first::<resident_model::ResidentModel>(conn)
         .optional()
     {
-        Ok(Some(ent)) => { found = true; Some(ent.id) },
+        Ok(Some(ent)) => {
+            found = true;
+            Some(ent.id)
+        }
         Ok(None) => None,
         Err(e) => {
+            log::error!("Error getting resident: {}", e);
             return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
                 error: true,
-                message: format!("Error signing in"),
+                message: "Error signing in".to_string(),
             });
         }
     };
-    
+
     if !found {
         entity_id = match crate::schema::admins::table
             .filter(crate::schema::admins::email.eq(email.clone()))
@@ -43,14 +47,15 @@ pub async fn sign_in(body: web::Json<auth_model::AuthModel>, req: HttpRequest) -
             Ok(Some(ent)) => Some(ent.id),
             Ok(None) => None,
             Err(e) => {
+                log::error!("Error getting admin: {}", e);
                 return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
                     error: true,
-                    message: format!("Error signing in"),
+                    message: "Error signing in".to_string(),
                 });
             }
         };
     }
-    
+
     if let Some(id) = entity_id {
         let user_obj = match crate::schema::users::table
             .filter(crate::schema::users::entity_id.eq(id))
@@ -58,29 +63,36 @@ pub async fn sign_in(body: web::Json<auth_model::AuthModel>, req: HttpRequest) -
             .optional()
         {
             Ok(Some(ent)) => ent,
-            Ok(None) => return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
-                error: true,
-                message: format!("Entity exists but user does not"),
-            }),
-            Err(e) => {
+            Ok(None) => {
+                log::error!("Entity exists but user does not");
                 return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
                     error: true,
-                    message: format!("Error signing in"),
+                    message: "Entity exists but user does not".to_string(),
+                });
+            }
+            Err(e) => {
+                log::error!("Error getting user: {}", e);
+                return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+                    error: true,
+                    message: "Error signing in".to_string(),
                 });
             }
         };
-        
+
         match check_password(password, user_obj.password) {
-            Ok(val) => if !val {
-                return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
-                    error: true,
-                    message: format!("Error signing in"),
-                });
-            },
+            Ok(val) => {
+                if !val {
+                    return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+                        error: true,
+                        message: "Error signing in".to_string(),
+                    });
+                }
+            }
             Err(e) => {
+                log::error!("Error checking password: {}", e);
                 return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
                     error: true,
-                    message: format!("Error signing in"),
+                    message: "Error signing in".to_string(),
                 });
             }
         };
@@ -90,9 +102,10 @@ pub async fn sign_in(body: web::Json<auth_model::AuthModel>, req: HttpRequest) -
         let token = match generate_jwt_token(user_obj.id, token_id) {
             Ok(new_token) => new_token,
             Err(e) => {
+                log::error!("Error generating JWT token: {}", e);
                 return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
                     error: true,
-                    message: format!("Error signing in"),
+                    message: "Error signing in".to_string(),
                 });
             }
         };
@@ -103,7 +116,7 @@ pub async fn sign_in(body: web::Json<auth_model::AuthModel>, req: HttpRequest) -
                 return HttpResponse::BadRequest().json(HttpResponseObjectEmpty {
                     error: true,
                     message: "User-Agent header is missing".to_string(),
-                })
+                });
             }
         };
 
@@ -113,7 +126,7 @@ pub async fn sign_in(body: web::Json<auth_model::AuthModel>, req: HttpRequest) -
                 return HttpResponse::BadRequest().json(HttpResponseObjectEmpty {
                     error: true,
                     message: "User-Agent header is missing".to_string(),
-                })
+                });
             }
         };
 
@@ -128,22 +141,26 @@ pub async fn sign_in(body: web::Json<auth_model::AuthModel>, req: HttpRequest) -
             version: ua.product.major,
             cpu_arch: ua.cpu.architecture,
         };
-        
+
         match auth_token.db_insert(conn) {
             Ok(_) => HttpResponse::Ok().json(HttpResponseObject {
                 error: false,
                 message: "Successfully authenticated".to_string(),
                 object: Some(token),
             }),
-            Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
-                error: true,
-                message: format!("Internal server error"),
-            }),
+            Err(e) => {
+                log::error!("Error inserting auth token: {}", e);
+                HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
+                    error: true,
+                    message: "Internal server error".to_string(),
+                })
+            },
         }
     } else {
+        log::error!("Error while signing user in: entity not found");
         HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
             error: true,
-            message: format!("Error signing in"),
+            message: "Error signing in".to_string(),
         })
     }
 }

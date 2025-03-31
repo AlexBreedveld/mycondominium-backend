@@ -1,7 +1,7 @@
 use super::prelude::*;
+use crate::internal::roles::UserRoles;
 use db_ops_derive::DbOps;
 use diesel::{QueryResult, RunQueryDsl};
-use crate::internal::roles::UserRoles;
 
 #[derive(
     Queryable,
@@ -35,7 +35,7 @@ pub struct AdminModelNew {
     pub email: String,
     pub password: String,
     pub role: UserRoles,
-    pub community_id: Option<Uuid>
+    pub community_id: Option<Uuid>,
 }
 
 impl AdminModel {
@@ -45,30 +45,34 @@ impl AdminModel {
         let mut tries = 0;
 
         while exists && tries < 10 {
-            let adm_table_exists: bool = match admins::table.filter(admins::columns::id.eq(uuid_new)).count().get_result::<i64>(conn) {
-                Ok(count) => {
-                    count != 0
-                },
+            let adm_table_exists: bool = match admins::table
+                .filter(admins::columns::id.eq(uuid_new))
+                .count()
+                .get_result::<i64>(conn)
+            {
+                Ok(count) => count != 0,
                 Err(e) => {
                     tries += 1;
                     true
                 }
             };
 
-            let res_table_exists: bool = match residents::table.filter(residents::columns::id.eq(uuid_new)).count().get_result::<i64>(conn) {
-                Ok(count) => {
-                    count != 0
-                },
+            let res_table_exists: bool = match residents::table
+                .filter(residents::columns::id.eq(uuid_new))
+                .count()
+                .get_result::<i64>(conn)
+            {
+                Ok(count) => count != 0,
                 Err(e) => {
                     tries += 1;
                     true
                 }
             };
-            
+
             if !adm_table_exists && !res_table_exists {
                 exists = false;
             }
-        };
+        }
 
         uuid_new
     }

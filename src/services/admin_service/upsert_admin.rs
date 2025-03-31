@@ -1,6 +1,6 @@
 use super::*;
 use crate::models::admin_model::AdminModel;
-use crate::utils::hash_password;
+use crate::utilities::auth_utils::hash_password;
 use std::io::ErrorKind;
 
 #[utoipa::path(

@@ -1,8 +1,8 @@
+pub mod admin_service;
 pub mod api;
+pub mod auth_service;
 mod prelude;
 pub mod resident_service;
-pub mod admin_service;
-pub mod auth_service;
 
 pub use crate::services::prelude::*;
 

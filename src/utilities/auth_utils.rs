@@ -1,8 +1,8 @@
-use std::io::ErrorKind;
-use user_agent_parser::UserAgentParser;
 use crate::models::auth_model::TokenClaims;
 use crate::models::auth_token_model;
 use crate::models::auth_token_model::{FromUaParser, UserAgent};
+use std::io::ErrorKind;
+use user_agent_parser::UserAgentParser;
 
 pub fn hash_password(password: String) -> Result<String, std::io::Error> {
     use password_hash::PasswordHasher;
@@ -64,7 +64,7 @@ pub fn generate_jwt_token(
     let exp_days = match std::env::var("AUTH_TOKEN_EXPIRATION_DAYS") {
         Ok(val) => val,
         Err(_) => {
-            println!("AUTH_TOKEN_EXPIRATION_DAYS environment variable not found.");
+            log::error!("AUTH_TOKEN_EXPIRATION_DAYS environment variable not found.");
             return Err(std::io::Error::new(
                 std::io::ErrorKind::Other,
                 "AUTH_TOKEN_EXPIRATION_DAYS environment variable not found".to_string(),
@@ -74,7 +74,7 @@ pub fn generate_jwt_token(
     let exp_days = match exp_days.parse::<i64>() {
         Ok(val) => val,
         Err(_) => {
-            println!("AUTH_TOKEN_EXPIRATION_DAYS could not be parsed as an integer.");
+            log::error!("Could not parse AUTH_TOKEN_EXPIRATION_DAYS as an integer.");
             return Err(std::io::Error::new(
                 std::io::ErrorKind::Other,
                 "AUTH_TOKEN_EXPIRATION_DAYS could not be parsed as an integer".to_string(),
@@ -84,19 +84,37 @@ pub fn generate_jwt_token(
     let secret_key = match std::env::var("AUTH_TOKEN_SECRET_KEY") {
         Ok(val) => val,
         Err(_) => {
-            println!("AUTH_TOKEN_SECRET_KEY environment variable not found.");
+            log::error!("AUTH_TOKEN_SECRET_KEY environment variable not found.");
             return Err(std::io::Error::new(
                 std::io::ErrorKind::Other,
                 "AUTH_TOKEN_SECRET_KEY environment variable not found".to_string(),
             ));
         }
     };
+    generate_jwt_token_internal(user_id, token_id, secret_key, exp_days)
+}
+
+pub fn generate_jwt_token_no_env(
+    user_id: uuid::Uuid,
+    token_id: uuid::Uuid,
+    secret_key: String,
+    exp_days: i64,
+) -> Result<String, std::io::Error> {
+    generate_jwt_token_internal(user_id, token_id, secret_key, exp_days)
+}
+
+fn generate_jwt_token_internal(
+    user_id: uuid::Uuid,
+    token_id: uuid::Uuid,
+    secret_key: String,
+    exp_days: i64,
+) -> Result<String, std::io::Error> {
     // Convert the UUID to a string representation
-    let user_id_str = user_id.to_string(); // UUID as a string
+    //let user_id_str = user_id.to_string(); // UUID as a string
 
     // Get the current time in seconds since UNIX EPOCH
     let now = chrono::Utc::now();
-    
+
     let expiration_time = now + chrono::Duration::days(exp_days);
 
     // Convert the expiration time to a Unix timestamp (seconds)
@@ -105,13 +123,18 @@ pub fn generate_jwt_token(
     // Define the claims of the token
     let claims = TokenClaims {
         token_id,
-        user_id: user_id_str,
-        exp: exp_timestamp
+        user_id,
+        exp: exp_timestamp,
     };
 
     // Encode the JWT with a secret key
     let encoding_key = jsonwebtoken::EncodingKey::from_secret(secret_key.as_bytes());
-    let token = jsonwebtoken::encode(&jsonwebtoken::Header::new(jsonwebtoken::Algorithm::HS256), &claims, &encoding_key).unwrap();
+    let token = jsonwebtoken::encode(
+        &jsonwebtoken::Header::new(jsonwebtoken::Algorithm::HS256),
+        &claims,
+        &encoding_key,
+    )
+    .unwrap();
 
     Ok(token)
 }
@@ -119,6 +142,14 @@ pub fn generate_jwt_token(
 pub fn validate_token(token: &str) -> jsonwebtoken::errors::Result<TokenClaims> {
     let secret_key =
         std::env::var("AUTH_TOKEN_SECRET_KEY").expect("AUTH_TOKEN_SECRET_KEY must be set");
+    validate_token_internal(token, secret_key)
+}
+
+pub fn validate_token_no_env(token: &str, secret_key: String) -> jsonwebtoken::errors::Result<TokenClaims> {
+    validate_token_internal(token, secret_key)
+}
+
+fn validate_token_internal(token: &str, secret_key: String) -> jsonwebtoken::errors::Result<TokenClaims> {
     // Define validation parameters
     let mut validation = jsonwebtoken::Validation::new(jsonwebtoken::Algorithm::HS256);
     validation.validate_exp = true;
@@ -137,13 +168,13 @@ pub fn validate_token(token: &str) -> jsonwebtoken::errors::Result<TokenClaims> 
 }
 
 pub fn parse_user_agent(ua_str: String) -> Result<UserAgent, std::io::Error> {
-    let parser = match UserAgentParser::from_str(include_str!("../res/ua-regexes.yaml")) {
+    let parser = match UserAgentParser::from_str(include_str!("../../res/ua-regexes.yaml")) {
         Ok(parser) => parser,
         Err(e) => {
             return Err(std::io::Error::new(
                 ErrorKind::Other,
                 format!("Error parsing User-Agent regexes: {}", e),
-            ))
+            ));
         }
     };
 

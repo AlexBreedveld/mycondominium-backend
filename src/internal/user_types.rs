@@ -1,10 +1,12 @@
-use diesel::{deserialize, serialize, AsExpression, FromSqlRow};
+use crate::services::{Deserialize, Serialize, ToSchema};
 use diesel::backend::Backend;
 use diesel::deserialize::FromSql;
 use diesel::serialize::{Output, ToSql};
-use crate::services::{Deserialize, Serialize, ToSchema};
+use diesel::{AsExpression, FromSqlRow, deserialize, serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, AsExpression, FromSqlRow)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, AsExpression, FromSqlRow,
+)]
 #[diesel(sql_type = diesel::sql_types::Text)]
 pub enum UserTypes {
     Admin,

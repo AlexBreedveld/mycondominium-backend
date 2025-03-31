@@ -47,3 +47,10 @@ pub fn admin_route() -> actix_web::Scope {
             web::delete().to(crate::services::admin_service::upsert_admin::delete_admin),
         )
 }
+
+pub fn auth_route() -> actix_web::Scope {
+    web::scope("/api/auth").route(
+        "/signin",
+        web::post().to(crate::services::auth_service::sign_in::sign_in),
+    )
+}

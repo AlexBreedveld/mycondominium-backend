@@ -44,12 +44,12 @@ pub fn derive_db_ops(input: TokenStream) -> TokenStream {
             fn table() -> Self::Table {
                 #table_path::table
             }
-            
+
             fn new_id(conn: &mut PgConnection) -> uuid::Uuid {
                 let mut uuid_new = uuid::Uuid::new_v4();
                 let mut exists = true;
                 let mut tries = 0;
-                
+
                 while exists && tries < 10 {
                     match Self::table().filter(#table_path::id.eq(uuid_new)).count().get_result::<i64>(conn) {
                         Ok(count) => {
@@ -65,7 +65,7 @@ pub fn derive_db_ops(input: TokenStream) -> TokenStream {
                         }
                     };
                 };
-                
+
                 uuid_new
             }
 

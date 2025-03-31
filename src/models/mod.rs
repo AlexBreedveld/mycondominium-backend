@@ -1,5 +1,6 @@
 pub mod admin_model;
 pub mod announcement_model;
+pub mod auth_model;
 pub mod auth_token_model;
 pub mod common_area_model;
 mod community_model;
@@ -18,4 +19,3 @@ pub mod user_model;
 pub mod user_role_model;
 pub mod vehicle_model;
 pub mod vote_model;
-pub mod auth_model;
