@@ -6,11 +6,13 @@ stages:
   - build-pages-swagger
   - deploy-pages
   - build
-  - release_nightly
+  - release
+  - deploy
 
 include:
   - local: .gitlab-ci/build.yml
   - local: .gitlab-ci/release_nightly.yml
+  - local: .gitlab-ci/deploy.yml
 
 tests:
   stage: test
