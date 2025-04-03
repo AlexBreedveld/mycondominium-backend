@@ -16,6 +16,8 @@ deploy_dev:
     - mkdir -p ~/.config/coderv2
     - echo "https://coder.al3xdev.net" > ~/.config/coderv2/url
     - echo $CODER_TOKEN > ~/.config/coderv2/session
+    - chmod 600 ~/.config/coderv2/url
+    - chmod 600 ~/.config/coderv2/session
     - coder config-ssh -y
     - ssh coder.mycondominium-backend-runner.main 'sudo apt update && sudo apt install -y curl wget postgresql openssl'
     - ssh coder.mycondominium-backend-runner.main -t "sudo systemctl start postgresql && sudo -u postgres psql -c \"ALTER USER postgres WITH PASSWORD 'toor';\" && sudo -u postgres psql -c \"CREATE DATABASE ${DEV_DB_NAME};\""
@@ -33,10 +35,10 @@ deploy_dev:
       MINIO_ACCESS_KEY=\"\"
       MINIO_SECRET_KEY=\"\"
       SERVER_HOST=\"127.0.0.1\"
-      SERVER_PORT=\"3030\"
+      SERVER_PORT=\"3031\"
       AUTH_TOKEN_EXPIRATION_DAYS=30
       AUTH_TOKEN_SECRET_KEY=$(openssl rand -hex 32)" > ./.dev-env
-    - scp ./.dev-env coder.mycondominium-backend-runner.main:~/dev_deployment/.env
+    - scp ./.dev-env coder.mycondominium-backend-runner.main:/home/coder/dev_deployment/.env
     - ssh coder.mycondominium-backend-runner.main -t "sudo systemctl daemon-reload"
     - ssh coder.mycondominium-backend-runner.main -t "sudo systemctl start mycondominium-backend-dev.service"
     - ssh coder.mycondominium-backend-runner.main -t "sudo systemctl restart mycondominium-backend"
