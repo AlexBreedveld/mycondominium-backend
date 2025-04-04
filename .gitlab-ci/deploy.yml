@@ -25,8 +25,8 @@ deploy_dev:
       sudo systemctl start postgresql &&
       sudo -u postgres psql -c \"ALTER USER postgres WITH PASSWORD 'toor';\" &&
       sudo -u postgres psql -U postgres -c \"SELECT 1 FROM pg_database WHERE datname = '${DEV_DB_NAME}';\" | grep -q 1 &&
-      sudo -u postgres dropdb ${DEV_DB_NAME} &&
-      sudo -u postgres createdb ${DEV_DB_NAME}" || true
+      sudo -u postgres dropdb ${DEV_DB_NAME}" || true
+    - ssh coder.mycondominium-backend-runner.main -t "sudo -u postgres createdb ${DEV_DB_NAME}"
     - ssh coder.mycondominium-backend-runner.main -t "sudo su coder -c \"mkdir -p ~/dev_deployment\""
     - ssh coder.mycondominium-backend-runner.main -t "sudo su coder -c \"if [ -f ~/dev_deployment/.env ]; then rm ~/dev_deployment/.env; fi\""
     - ssh coder.mycondominium-backend-runner.main -t "sudo su coder -c \"if [ -f ~/dev_deployment/mycondominium-backend ]; then rm ~/dev_deployment/mycondominium-backend; fi\""
