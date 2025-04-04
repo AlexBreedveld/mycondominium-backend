@@ -13,7 +13,7 @@ deploy_dev:
   #  job: build
   #  artifacts: true
   before_script:
-    - apt-get update && apt-get install -y curl sudo openssh-client openssl
+    - apt-get update && apt-get install -y curl sudo openssh-client openssl jq
     - curl -fsSL https://coder.al3xdev.net/install.sh | sh
   script:
     - mkdir -p ~/.ssh
