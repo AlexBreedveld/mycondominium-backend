@@ -9,20 +9,19 @@ deploy_dev:
   needs:
     job: build
     artifacts: true
-  variables:
-    CODER_SESSION_TOKEN: $CODER_TOKEN
-    CODER_URL: "https://coder.al3xdev.net"
   before_script:
     - apt-get update && apt-get install -y curl sudo openssh-client openssl
     - curl -fsSL https://coder.al3xdev.net/install.sh | sh
   script:
+    - export CODER_SESSION_TOKEN=${CODER_TOKEN}
+    - export CODER_URL="https://coder.al3xdev.net"
     - coder login
     - coder config-ssh -y
     - ssh coder.mycondominium-backend-runner.main 'sudo apt update && sudo apt install -y curl wget postgresql openssl'
     - ssh coder.mycondominium-backend-runner.main -t "sudo systemctl start postgresql && sudo -u postgres psql -c \"ALTER USER postgres WITH PASSWORD 'toor';\" && sudo -u postgres psql -c \"CREATE DATABASE ${DEV_DB_NAME};\""
     - ssh coder.mycondominium-backend-runner.main -t "mkdir -p ~/dev_deployment"
     - ssh coder.mycondominium-backend-runner.main -t "if [ -f ~/dev_deployment/mycondominium-backend ]; then rm ~/dev_deployment/mycondominium-backend; fi"
-    - ssh coder.mycondominium-backend-runner.main -t "wget -O ~/dev_deployment/mycondominium-backend '${LINUX_GNU_AMD64_BIN_URL}'"
+    - ssh coder.mycondominium-backend-runner.main -t "wget -O ~/dev_deployment/mycondominium-backend 'https://git.al3xdev.com/puc/software-engineering-v/mycondominium-backend/-/releases/permalink/latest/downloads/target/x86_64-unknown-linux-gnu/release/mycondominium-backend'"
     - ssh coder.mycondominium-backend-runner.main -t "chmod +x ~/dev_deployment/mycondominium-backend"
     - ssh coder.mycondominium-backend-runner.main -t "if [ -f /etc/systemd/system/mycondominium-backend-dev.service ]; then sudo rm /etc/systemd/system/mycondominium-backend-dev.service; fi"
     - ssh coder.mycondominium-backend-runner.main -t "sudo wget -O /etc/systemd/system/mycondominium-backend-dev.service '${DEV_SYSTEMD_SERVICE_URL}'"
