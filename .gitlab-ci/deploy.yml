@@ -16,6 +16,7 @@ deploy_dev:
     - apt-get update && apt-get install -y curl sudo openssh-client openssl
     - curl -fsSL https://coder.al3xdev.net/install.sh | sh
   script:
+    - mkdir -p ~/.ssh
     - coder login
     - coder config-ssh -y
     - ssh coder.mycondominium-backend-runner.main 'sudo apt update && sudo apt install -y curl wget postgresql openssl'
