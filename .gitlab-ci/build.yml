@@ -46,7 +46,7 @@ build:
       dotenv: build.env
     # Artifacts: any binary output in the target/{target}/release folder.
     paths:
-      - target/${TARGET}/release/
+      - target/${TARGET}/release/mycondominium-backend
     expire_in: 1 week
   parallel:
     matrix:
