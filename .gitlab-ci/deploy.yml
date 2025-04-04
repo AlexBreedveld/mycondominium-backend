@@ -20,7 +20,7 @@ deploy_dev:
     - coder login
     - coder start -y mycondominium-backend-runner || true
     - coder config-ssh -y
-    - ssh coder.mycondominium-backend-runner.main 'sudo apt-get update && sudo apt-get install -y curl wget postgresql openssl'
+    - ssh coder.mycondominium-backend-runner.main 'sudo apt-get update && sudo apt-get install -y curl wget postgresql openssl jq'
     - ssh coder.mycondominium-backend-runner.main -t "if [ -f /etc/systemd/system/mycondominium-backend-dev.service ]; then sudo rm /etc/systemd/system/mycondominium-backend-dev.service; fi"
     - ssh coder.mycondominium-backend-runner.main -t "sudo wget -O /etc/systemd/system/mycondominium-backend-dev.service '${DEV_SYSTEMD_SERVICE_URL}'"
     - ssh coder.mycondominium-backend-runner.main -t "sudo systemctl daemon-reload"
@@ -34,7 +34,7 @@ deploy_dev:
     - ssh coder.mycondominium-backend-runner.main -t "sudo su coder -c \"mkdir -p ~/dev_deployment\""
     - ssh coder.mycondominium-backend-runner.main -t "sudo su coder -c \"if [ -f ~/dev_deployment/.env ]; then rm ~/dev_deployment/.env; fi\""
     - ssh coder.mycondominium-backend-runner.main -t "sudo su coder -c \"if [ -f ~/dev_deployment/mycondominium-backend ]; then rm ~/dev_deployment/mycondominium-backend; fi\""
-    - ssh coder.mycondominium-backend-runner.main -t "sudo su coder -c \"wget -O ~/dev_deployment/mycondominium-backend 'https://git.al3xdev.com/puc/software-engineering-v/mycondominium-backend/-/releases/permalink/latest/downloads/target/x86_64-unknown-linux-gnu/release/mycondominium-backend'\""
+    - ssh coder.mycondominium-backend-runner.main -t "sudo su coder -c \"wget -O ~/dev_deployment/mycondominium-backend '$(curl -X GET https://git.al3xdev.com/api/v4/projects/187/releases | jq 'map(select(.tag_name? | contains("nightly"))) | first' | jq -r '.assets.links[] | select(.name? | contains("linux-gnu-amd64")) | .url')'\""
     - ssh coder.mycondominium-backend-runner.main -t "sudo su coder -c \"chmod +x ~/dev_deployment/mycondominium-backend\""
     - |
       echo -e "
