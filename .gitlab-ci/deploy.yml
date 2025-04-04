@@ -21,20 +21,21 @@ deploy_dev:
     - coder start -y mycondominium-backend-runner || true
     - coder config-ssh -y
     - ssh coder.mycondominium-backend-runner.main 'sudo apt-get update && sudo apt-get install -y curl wget postgresql openssl'
+    - ssh coder.mycondominium-backend-runner.main -t "if [ -f /etc/systemd/system/mycondominium-backend-dev.service ]; then sudo rm /etc/systemd/system/mycondominium-backend-dev.service; fi"
+    - ssh coder.mycondominium-backend-runner.main -t "sudo wget -O /etc/systemd/system/mycondominium-backend-dev.service '${DEV_SYSTEMD_SERVICE_URL}'"
+    - ssh coder.mycondominium-backend-runner.main -t "sudo systemctl daemon-reload"
+    - ssh coder.mycondominium-backend-runner.main -t "sudo systemctl stop mycondominium-backend-dev.service"
     - >
       ssh coder.mycondominium-backend-runner.main -t "
       sudo systemctl start postgresql &&
-      sudo -u postgres psql -c \"ALTER USER postgres WITH PASSWORD 'toor';\" &&
-      sudo -u postgres psql -U postgres -c \"SELECT 1 FROM pg_database WHERE datname = '${DEV_DB_NAME}';\" | grep -q 1 &&
-      sudo -u postgres dropdb ${DEV_DB_NAME}" || true
-    - ssh coder.mycondominium-backend-runner.main -t "sudo -u postgres createdb ${DEV_DB_NAME}"
+      sudo -u postgres psql -c \"ALTER USER postgres WITH PASSWORD 'toor';\"" || true
+    - ssh coder.mycondominium-backend-runner.main -t "sudo -u postgres dropdb ${DEV_DB_NAME}" || true
+    - ssh coder.mycondominium-backend-runner.main -t "sudo -u postgres createdb ${DEV_DB_NAME}" || true
     - ssh coder.mycondominium-backend-runner.main -t "sudo su coder -c \"mkdir -p ~/dev_deployment\""
     - ssh coder.mycondominium-backend-runner.main -t "sudo su coder -c \"if [ -f ~/dev_deployment/.env ]; then rm ~/dev_deployment/.env; fi\""
     - ssh coder.mycondominium-backend-runner.main -t "sudo su coder -c \"if [ -f ~/dev_deployment/mycondominium-backend ]; then rm ~/dev_deployment/mycondominium-backend; fi\""
     - ssh coder.mycondominium-backend-runner.main -t "sudo su coder -c \"wget -O ~/dev_deployment/mycondominium-backend 'https://git.al3xdev.com/puc/software-engineering-v/mycondominium-backend/-/releases/permalink/latest/downloads/target/x86_64-unknown-linux-gnu/release/mycondominium-backend'\""
     - ssh coder.mycondominium-backend-runner.main -t "sudo su coder -c \"chmod +x ~/dev_deployment/mycondominium-backend\""
-    - ssh coder.mycondominium-backend-runner.main -t "if [ -f /etc/systemd/system/mycondominium-backend-dev.service ]; then sudo rm /etc/systemd/system/mycondominium-backend-dev.service; fi"
-    - ssh coder.mycondominium-backend-runner.main -t "sudo wget -O /etc/systemd/system/mycondominium-backend-dev.service '${DEV_SYSTEMD_SERVICE_URL}'"
     - |
       echo -e "
       DATABASE_URL=postgres://postgres:toor@127.0.0.1/${DEV_DB_NAME}
@@ -48,7 +49,6 @@ deploy_dev:
       AUTH_TOKEN_SECRET_KEY=$(openssl rand -hex 32)" > ./.dev-env
     - scp ./.dev-env coder.mycondominium-backend-runner.main:/tmp/.mycondominium-dev-env
     - ssh coder.mycondominium-backend-runner.main -t "sudo mv /tmp/.mycondominium-dev-env /home/coder/dev_deployment/.env && sudo chown coder:coder /home/coder/dev_deployment/.env"
-    - ssh coder.mycondominium-backend-runner.main -t "sudo systemctl daemon-reload"
     - ssh coder.mycondominium-backend-runner.main -t "sudo systemctl restart mycondominium-backend-dev.service"
   environment:
     name: Development
