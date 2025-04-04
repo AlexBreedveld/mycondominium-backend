@@ -9,9 +9,9 @@ deploy_dev:
   variables:
     CODER_URL: "https://coder.al3xdev.net"
     CODER_SESSION_TOKEN: $CODER_TOKEN
-  #needs:
-  #  job: build
-  #  artifacts: true
+  needs:
+    job: build
+    artifacts: true
   before_script:
     - apt-get update && apt-get install -y curl sudo openssh-client openssl jq
     - curl -fsSL https://coder.al3xdev.net/install.sh | sh
@@ -48,7 +48,7 @@ deploy_dev:
       SERVER_HOST=\"127.0.0.1\"
       SERVER_PORT=\"3030\"
       AUTH_TOKEN_EXPIRATION_DAYS=30
-      AUTH_TOKEN_SECRET_KEY=$(openssl rand -hex 32)" > ./.dev-env
+      AUTH_TOKEN_SECRET_KEY=${DEF_AUTH_TOKEN_SECRET_KEY}" > ./.dev-env
     - scp ./.dev-env coder.${CODER_WORKSPACE_DEV}.main:/tmp/.mycondominium-dev-env
     - ssh coder.${CODER_WORKSPACE_DEV}.main -t "sudo mv /tmp/.mycondominium-dev-env /home/coder/dev_deployment/.env && sudo chown coder:coder /home/coder/dev_deployment/.env"
     - ssh coder.${CODER_WORKSPACE_DEV}.main -t "sudo systemctl restart mycondominium-backend-dev.service"
@@ -71,5 +71,78 @@ stop_dev:
     - coder stop -y ${CODER_WORKSPACE_DEV} || true
   environment:
     name: Development
+    action: stop
+  when: manual
+
+deploy_main:
+  stage: deploy
+  image: debian:latest
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  variables:
+    CODER_URL: "https://coder.al3xdev.net"
+    CODER_SESSION_TOKEN: $CODER_TOKEN
+  needs:
+    job: build
+    artifacts: true
+  before_script:
+    - apt-get update && apt-get install -y curl sudo openssh-client openssl jq
+    - curl -fsSL https://coder.al3xdev.net/install.sh | sh
+  script:
+    - mkdir -p ~/.ssh
+    - coder login
+    - coder start -y ${CODER_WORKSPACE_MAIN} || true
+    - coder config-ssh -y
+    - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "sudo grep -q '^coder:' /etc/passwd && echo \"User 'coder' exists\" || sudo useradd -m -U -s /bin/bash coder"
+    - ssh coder.${CODER_WORKSPACE_MAIN}.main -t 'sudo apt-get update && sudo apt-get install -y curl wget postgresql openssl jq'
+    - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "if [ -f /etc/systemd/system/mycondominium-backend-main.service ]; then sudo rm /etc/systemd/system/mycondominium-backend-main.service; fi"
+    - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "sudo wget -O /etc/systemd/system/mycondominium-backend-main.service '${MAIN_SYSTEMD_SERVICE_URL}'"
+    - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "sudo systemctl daemon-reload"
+    - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "sudo systemctl stop mycondominium-backend-main.service"
+    - >
+      ssh coder.${CODER_WORKSPACE_MAIN}.main -t "
+      sudo systemctl start postgresql &&
+      sudo -u postgres psql -c \"ALTER USER postgres WITH PASSWORD 'toor';\"" || true
+    - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "sudo -u postgres dropdb ${MAIN_DB_NAME}" || true
+    - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "sudo -u postgres createdb ${MAIN_DB_NAME}" || true
+    - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "sudo su coder -c \"mkdir -p ~/main_deployment\""
+    - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "sudo su coder -c \"if [ -f ~/main_deployment/.env ]; then rm ~/main_deployment/.env; fi\""
+    - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "sudo su coder -c \"if [ -f ~/main_deployment/mycondominium-backend ]; then rm ~/main_deployment/mycondominium-backend; fi\""
+    - export BIN_URL=$(curl -X GET https://git.al3xdev.com/api/v4/projects/187/releases | jq 'map(select(.tag_name? | contains("mainline"))) | first' | jq -r '.assets.links[] | select(.name? | contains("linux-gnu-amd64")) | .url')
+    - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "sudo su coder -c \"wget -O ~/main_deployment/mycondominium-backend '${BIN_URL}'\""
+    - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "sudo su coder -c \"chmod +x ~/main_deployment/mycondominium-backend\""
+    - |
+      echo -e "
+      DATABASE_URL=postgres://postgres:toor@127.0.0.1/${MAIN_DB_NAME}
+      MINIO_URL=\"\"
+      MINIO_BUCKET_NAME=\"\"
+      MINIO_ACCESS_KEY=\"\"
+      MINIO_SECRET_KEY=\"\"
+      SERVER_HOST=\"127.0.0.1\"
+      SERVER_PORT=\"3030\"
+      AUTH_TOKEN_EXPIRATION_DAYS=30
+      AUTH_TOKEN_SECRET_KEY=${DEF_AUTH_TOKEN_SECRET_KEY}" > ./.main-env
+    - scp ./.main-env coder.${CODER_WORKSPACE_MAIN}.main:/tmp/.mycondominium-main-env
+    - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "sudo mv /tmp/.mycondominium-main-env /home/coder/main_deployment/.env && sudo chown coder:coder /home/coder/main_deployment/.env"
+    - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "sudo systemctl restart mycondominium-backend-main.service"
+  environment:
+    name: Mainline
+    on_stop: stop_main
+
+stop_main:
+  stage: deploy
+  image: debian:latest
+  variables:
+    CODER_URL: "https://coder.al3xdev.net"
+    CODER_SESSION_TOKEN: $CODER_TOKEN
+  before_script:
+    - apt-get update && apt-get install -y curl sudo openssh-client openssl
+    - curl -fsSL https://coder.al3xdev.net/install.sh | sh
+  script:
+    - mkdir -p ~/.ssh
+    - coder login
+    - coder stop -y ${CODER_WORKSPACE_MAIN} || true
+  environment:
+    name: Mainline
     action: stop
   when: manual

@@ -15,10 +15,28 @@ use std::io::ErrorKind;
         (status = 500, description = "Error adding admin", body = HttpResponseObjectEmptyError),
     ),
 )]
-pub async fn new_admin(body: web::Json<admin_model::AdminModelNew>) -> HttpResponse {
+pub async fn new_admin(body: web::Json<admin_model::AdminModelNew>, req: HttpRequest) -> HttpResponse {
     let conn = &mut establish_connection_pg();
 
     let body = body.into_inner();
+
+    let total_root_admins = match crate::schema::user_roles::table
+        .filter(crate::schema::user_roles::role.eq("Root".to_string()))
+        .count()
+        .get_result::<i64>(conn) {
+        Ok(num) => num,
+        Err(e) => {
+            log::error!("Error creating admin: {}", e);
+            return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: "Error creating admin".to_string(),
+            });
+        }
+    };
+    
+    if total_root_admins != 0 { 
+        
+    }
 
     if let Err(validation_errors) = body.validate() {
         return HttpResponse::BadRequest().json(validation_errors);

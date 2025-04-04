@@ -11,7 +11,7 @@ stages:
 
 include:
   - local: .gitlab-ci/build.yml
-  - local: .gitlab-ci/release_nightly.yml
+  - local: .gitlab-ci/release.yml
   - local: .gitlab-ci/deploy.yml
 
 tests:

@@ -1,7 +1,8 @@
 pub mod sign_in;
+mod auth;
 
 use super::prelude::*;
 
 #[derive(OpenApi)]
-#[openapi(paths(sign_in::sign_in,), components(schemas(auth_model::AuthModel)))]
+#[openapi(paths(sign_in::sign_in,auth::auth), components(schemas(auth_model::AuthModel)))]
 pub struct AuthApi;

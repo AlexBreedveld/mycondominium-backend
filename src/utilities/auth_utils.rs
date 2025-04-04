@@ -2,7 +2,9 @@ use crate::models::auth_model::TokenClaims;
 use crate::models::auth_token_model;
 use crate::models::auth_token_model::{FromUaParser, UserAgent};
 use std::io::ErrorKind;
+use diesel::PgConnection;
 use user_agent_parser::UserAgentParser;
+use crate::internal::roles;
 
 pub fn hash_password(password: String) -> Result<String, std::io::Error> {
     use password_hash::PasswordHasher;
@@ -145,6 +147,29 @@ pub fn validate_token(token: &str) -> jsonwebtoken::errors::Result<TokenClaims> 
     validate_token_internal(token, secret_key)
 }
 
+pub fn validate_token_from_header(req: actix_web::HttpRequest) -> Result<TokenClaims, std::io::Error> {
+    match req.headers().get("X-Auth-Token") {
+        Some(header) => {
+            let token = header.to_str().unwrap_or("");
+            let secret_key =
+                std::env::var("AUTH_TOKEN_SECRET_KEY").expect("AUTH_TOKEN_SECRET_KEY must be set");
+            match validate_token_internal(token, secret_key) {
+                Ok(claims) => Ok(claims),
+                Err(e) => Err(std::io::Error::new(
+                    std::io::ErrorKind::PermissionDenied,
+                    "Error validating token".to_string(),
+                )),
+            }
+        },
+        None => {
+            Err(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "X-Auth-Token header is missing".to_string(),
+            ))
+        }
+    }
+}
+
 pub fn validate_token_no_env(token: &str, secret_key: String) -> jsonwebtoken::errors::Result<TokenClaims> {
     validate_token_internal(token, secret_key)
 }
@@ -195,4 +220,34 @@ pub fn parse_user_agent(ua_str: String) -> Result<UserAgent, std::io::Error> {
     };
 
     Ok(ua)
+}
+
+pub fn authenticate_user(
+    req: actix_web::HttpRequest,
+) -> Result<(bool, TokenClaims), std::io::Error> {
+    let headers = req.headers();
+    if headers.get("X-Auth-Token").is_some() {
+        let token = match headers.get("X-Auth-Token") {
+            Some(header) => header.to_str().unwrap_or("").to_string(),
+            None => {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    "Missing X-Auth-Token header".to_string(),
+                ))
+            }
+        };
+
+        match validate_token(&token) {
+            Ok(val) => Ok((true, val)),
+            Err(_) => Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Invalid or expired token".to_string(),
+            )),
+        }
+    } else {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            "Missing authentication headers X-Auth-Basic or X-Auth-Token".to_string(),
+        ));
+    }
 }
