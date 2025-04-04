@@ -31,7 +31,7 @@ deploy_dev:
     - ssh coder.mycondominium-backend-runner.main -t "sudo su coder -c \"if [ -f ~/dev_deployment/.env ]; then rm ~/dev_deployment/.env; fi\""
     - ssh coder.mycondominium-backend-runner.main -t "sudo su coder -c \"if [ -f ~/dev_deployment/mycondominium-backend ]; then rm ~/dev_deployment/mycondominium-backend; fi\""
     - ssh coder.mycondominium-backend-runner.main -t "sudo su coder -c \"wget -O ~/dev_deployment/mycondominium-backend 'https://git.al3xdev.com/puc/software-engineering-v/mycondominium-backend/-/releases/permalink/latest/downloads/target/x86_64-unknown-linux-gnu/release/mycondominium-backend'\""
-    - ssh coder.mycondominium-backend-runner.main -t "sudo -u coder chmod +x ~/dev_deployment/mycondominium-backend"
+    - ssh coder.mycondominium-backend-runner.main -t "sudo su coder -c \"chmod +x ~/dev_deployment/mycondominium-backend\""
     - ssh coder.mycondominium-backend-runner.main -t "if [ -f /etc/systemd/system/mycondominium-backend-dev.service ]; then sudo rm /etc/systemd/system/mycondominium-backend-dev.service; fi"
     - ssh coder.mycondominium-backend-runner.main -t "sudo wget -O /etc/systemd/system/mycondominium-backend-dev.service '${DEV_SYSTEMD_SERVICE_URL}'"
     - |
