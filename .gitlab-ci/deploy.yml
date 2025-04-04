@@ -36,7 +36,7 @@ deploy_dev:
     - ssh coder.mycondominium-backend-runner.main -t "sudo wget -O /etc/systemd/system/mycondominium-backend-dev.service '${DEV_SYSTEMD_SERVICE_URL}'"
     - |
       echo -e "
-      DATABASE_URL=postgres://postgres:toor@127.0.0.1/mycondominium
+      DATABASE_URL=postgres://postgres:toor@127.0.0.1/${DEV_DB_NAME}
       MINIO_URL=\"\"
       MINIO_BUCKET_NAME=\"\"
       MINIO_ACCESS_KEY=\"\"
