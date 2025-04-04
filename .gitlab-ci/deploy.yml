@@ -18,8 +18,9 @@ deploy_dev:
   script:
     - mkdir -p ~/.ssh
     - coder login
+    - coder start -y mycondominium-backend-runner || true
     - coder config-ssh -y
-    - ssh coder.mycondominium-backend-runner.main 'sudo apt update && sudo apt install -y curl wget postgresql openssl'
+    - ssh coder.mycondominium-backend-runner.main 'sudo apt-get update && sudo apt-get install -y curl wget postgresql openssl'
     - >
       ssh coder.mycondominium-backend-runner.main -t "
       sudo systemctl start postgresql &&
@@ -51,3 +52,22 @@ deploy_dev:
     - ssh coder.mycondominium-backend-runner.main -t "sudo systemctl restart mycondominium-backend-dev.service"
   environment:
     name: Development
+    on_stop: stop_dev
+
+stop_dev:
+  stage: deploy
+  image: debian:latest
+  variables:
+    CODER_URL: "https://coder.al3xdev.net"
+    CODER_SESSION_TOKEN: $CODER_TOKEN
+  before_script:
+    - apt-get update && apt-get install -y curl sudo openssh-client openssl
+    - curl -fsSL https://coder.al3xdev.net/install.sh | sh
+  script:
+    - mkdir -p ~/.ssh
+    - coder login
+    - coder stop -y mycondominium-backend-runner || true
+  environment:
+    name: Development
+    action: stop
+  when: manual
