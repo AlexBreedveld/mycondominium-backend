@@ -1,5 +1,6 @@
 pub use crate::establish_connection_pg;
 pub use crate::internal::user_types::UserTypes;
+pub use crate::internal::roles::UserRoles;
 pub use crate::models::prelude::*;
 pub use crate::models::*;
 pub use crate::types::*;

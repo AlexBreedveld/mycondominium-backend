@@ -90,6 +90,17 @@ pub async fn new_admin(body: web::Json<admin_model::AdminModelNew>, req: HttpReq
         return HttpResponse::BadRequest().json(validation_errors);
     }
 
+    match check_email_exist(conn, body.email.clone()) {
+        Ok(()) => (),
+        Err(e) => {
+            log::error!("Error creating admin: {}", e);
+            return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: "Error creating admin: Email already in use".to_string(),
+            });
+        }   
+    }
+
     let new_obj = admin_model::AdminModel {
         id: admin_model::AdminModel::new_id_user(conn),
         first_name: body.first_name,
@@ -432,4 +443,52 @@ fn check_email_valid(
     };
 
     Ok(true)
+}
+
+fn check_email_exist(conn: &mut PgConnection, email: String) -> Result<(), std::io::Error> {
+
+    let email = email.trim().to_string();
+    match crate::schema::admins::table
+        .filter(crate::schema::admins::email.eq(email.clone()))
+        .count()
+        .get_result::<i64>(conn)
+    {
+        Ok(num) => {
+            if num != 0 {
+                return Err(std::io::Error::new(
+                    ErrorKind::AddrInUse,
+                    "Email already exists",
+                ));
+            }
+        }
+        Err(e) => {
+            return Err(std::io::Error::new(
+                ErrorKind::Other,
+                "Error checking if email exists",
+            ));
+        }
+    };
+
+    match crate::schema::residents::table
+        .filter(crate::schema::residents::email.eq(email))
+        .count()
+        .get_result::<i64>(conn)
+    {
+        Ok(num) => {
+            if num != 0 {
+                return Err(std::io::Error::new(
+                    ErrorKind::AddrInUse,
+                    "Email already exists",
+                ));
+            }
+        }
+        Err(e) => {
+            return Err(std::io::Error::new(
+                ErrorKind::Other,
+                "Error checking if email exists",
+            ));
+        }
+    };
+
+    Ok(())
 }

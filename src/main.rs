@@ -40,6 +40,7 @@ async fn main() {
                     .service(resident_route())
                     .service(admin_route())
                     .service(auth_route())
+                    .service(community_route())
                     .service(
                         SwaggerUi::new("/docs-v1/{_:.*}")
                             .url("/api-docs/openapi.json", ApiDoc::openapi()),
