@@ -2,6 +2,7 @@ use super::*;
 use crate::models::admin_model::AdminModel;
 use crate::utilities::auth_utils::hash_password;
 use std::io::ErrorKind;
+use crate::internal::roles::UserRoles;
 
 #[utoipa::path(
     post,
@@ -14,28 +15,75 @@ use std::io::ErrorKind;
         (status = 401, description = "Unauthorized", body = HttpResponseObjectEmptyError),
         (status = 500, description = "Error adding admin", body = HttpResponseObjectEmptyError),
     ),
+    security(
+        ("Token" = [])
+    )
 )]
 pub async fn new_admin(body: web::Json<admin_model::AdminModelNew>, req: HttpRequest) -> HttpResponse {
     let conn = &mut establish_connection_pg();
 
     let body = body.into_inner();
-
-    let total_root_admins = match crate::schema::user_roles::table
-        .filter(crate::schema::user_roles::role.eq("Root".to_string()))
-        .count()
-        .get_result::<i64>(conn) {
-        Ok(num) => num,
-        Err(e) => {
-            log::error!("Error creating admin: {}", e);
-            return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
-                error: true,
-                message: "Error creating admin".to_string(),
-            });
-        }
-    };
     
-    if total_root_admins != 0 { 
-        
+    if body.role == UserRoles::Root {
+        let total_root_admins = match user_role_model::UserRoleModel::count_root_admins(conn) {
+            Ok(num) => num,
+            Err(e) => {
+                log::error!("Error creating admin: {}", e);
+                return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
+                    error: true,
+                    message: "Error creating admin".to_string(),
+                });
+            }
+        };
+        if total_root_admins != 0 {
+            match authenticate_user(req.clone(), conn) {
+                Ok((role, claims, token)) => {
+                    if role.role != UserRoles::Root {
+                        return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
+                            error: true,
+                            message: "Unauthorized".to_string(),
+                        });
+                    }
+                }
+                Err(_) => {
+                    return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
+                        error: true,
+                        message: "Unauthorized".to_string(),
+                    })
+                }
+            }
+        }
+    } else if body.role == UserRoles::Admin {
+        match authenticate_user(req.clone(), conn) {
+            Ok((role, claims, token)) => {
+                if role.role != UserRoles::Root {
+                    if body.community_id.is_none() || role.community_id.is_none() { 
+                        return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
+                            error: true,
+                            message: "Unauthorized".to_string(),
+                        })
+                    }
+                    
+                    if !(role.role == UserRoles::Admin && body.community_id.unwrap() == role.community_id.unwrap()) {
+                        return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
+                            error: true,
+                            message: "Unauthorized".to_string(),
+                        })
+                    }
+                }
+            }
+            Err(_) => {
+                return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
+                    error: true,
+                    message: "Unauthorized".to_string(),
+                })
+            }
+        }
+    } else {
+        return HttpResponse::BadRequest().json(HttpResponseObjectEmptyError {
+            error: true,
+            message: "Invalid Admin Role".to_string(),
+        })
     }
 
     if let Err(validation_errors) = body.validate() {
@@ -137,13 +185,55 @@ pub async fn new_admin(body: web::Json<admin_model::AdminModelNew>, req: HttpReq
         (status = 401, description = "Unauthorized", body = HttpResponseObjectEmptyError),
         (status = 500, description = "Internal server error", body = HttpResponseObjectEmptyError),
     ),
+    security(
+        ("Token" = [])
+    )
 )]
 pub async fn update_admin(
     id: web::Path<String>,
     body: web::Json<admin_model::AdminModelNew>,
+    req: HttpRequest
 ) -> HttpResponse {
     let conn = &mut establish_connection_pg();
     let body = body.into_inner();
+
+    match authenticate_user(req.clone(), conn) {
+        Ok((role, claims, token)) => {
+            if body.role == UserRoles::Admin {
+                if role.role != UserRoles::Root {
+                    if body.community_id.is_none() || role.community_id.is_none() {
+                        return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
+                            error: true,
+                            message: "Unauthorized".to_string(),
+                        })
+                    }
+
+                    if !(role.role == UserRoles::Admin && body.community_id.unwrap() == role.community_id.unwrap()) {
+                        return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
+                            error: true,
+                            message: "Unauthorized".to_string(),
+                        })
+                    }
+                }
+            } else if body.role == UserRoles::Root && role.role != UserRoles::Root {
+                return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
+                    error: true,
+                    message: "Unauthorized".to_string(),
+                })
+            } else {
+                return HttpResponse::BadRequest().json(HttpResponseObjectEmptyError {
+                    error: true,
+                    message: "Invalid Admin Role".to_string(),
+                })
+            }
+        }
+        Err(_) => {
+            return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: "Unauthorized".to_string(),
+            })
+        }
+    }
 
     if let Err(validation_errors) = body.validate() {
         return HttpResponse::BadRequest().json(validation_errors);
@@ -211,8 +301,11 @@ pub async fn update_admin(
         (status = 401, description = "Unauthorized", body = HttpResponseObjectEmptyError),
         (status = 500, description = "Error deleting Admin", body = HttpResponseObjectEmptyError),
     ),
+    security(
+        ("Token" = [])
+    )
 )]
-pub async fn delete_admin(id: web::Path<String>) -> HttpResponse {
+pub async fn delete_admin(id: web::Path<String>, req: HttpRequest) -> HttpResponse {
     let conn = &mut establish_connection_pg();
 
     let id = match Uuid::parse_str(&id) {
@@ -224,6 +317,62 @@ pub async fn delete_admin(id: web::Path<String>) -> HttpResponse {
             });
         }
     };
+    
+    let adm = match admin_model::AdminModel::db_read_by_id(conn, id) {
+        Ok(adm) => adm,
+        Err(e) => {
+            return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: "Unauthorized".to_string(),
+            });
+        }
+    };
+    
+    let adm_user = match user_model::UserModel::table().filter(crate::schema::users::admin_id.eq(adm.id)).first::<user_model::UserModel>(conn) {
+        Ok(adm_user) => adm_user,
+        Err(e) => {
+            return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: "Unauthorized".to_string(),
+            });
+        }   
+    };
+
+    let adm_user_role = match user_role_model::UserRoleModel::table().filter(crate::schema::user_roles::user_id.eq(adm_user.id)).first::<user_role_model::UserRoleModel>(conn) {
+        Ok(adm_user_role) => adm_user_role,
+        Err(e) => {
+            return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: "Unauthorized".to_string(),
+            });
+        }
+    };
+
+    match authenticate_user(req.clone(), conn) {
+        Ok((role, claims, token)) => {
+            if role.role != UserRoles::Root {
+                if adm_user_role.community_id.is_none() || role.community_id.is_none() {
+                    return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
+                        error: true,
+                        message: "Unauthorized".to_string(),
+                    })
+                }
+
+                if !(role.role == UserRoles::Admin && adm_user_role.community_id.unwrap() == role.community_id.unwrap()) {
+                    return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
+                        error: true,
+                        message: "Unauthorized".to_string(),
+                    })
+                }
+            }
+        }
+        Err(_) => {
+            return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: "Unauthorized".to_string(),
+            })
+        }
+    }
 
     match admin_model::AdminModel::db_delete_by_id(conn, id) {
         Ok(_) => HttpResponse::Ok().json(HttpResponseObjectEmpty {

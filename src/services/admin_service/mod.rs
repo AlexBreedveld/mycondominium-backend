@@ -2,8 +2,8 @@ pub mod get_admin;
 pub mod upsert_admin;
 
 use super::prelude::*;
-type AdminListHttpResponse = HttpResponseObject<Vec<admin_model::AdminModel>>;
-type AdminGetHttpResponse = HttpResponseObject<admin_model::AdminModel>;
+type AdminListHttpResponse = HttpResponseObject<Vec<admin_model::AdminModelResult>>;
+type AdminGetHttpResponse = HttpResponseObject<admin_model::AdminModelResult>;
 
 #[derive(OpenApi)]
 #[openapi(

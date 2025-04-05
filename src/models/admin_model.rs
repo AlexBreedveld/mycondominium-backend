@@ -2,6 +2,8 @@ use super::prelude::*;
 use crate::internal::roles::UserRoles;
 use db_ops_derive::DbOps;
 use diesel::{QueryResult, RunQueryDsl};
+use crate::models::user_model::UserModelResult;
+use crate::models::user_role_model::UserRoleModel;
 
 #[derive(
     Queryable,
@@ -36,6 +38,13 @@ pub struct AdminModelNew {
     pub password: String,
     pub role: UserRoles,
     pub community_id: Option<Uuid>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Validate, ToSchema)]
+pub struct AdminModelResult {
+    pub admin: AdminModel,
+    pub user: UserModelResult,
+    pub role: UserRoleModel
 }
 
 impl AdminModel {
@@ -75,5 +84,103 @@ impl AdminModel {
         }
 
         uuid_new
+    }
+
+    pub fn db_read_all_matching_community_by_range(&self, conn: &mut PgConnection, per_page: i64, offset: i64) -> diesel::QueryResult<Vec::<AdminModelResult>> {
+
+        let self_user = crate::models::user_model::UserModel::table().filter(users::admin_id.eq(self.id)).first::<crate::models::user_model::UserModel>(conn)?;
+
+        let self_role = crate::models::user_role_model::UserRoleModel::table().filter(user_roles::user_id.eq(self_user.id)).first::<crate::models::user_role_model::UserRoleModel>(conn)?;
+        
+        let mut all_roles_matching_comm = Vec::<crate::models::user_role_model::UserRoleModel>::new();
+        
+        if self_role.role == UserRoles::Root {
+            all_roles_matching_comm = crate::models::user_role_model::UserRoleModel::table()
+                .filter(user_roles::role.eq(UserRoles::Root).or(user_roles::role.eq(UserRoles::Admin)))
+                .limit(per_page)
+                .offset(offset)
+                .load::<crate::models::user_role_model::UserRoleModel>(conn)?;
+        } else if self_role.role == UserRoles::Admin {
+            all_roles_matching_comm = crate::models::user_role_model::UserRoleModel::table()
+                .filter(user_roles::community_id.eq(self_role.community_id))
+                .filter(user_roles::role.eq(self_role.role))
+                .limit(per_page)
+                .offset(offset)
+                .load::<crate::models::user_role_model::UserRoleModel>(conn)?;
+        }
+
+        let all_users_matching_comm: Vec::<AdminModelResult> = all_roles_matching_comm.into_iter()
+            .filter_map(|role| {
+                let user = match crate::models::user_model::UserModel::table()
+                    .filter(users::id.eq(role.user_id))
+                    .filter(users::entity_type.eq("admin"))
+                    .first::<crate::models::user_model::UserModel>(conn) {
+                    Ok(user) => user,
+                    Err(e) => return None,
+                };
+
+                let admin = match crate::models::admin_model::AdminModel::table()
+                    .filter(admins::id.eq(user.entity_id))
+                    .first::<crate::models::admin_model::AdminModel>(conn) {
+                    Ok(admin) => admin,
+                    Err(e) => return None,
+                };
+
+                let user_result = UserModelResult {
+                    id: user.id,
+                    entity_id: user.entity_id,
+                    entity_type: user.entity_type,
+                    admin_id: user.admin_id,
+                    resident_id: user.resident_id,
+                    created_at: user.created_at,
+                    updated_at: user.updated_at,
+                };
+
+                Some(AdminModelResult {
+                    admin,
+                    user: user_result,
+                    role
+                })
+            }).collect();
+
+        Ok(all_users_matching_comm)
+    }
+
+    pub fn db_read_by_id_matching_community(&self, id: uuid::Uuid, conn: &mut PgConnection) -> diesel::QueryResult<AdminModelResult> {
+
+        let self_user = crate::models::user_model::UserModel::table().filter(users::admin_id.eq(self.id)).first::<crate::models::user_model::UserModel>(conn)?;
+
+        let self_role = crate::models::user_role_model::UserRoleModel::table().filter(user_roles::user_id.eq(self_user.id)).first::<crate::models::user_role_model::UserRoleModel>(conn)?;
+
+        let admin = crate::models::admin_model::AdminModel::db_read_by_id(conn, id)?;
+
+        let user = crate::models::user_model::UserModel::table()
+            .filter(users::entity_id.eq(admin.id))
+            .filter(users::entity_type.eq("admin"))
+            .first::<crate::models::user_model::UserModel>(conn)?;
+        
+        let role = crate::models::user_role_model::UserRoleModel::table()
+            .filter(user_roles::user_id.eq(user.id))
+            .first::<crate::models::user_role_model::UserRoleModel>(conn)?;
+
+        if self_role.role == UserRoles::Root || (self_role.role == UserRoles::Admin && self_role.community_id == role.community_id) {
+            let user_result = UserModelResult {
+                id: user.id,
+                entity_id: user.entity_id,
+                entity_type: user.entity_type,
+                admin_id: user.admin_id,
+                resident_id: user.resident_id,
+                created_at: user.created_at,
+                updated_at: user.updated_at,
+            };
+
+            Ok(AdminModelResult {
+                admin,
+                user: user_result,
+                role
+            })
+        } else {
+            Err(diesel::result::Error::NotFound)
+        }
     }
 }

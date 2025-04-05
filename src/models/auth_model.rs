@@ -1,6 +1,7 @@
 use crate::internal::roles::UserRoles;
 use crate::services::{Deserialize, Serialize, ToSchema};
 use validator_derive::Validate;
+use crate::models::user_role_model::UserRoleModel;
 
 #[derive(Serialize, Deserialize, Clone, Debug, Validate, ToSchema)]
 pub struct AuthModel {

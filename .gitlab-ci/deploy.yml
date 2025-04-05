@@ -10,7 +10,7 @@ deploy_dev:
     CODER_URL: "https://coder.al3xdev.net"
     CODER_SESSION_TOKEN: $CODER_TOKEN
   needs:
-    job: build
+    job: release_nightly
     artifacts: true
   before_script:
     - apt-get update && apt-get install -y curl sudo openssh-client openssl jq
@@ -59,6 +59,8 @@ deploy_dev:
 stop_dev:
   stage: deploy
   image: debian:latest
+  rules:
+    - if: $CI_COMMIT_BRANCH == "dev"
   variables:
     CODER_URL: "https://coder.al3xdev.net"
     CODER_SESSION_TOKEN: $CODER_TOKEN
@@ -83,7 +85,7 @@ deploy_main:
     CODER_URL: "https://coder.al3xdev.net"
     CODER_SESSION_TOKEN: $CODER_TOKEN
   needs:
-    job: build
+    job: release_main
     artifacts: true
   before_script:
     - apt-get update && apt-get install -y curl sudo openssh-client openssl jq
@@ -132,6 +134,8 @@ deploy_main:
 stop_main:
   stage: deploy
   image: debian:latest
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
   variables:
     CODER_URL: "https://coder.al3xdev.net"
     CODER_SESSION_TOKEN: $CODER_TOKEN
