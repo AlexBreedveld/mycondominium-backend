@@ -16,7 +16,7 @@ variables:
 build:
   stage: build
   needs:
-    job: test
+    job: tests
     artifacts: false
   tags:
     - dind
