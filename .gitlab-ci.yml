@@ -18,8 +18,6 @@ tests:
   stage: test
   script:
     - cargo test --verbose
-  only:
-    - main
 
 # Build Page stage: Generate documentation
 doc-rustdoc:

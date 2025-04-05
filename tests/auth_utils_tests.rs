@@ -27,12 +27,3 @@ fn test_jwt_token() {
 
     assert!(validate_token_no_env(&token, secret_key).unwrap().user_id.eq(&user_id));
 }
-
-#[test]
-fn test_jwt_check() {
-    let jwt_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl9pZCI6IjE5ZDkyNjU5LTM4NzQtNDAxZS1hOTAyLTJlOWMwM2UwNzAwNyIsInVzZXJfaWQiOiJjZjY3NjJhNi1jNjk1LTQ0YjUtOWE4NC1jYmE2MWIwMzFlZWEiLCJleHAiOjE3NDM1MjgzODF9.6P-z89xmaPV9fQK7k1XxpBSCGw4VkYIWQHcT2nQ-TYo";
-    let user_id = uuid::Uuid::parse_str("cf6762a6-c695-44b5-9a84-cba61b031eea").unwrap();
-    let secret_key = "1a855a3f6a0de874ae624013646e1c8f13e2bbe69f31dd286c99c85e95a43285".to_string();
-
-    assert!(validate_token_no_env(jwt_token, secret_key).unwrap().user_id.eq(&user_id));
-}

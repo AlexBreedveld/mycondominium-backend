@@ -15,6 +15,9 @@ variables:
 # This job uses a matrix to build for multiple targets.
 build:
   stage: build
+  needs:
+    job: tests
+    artifacts: false
   tags:
     - dind
     - cloud-br9
