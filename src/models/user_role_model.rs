@@ -23,3 +23,12 @@ pub struct UserRoleModel {
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
+
+impl UserRoleModel {
+    pub fn count_root_admins(conn: &mut PgConnection) -> QueryResult<i64> {
+        crate::schema::user_roles::table
+            .filter(crate::schema::user_roles::role.eq("Root".to_string()))
+            .count()
+            .get_result::<i64>(conn)
+    }
+}

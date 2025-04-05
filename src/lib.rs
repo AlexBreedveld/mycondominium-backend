@@ -7,6 +7,9 @@ pub mod types;
 pub mod utilities;
 
 use std::env;
+use diesel_migrations::{embed_migrations, EmbeddedMigrations};
+
+pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 
 pub fn establish_connection_pg() -> diesel::PgConnection {
     use diesel::prelude::*;

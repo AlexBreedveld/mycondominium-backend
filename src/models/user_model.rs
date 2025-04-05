@@ -25,3 +25,14 @@ pub struct UserModel {
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
+
+#[derive(Serialize, Deserialize, Clone, Debug, Validate, ToSchema)]
+pub struct UserModelResult {
+    pub id: Uuid,
+    pub entity_id: Uuid,
+    pub entity_type: UserTypes,
+    pub admin_id: Option<Uuid>,
+    pub resident_id: Option<Uuid>,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+}

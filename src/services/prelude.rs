@@ -1,8 +1,10 @@
 pub use crate::establish_connection_pg;
 pub use crate::internal::user_types::UserTypes;
+pub use crate::internal::roles::UserRoles;
 pub use crate::models::prelude::*;
 pub use crate::models::*;
 pub use crate::types::*;
+pub use crate::utilities::auth_utils::*;
 pub use actix_web::http::header;
 pub use actix_web::{HttpRequest, HttpResponse, web};
 pub use db_ops_derive::DbOps;

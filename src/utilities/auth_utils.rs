@@ -1,8 +1,13 @@
 use crate::models::auth_model::TokenClaims;
 use crate::models::auth_token_model;
-use crate::models::auth_token_model::{FromUaParser, UserAgent};
+use crate::models::auth_token_model::{AuthTokenModel, FromUaParser, UserAgent};
 use std::io::ErrorKind;
+use diesel::{ExpressionMethods, PgConnection, QueryDsl, RunQueryDsl};
 use user_agent_parser::UserAgentParser;
+use crate::internal::roles;
+use crate::models::user_role_model::UserRoleModel;
+use crate::schema::user_roles::dsl::user_roles;
+use crate::services::DatabaseTrait;
 
 pub fn hash_password(password: String) -> Result<String, std::io::Error> {
     use password_hash::PasswordHasher;
@@ -145,6 +150,29 @@ pub fn validate_token(token: &str) -> jsonwebtoken::errors::Result<TokenClaims> 
     validate_token_internal(token, secret_key)
 }
 
+pub fn validate_token_from_header(req: actix_web::HttpRequest) -> Result<TokenClaims, std::io::Error> {
+    match req.headers().get("X-Auth-Token") {
+        Some(header) => {
+            let token = header.to_str().unwrap_or("");
+            let secret_key =
+                std::env::var("AUTH_TOKEN_SECRET_KEY").expect("AUTH_TOKEN_SECRET_KEY must be set");
+            match validate_token_internal(token, secret_key) {
+                Ok(claims) => Ok(claims),
+                Err(e) => Err(std::io::Error::new(
+                    std::io::ErrorKind::PermissionDenied,
+                    "Error validating token".to_string(),
+                )),
+            }
+        },
+        None => {
+            Err(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "X-Auth-Token header is missing".to_string(),
+            ))
+        }
+    }
+}
+
 pub fn validate_token_no_env(token: &str, secret_key: String) -> jsonwebtoken::errors::Result<TokenClaims> {
     validate_token_internal(token, secret_key)
 }
@@ -195,4 +223,48 @@ pub fn parse_user_agent(ua_str: String) -> Result<UserAgent, std::io::Error> {
     };
 
     Ok(ua)
+}
+
+pub fn authenticate_user(
+    req: actix_web::HttpRequest,
+    conn: &mut PgConnection
+) -> Result<(UserRoleModel, TokenClaims, AuthTokenModel), std::io::Error> {
+    match validate_token_from_header(req) {
+        Ok(claims) => {
+            match auth_token_model::AuthTokenModel::db_read_by_id(conn, claims.token_id) {
+                Ok(token) => {
+                    if !token.active {
+                        return Err(std::io::Error::new(
+                            std::io::ErrorKind::PermissionDenied,
+                            "Token is not active".to_string(),
+                        ));
+                    }
+                    
+                    match UserRoleModel::table().filter(crate::schema::user_roles::user_id.eq(claims.user_id)).first::<UserRoleModel>(conn) { 
+                        Ok(role) => {
+                            Ok((role, claims, token))
+                        },
+                        Err(e) => {
+                            return Err(std::io::Error::new(
+                                std::io::ErrorKind::Other,
+                                "Error getting user role".to_string(),
+                            ));
+                        }
+                    }
+                },
+                Err(e) => {
+                    return Err(std::io::Error::new(
+                        std::io::ErrorKind::Other,
+                        "Error reading token from database".to_string(),
+                    ));
+                }
+            }
+        },
+        Err(e) => {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::PermissionDenied,
+                "Invalid token".to_string(),
+            ));
+        }
+    }
 }

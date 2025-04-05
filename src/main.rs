@@ -9,8 +9,10 @@ use log::{Level, log};
 use mycondominium_backend::routes::routes::*;
 use mycondominium_backend::services::ApiDoc;
 use std::env;
+use diesel_migrations::MigrationHarness;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
+use mycondominium_backend::{establish_connection_pg, MIGRATIONS};
 
 #[tokio::main]
 async fn main() {
@@ -20,7 +22,9 @@ async fn main() {
 
     match &args.command {
         Some(Commands::Daemon) => {
-            // TODO: Implement running DB migrations before starting the server
+
+            let conn = &mut establish_connection_pg();
+            conn.run_pending_migrations(MIGRATIONS).expect("Failed to run database migrations");
 
             let http_host = env::var("SERVER_HOST").expect("SERVER_HOST must be set");
             let http_port: i32 = env::var("SERVER_PORT")
@@ -36,6 +40,7 @@ async fn main() {
                     .service(resident_route())
                     .service(admin_route())
                     .service(auth_route())
+                    .service(community_route())
                     .service(
                         SwaggerUi::new("/docs-v1/{_:.*}")
                             .url("/api-docs/openapi.json", ApiDoc::openapi()),

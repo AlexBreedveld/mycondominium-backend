@@ -3,7 +3,9 @@ pub mod api;
 pub mod auth_service;
 mod prelude;
 pub mod resident_service;
+pub mod community_service;
 
+use utoipa::openapi::security::{ApiKey, ApiKeyValue};
 pub use crate::services::prelude::*;
 
 #[derive(OpenApi)]
@@ -15,10 +17,25 @@ pub use crate::services::prelude::*;
             HttpResponseObjectEmptyEntity
         ),
     ),
+    modifiers(&SecurityAddon),
     nest(
         (path = "/api/resident", api = resident_service::ResidentApi),
         (path = "/api/admin", api = admin_service::AdminApi),
         (path = "/api/auth", api = auth_service::AuthApi),
+        (path = "/api/community", api = community_service::CommunityApi),
     )
 )]
 pub struct ApiDoc;
+
+
+struct SecurityAddon;
+impl utoipa::Modify for SecurityAddon {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        // NOTE: we can unwrap safely since there already is components registered.
+        let components = openapi.components.as_mut().unwrap();
+        components.add_security_scheme(
+            "Token",
+            utoipa::openapi::security::SecurityScheme::ApiKey(ApiKey::Header(ApiKeyValue::new("X-Auth-Token"))),
+        );
+    }
+}

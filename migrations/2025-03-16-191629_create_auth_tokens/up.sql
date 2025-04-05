@@ -2,7 +2,7 @@ create table auth_tokens
 (
     user_id     uuid      not null
         constraint auth_tokens_user_id_fk
-            references public.users,
+            references public.users ON DELETE CASCADE,
     id uuid      not null
         constraint auth_tokens_pk
             primary key,

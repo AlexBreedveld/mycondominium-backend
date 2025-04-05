@@ -1,29 +1,5 @@
 use actix_web::web;
 
-pub fn resident_route() -> actix_web::Scope {
-    web::scope("/api/resident")
-        .route(
-            "/list",
-            web::get().to(crate::services::resident_service::get_resident::get_residents),
-        )
-        .route(
-            "/get/{id}",
-            web::get().to(crate::services::resident_service::get_resident::get_resident_by_id),
-        )
-        .route(
-            "/new",
-            web::post().to(crate::services::resident_service::upsert_resident::new_resident),
-        )
-        .route(
-            "/update/{id}",
-            web::put().to(crate::services::resident_service::upsert_resident::update_resident),
-        )
-        .route(
-            "/delete/{id}",
-            web::delete().to(crate::services::resident_service::upsert_resident::delete_resident),
-        )
-}
-
 pub fn admin_route() -> actix_web::Scope {
     web::scope("/api/admin")
         .route(
@@ -53,4 +29,52 @@ pub fn auth_route() -> actix_web::Scope {
         "/signin",
         web::post().to(crate::services::auth_service::sign_in::sign_in),
     )
+}
+
+pub fn community_route() -> actix_web::Scope {
+    web::scope("/api/community")
+        .route(
+            "/list",
+            web::get().to(crate::services::community_service::get_community::get_communities),
+        )
+        .route(
+            "/get/{id}",
+            web::get().to(crate::services::community_service::get_community::get_community_by_id),
+        )
+        .route(
+            "/new",
+            web::post().to(crate::services::community_service::upsert_community::new_community),
+        )
+        .route(
+            "/update/{id}",
+            web::put().to(crate::services::community_service::upsert_community::update_community),
+        )
+        .route(
+            "/delete/{id}",
+            web::delete().to(crate::services::community_service::upsert_community::delete_community),
+        )
+}
+
+pub fn resident_route() -> actix_web::Scope {
+    web::scope("/api/resident")
+        .route(
+            "/list",
+            web::get().to(crate::services::resident_service::get_resident::get_residents),
+        )
+        .route(
+            "/get/{id}",
+            web::get().to(crate::services::resident_service::get_resident::get_resident_by_id),
+        )
+        .route(
+            "/new",
+            web::post().to(crate::services::resident_service::upsert_resident::new_resident),
+        )
+        .route(
+            "/update/{id}",
+            web::put().to(crate::services::resident_service::upsert_resident::update_resident),
+        )
+        .route(
+            "/delete/{id}",
+            web::delete().to(crate::services::resident_service::upsert_resident::delete_resident),
+        )
 }
