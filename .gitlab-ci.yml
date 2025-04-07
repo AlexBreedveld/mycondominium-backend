@@ -2,9 +2,7 @@ image: rust:latest
 
 stages:
   - test
-  - build-pages-rustdoc
-  - build-pages-swagger
-  - deploy-pages
+  - docs
   - build
   - release
   - deploy
@@ -18,10 +16,14 @@ tests:
   stage: test
   script:
     - cargo test --verbose
+  except:
+    - tags
 
 # Build Page stage: Generate documentation
 doc-rustdoc:
-  stage: build-pages-rustdoc
+  stage: docs
+  dependencies:
+    - tests
   script:
     - cargo doc
     - mkdir swagger
@@ -37,9 +39,12 @@ doc-rustdoc:
 # Deploy stage: Publish docs to GitLab Pages
 pages:
   image: alpine:latest
-  stage: deploy-pages
-  dependencies:
-    - pages-swagger
+  stage: deploy
+  needs:
+    - job: pages-swagger
+      artifacts: true
+    - job: doc-rustdoc
+      artifacts: false
   script:
     - mkdir public
     - mkdir public/rustdoc
@@ -54,9 +59,10 @@ pages:
 
 pages-swagger:
   image: node:latest
-  stage: build-pages-swagger
-  dependencies:
-    - doc-rustdoc
+  stage: docs
+  needs:
+    - job: doc-rustdoc
+      artifacts: true
   script:
     - mkdir public-swagger
     - npx @redocly/cli build-docs -o public-swagger/index.html swagger/openapi.json

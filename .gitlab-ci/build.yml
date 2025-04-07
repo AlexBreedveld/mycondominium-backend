@@ -21,6 +21,8 @@ build:
   tags:
     - dind
     - cloud-br9
+  except:
+    - tags
   image: registry.git.al3xdev.com:443/alex/rust-cross/rust-cross:latest
   services:
     - docker:dind

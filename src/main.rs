@@ -2,10 +2,10 @@ mod cli;
 
 use crate::cli::{CliArgs, Commands};
 use actix_web::middleware::Logger;
-use actix_web::{App, HttpServer, web};
+use actix_web::{App, HttpServer, web, HttpResponse};
 use clap::Parser;
 use dotenvy::dotenv;
-use log::{Level, log};
+use log::log;
 use mycondominium_backend::routes::routes::*;
 use mycondominium_backend::services::ApiDoc;
 use std::env;
@@ -45,6 +45,9 @@ async fn main() {
                         SwaggerUi::new("/docs-v1/{_:.*}")
                             .url("/api-docs/openapi.json", ApiDoc::openapi()),
                     )
+                    .route("/docs-v1", web::get().to(|_req: actix_web::HttpRequest| async {
+                        HttpResponse::Found().append_header(("Location", "/docs-v1/")).finish()
+                    }))
             })
             .bind(format!("{http_host}:{http_port}"))
             .unwrap_or_else(|_| panic!("Error binding server to: {}:{}", http_host, http_port))
