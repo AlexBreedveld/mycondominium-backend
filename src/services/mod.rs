@@ -1,12 +1,12 @@
 pub mod admin_service;
 pub mod api;
 pub mod auth_service;
+pub mod community_service;
 mod prelude;
 pub mod resident_service;
-pub mod community_service;
 
-use utoipa::openapi::security::{ApiKey, ApiKeyValue};
 pub use crate::services::prelude::*;
+use utoipa::openapi::security::{ApiKey, ApiKeyValue};
 
 #[derive(OpenApi)]
 #[openapi(
@@ -27,7 +27,6 @@ pub use crate::services::prelude::*;
 )]
 pub struct ApiDoc;
 
-
 struct SecurityAddon;
 impl utoipa::Modify for SecurityAddon {
     fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
@@ -35,7 +34,9 @@ impl utoipa::Modify for SecurityAddon {
         let components = openapi.components.as_mut().unwrap();
         components.add_security_scheme(
             "Token",
-            utoipa::openapi::security::SecurityScheme::ApiKey(ApiKey::Header(ApiKeyValue::new("X-Auth-Token"))),
+            utoipa::openapi::security::SecurityScheme::ApiKey(ApiKey::Header(ApiKeyValue::new(
+                "X-Auth-Token",
+            ))),
         );
     }
 }

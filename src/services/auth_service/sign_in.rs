@@ -154,7 +154,7 @@ pub async fn sign_in(body: web::Json<auth_model::AuthModel>, req: HttpRequest) -
                     error: true,
                     message: "Internal server error".to_string(),
                 })
-            },
+            }
         }
     } else {
         log::error!("Error while signing user in: entity not found");

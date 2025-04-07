@@ -1,8 +1,9 @@
 use super::*;
+use crate::internal::roles::UserRoles;
 use crate::models::admin_model::AdminModel;
 use crate::utilities::auth_utils::hash_password;
 use std::io::ErrorKind;
-use crate::internal::roles::UserRoles;
+use crate::utilities::user_utils::{check_email_exist, user_check_email_valid};
 
 #[utoipa::path(
     post,
@@ -19,11 +20,14 @@ use crate::internal::roles::UserRoles;
         ("Token" = [])
     )
 )]
-pub async fn new_admin(body: web::Json<admin_model::AdminModelNew>, req: HttpRequest) -> HttpResponse {
+pub async fn new_admin(
+    body: web::Json<admin_model::AdminModelNew>,
+    req: HttpRequest,
+) -> HttpResponse {
     let conn = &mut establish_connection_pg();
 
     let body = body.into_inner();
-    
+
     if body.role == UserRoles::Root {
         let total_root_admins = match user_role_model::UserRoleModel::count_root_admins(conn) {
             Ok(num) => num,
@@ -49,7 +53,7 @@ pub async fn new_admin(body: web::Json<admin_model::AdminModelNew>, req: HttpReq
                     return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                         error: true,
                         message: "Unauthorized".to_string(),
-                    })
+                    });
                 }
             }
         }
@@ -57,18 +61,20 @@ pub async fn new_admin(body: web::Json<admin_model::AdminModelNew>, req: HttpReq
         match authenticate_user(req.clone(), conn) {
             Ok((role, claims, token)) => {
                 if role.role != UserRoles::Root {
-                    if body.community_id.is_none() || role.community_id.is_none() { 
+                    if body.community_id.is_none() || role.community_id.is_none() {
                         return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                             error: true,
                             message: "Unauthorized".to_string(),
-                        })
+                        });
                     }
-                    
-                    if !(role.role == UserRoles::Admin && body.community_id.unwrap() == role.community_id.unwrap()) {
+
+                    if !(role.role == UserRoles::Admin
+                        && body.community_id.unwrap() == role.community_id.unwrap())
+                    {
                         return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                             error: true,
                             message: "Unauthorized".to_string(),
-                        })
+                        });
                     }
                 }
             }
@@ -76,14 +82,14 @@ pub async fn new_admin(body: web::Json<admin_model::AdminModelNew>, req: HttpReq
                 return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                     error: true,
                     message: "Unauthorized".to_string(),
-                })
+                });
             }
         }
     } else {
         return HttpResponse::BadRequest().json(HttpResponseObjectEmptyError {
             error: true,
             message: "Invalid Admin Role".to_string(),
-        })
+        });
     }
 
     if let Err(validation_errors) = body.validate() {
@@ -98,7 +104,7 @@ pub async fn new_admin(body: web::Json<admin_model::AdminModelNew>, req: HttpReq
                 error: true,
                 message: "Error creating admin: Email already in use".to_string(),
             });
-        }   
+        }
     }
 
     let new_obj = admin_model::AdminModel {
@@ -203,7 +209,7 @@ pub async fn new_admin(body: web::Json<admin_model::AdminModelNew>, req: HttpReq
 pub async fn update_admin(
     id: web::Path<String>,
     body: web::Json<admin_model::AdminModelNew>,
-    req: HttpRequest
+    req: HttpRequest,
 ) -> HttpResponse {
     let conn = &mut establish_connection_pg();
     let body = body.into_inner();
@@ -216,33 +222,35 @@ pub async fn update_admin(
                         return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                             error: true,
                             message: "Unauthorized".to_string(),
-                        })
+                        });
                     }
 
-                    if !(role.role == UserRoles::Admin && body.community_id.unwrap() == role.community_id.unwrap()) {
+                    if !(role.role == UserRoles::Admin
+                        && body.community_id.unwrap() == role.community_id.unwrap())
+                    {
                         return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                             error: true,
                             message: "Unauthorized".to_string(),
-                        })
+                        });
                     }
                 }
             } else if body.role == UserRoles::Root && role.role != UserRoles::Root {
                 return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                     error: true,
                     message: "Unauthorized".to_string(),
-                })
+                });
             } else {
                 return HttpResponse::BadRequest().json(HttpResponseObjectEmptyError {
                     error: true,
                     message: "Invalid Admin Role".to_string(),
-                })
+                });
             }
         }
         Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                 error: true,
                 message: "Unauthorized".to_string(),
-            })
+            });
         }
     }
 
@@ -270,11 +278,14 @@ pub async fn update_admin(
         }
     };
 
-    if !check_email_valid(conn, body.email.clone(), curr_obj.email).unwrap() {
-        return HttpResponse::BadRequest().json(HttpResponseObjectEmpty {
-            error: true,
-            message: "Email already exists".to_string(),
-        });
+    match user_check_email_valid(conn, body.email.clone(), curr_obj.email) {
+        Ok(()) => (),
+        Err(e) => {
+            return HttpResponse::BadRequest().json(HttpResponseObjectEmpty {
+                error: true,
+                message: "Email already in use".to_string(),
+            });
+        }
     }
 
     let new_obj = admin_model::AdminModel {
@@ -328,7 +339,7 @@ pub async fn delete_admin(id: web::Path<String>, req: HttpRequest) -> HttpRespon
             });
         }
     };
-    
+
     let adm = match admin_model::AdminModel::db_read_by_id(conn, id) {
         Ok(adm) => adm,
         Err(e) => {
@@ -338,18 +349,24 @@ pub async fn delete_admin(id: web::Path<String>, req: HttpRequest) -> HttpRespon
             });
         }
     };
-    
-    let adm_user = match user_model::UserModel::table().filter(crate::schema::users::admin_id.eq(adm.id)).first::<user_model::UserModel>(conn) {
+
+    let adm_user = match user_model::UserModel::table()
+        .filter(crate::schema::users::admin_id.eq(adm.id))
+        .first::<user_model::UserModel>(conn)
+    {
         Ok(adm_user) => adm_user,
         Err(e) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                 error: true,
                 message: "Unauthorized".to_string(),
             });
-        }   
+        }
     };
 
-    let adm_user_role = match user_role_model::UserRoleModel::table().filter(crate::schema::user_roles::user_id.eq(adm_user.id)).first::<user_role_model::UserRoleModel>(conn) {
+    let adm_user_role = match user_role_model::UserRoleModel::table()
+        .filter(crate::schema::user_roles::user_id.eq(adm_user.id))
+        .first::<user_role_model::UserRoleModel>(conn)
+    {
         Ok(adm_user_role) => adm_user_role,
         Err(e) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
@@ -366,14 +383,16 @@ pub async fn delete_admin(id: web::Path<String>, req: HttpRequest) -> HttpRespon
                     return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                         error: true,
                         message: "Unauthorized".to_string(),
-                    })
+                    });
                 }
 
-                if !(role.role == UserRoles::Admin && adm_user_role.community_id.unwrap() == role.community_id.unwrap()) {
+                if !(role.role == UserRoles::Admin
+                    && adm_user_role.community_id.unwrap() == role.community_id.unwrap())
+                {
                     return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                         error: true,
                         message: "Unauthorized".to_string(),
-                    })
+                    });
                 }
             }
         }
@@ -381,7 +400,7 @@ pub async fn delete_admin(id: web::Path<String>, req: HttpRequest) -> HttpRespon
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                 error: true,
                 message: "Unauthorized".to_string(),
-            })
+            });
         }
     }
 
@@ -395,100 +414,4 @@ pub async fn delete_admin(id: web::Path<String>, req: HttpRequest) -> HttpRespon
             message: format!("Error deleting admin: {}", e),
         }),
     }
-}
-
-fn check_email_valid(
-    conn: &mut PgConnection,
-    req_email: String,
-    curr_email: String,
-) -> Result<bool, std::io::Error> {
-    if req_email.trim() == curr_email.trim() {
-        return Ok(true);
-    }
-
-    match crate::schema::admins::table
-        .filter(crate::schema::admins::email.eq(req_email.clone()))
-        .count()
-        .get_result::<i64>(conn)
-    {
-        Ok(num) => {
-            if num != 0 {
-                return Ok(false);
-            }
-        }
-        Err(e) => {
-            return Err(std::io::Error::new(
-                ErrorKind::Other,
-                "Error checking if email exists",
-            ));
-        }
-    };
-
-    match crate::schema::residents::table
-        .filter(crate::schema::residents::email.eq(req_email.clone()))
-        .count()
-        .get_result::<i64>(conn)
-    {
-        Ok(num) => {
-            if num != 0 {
-                return Ok(false);
-            }
-        }
-        Err(e) => {
-            return Err(std::io::Error::new(
-                ErrorKind::Other,
-                "Error checking if email exists",
-            ));
-        }
-    };
-
-    Ok(true)
-}
-
-fn check_email_exist(conn: &mut PgConnection, email: String) -> Result<(), std::io::Error> {
-
-    let email = email.trim().to_string();
-    match crate::schema::admins::table
-        .filter(crate::schema::admins::email.eq(email.clone()))
-        .count()
-        .get_result::<i64>(conn)
-    {
-        Ok(num) => {
-            if num != 0 {
-                return Err(std::io::Error::new(
-                    ErrorKind::AddrInUse,
-                    "Email already exists",
-                ));
-            }
-        }
-        Err(e) => {
-            return Err(std::io::Error::new(
-                ErrorKind::Other,
-                "Error checking if email exists",
-            ));
-        }
-    };
-
-    match crate::schema::residents::table
-        .filter(crate::schema::residents::email.eq(email))
-        .count()
-        .get_result::<i64>(conn)
-    {
-        Ok(num) => {
-            if num != 0 {
-                return Err(std::io::Error::new(
-                    ErrorKind::AddrInUse,
-                    "Email already exists",
-                ));
-            }
-        }
-        Err(e) => {
-            return Err(std::io::Error::new(
-                ErrorKind::Other,
-                "Error checking if email exists",
-            ));
-        }
-    };
-
-    Ok(())
 }
