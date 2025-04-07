@@ -179,7 +179,7 @@ diesel::table! {
         unit_number -> Nullable<Varchar>,
         address -> Nullable<Text>,
         phone -> Nullable<Text>,
-        email -> Nullable<Text>,
+        email -> Text,
         date_of_birth -> Nullable<Date>,
         resident_since -> Timestamp,
         is_active -> Bool,

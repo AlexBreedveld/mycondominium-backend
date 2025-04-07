@@ -4,7 +4,7 @@ use mycondominium_backend::utilities::auth_utils::*;
 fn test_password_hashing() {
     let password: String = "ABCDEF123456".to_string();
     let hashed_password = hash_password(password.clone()).unwrap();
-    
+
     assert!(check_password(password, hashed_password).unwrap());
 }
 
@@ -25,5 +25,10 @@ fn test_jwt_token() {
 
     let token = generate_jwt_token_no_env(user_id, token_id, secret_key.clone(), exp_days).unwrap();
 
-    assert!(validate_token_no_env(&token, secret_key).unwrap().user_id.eq(&user_id));
+    assert!(
+        validate_token_no_env(&token, secret_key)
+            .unwrap()
+            .user_id
+            .eq(&user_id)
+    );
 }

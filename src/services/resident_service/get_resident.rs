@@ -18,25 +18,77 @@ use log::{Level, log};
         (status = 401, description = "Unauthorized", body = HttpResponseObjectEmptyError),
         (status = 500, description = "Internal server error", body = HttpResponseObjectEmptyError)
     ),
+    security(
+        ("Token" = [])
+    )
 )]
-pub async fn get_residents(query: web::Query<PaginationParams>) -> HttpResponse {
+pub async fn get_residents(query: web::Query<PaginationParams>, req: HttpRequest) -> HttpResponse {
     let page = query.page.unwrap_or(1);
     let per_page = query.per_page.unwrap_or(10);
     let offset = (page - 1) * per_page;
 
     let conn = &mut establish_connection_pg();
 
-    let total_items = match resident_model::ResidentModel::db_count_all(conn) {
-        Ok(count) => count,
-        Err(e) => {
-            return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+    let (role, claims, token) = match authenticate_user(req.clone(), conn) {
+        Ok((role, claims, token)) => {
+            if role.role == UserRoles::Root || role.role == UserRoles::Admin {
+                (role, claims, token)
+            } else {
+                return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
+                    error: true,
+                    message: "Unauthorized".to_string(),
+                });
+            }
+        }
+        Err(_) => {
+            return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                 error: true,
-                message: format!("Error getting total items: {}", e),
+                message: "Unauthorized".to_string(),
             });
         }
     };
 
-    match Vec::<resident_model::ResidentModel>::db_read_by_range(conn, per_page, offset) {
+    let total_items = match role.role {
+        UserRoles::Root => {
+            match resident_model::ResidentModel::db_count_all(conn) {
+                Ok(count) => count,
+                Err(e) => {
+                    return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+                        error: true,
+                        message: "Error getting total items".to_string(),
+                    });
+                }
+            }
+        },
+        UserRoles::Admin => {
+            match user_role_model::UserRoleModel::table()
+                .filter(user_roles::community_id.eq(role.community_id))
+                .filter(
+                    user_roles::role
+                        .eq(UserRoles::Resident)
+                        .or(user_roles::role.eq(UserRoles::Guest)),
+                )
+                .count()
+                .get_result::<i64>(conn)
+            {
+                Ok(count) => count,
+                Err(e) => {
+                    return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+                        error: true,
+                        message: format!("Error getting total items: {}", e),
+                    });
+                }
+            }
+        },
+        _ => return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
+            error: true,
+            message: "Unauthorized".to_string(),
+        })
+    };
+
+    match resident_model::ResidentModel::db_read_all_matching_community_by_range(
+        role, conn, per_page, offset,
+    ) {
         Ok(res) => {
             let total_pages = (total_items as f64 / per_page as f64).ceil() as i64;
             let remaining_pages = total_pages - page;
@@ -76,8 +128,11 @@ pub async fn get_residents(query: web::Query<PaginationParams>) -> HttpResponse 
         (status = 401, description = "Unauthorized", body = HttpResponseObjectEmptyError),
         (status = 500, description = "Internal server error", body = HttpResponseObjectEmptyError)
     ),
+    security(
+        ("Token" = [])
+    )
 )]
-pub async fn get_resident_by_id(id: web::Path<String>) -> HttpResponse {
+pub async fn get_resident_by_id(id: web::Path<String>, req: HttpRequest) -> HttpResponse {
     let id = id.into_inner();
 
     let conn = &mut establish_connection_pg();
@@ -92,7 +147,26 @@ pub async fn get_resident_by_id(id: web::Path<String>) -> HttpResponse {
         }
     };
 
-    match resident_model::ResidentModel::db_read_by_id(conn, id) {
+    let role = match authenticate_user(req.clone(), conn) {
+        Ok((role, claims, token)) => {
+            if role.role == UserRoles::Root || role.role == UserRoles::Admin {
+                role
+            } else {
+                return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
+                    error: true,
+                    message: "Unauthorized".to_string(),
+                });
+            }
+        }
+        Err(_) => {
+            return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: "Unauthorized".to_string(),
+            });
+        }
+    };
+
+    match resident_model::ResidentModel::db_read_by_id_matching_community(role, conn, id) {
         Ok(user_req) => HttpResponse::Ok().json(HttpResponseObject {
             error: false,
             message: "Got resident successfully".to_string(),

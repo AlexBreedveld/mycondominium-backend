@@ -1,13 +1,13 @@
+use crate::internal::roles;
 use crate::models::auth_model::TokenClaims;
 use crate::models::auth_token_model;
 use crate::models::auth_token_model::{AuthTokenModel, FromUaParser, UserAgent};
-use std::io::ErrorKind;
-use diesel::{ExpressionMethods, PgConnection, QueryDsl, RunQueryDsl};
-use user_agent_parser::UserAgentParser;
-use crate::internal::roles;
 use crate::models::user_role_model::UserRoleModel;
 use crate::schema::user_roles::dsl::user_roles;
 use crate::services::DatabaseTrait;
+use diesel::{ExpressionMethods, PgConnection, QueryDsl, RunQueryDsl};
+use std::io::ErrorKind;
+use user_agent_parser::UserAgentParser;
 
 pub fn hash_password(password: String) -> Result<String, std::io::Error> {
     use password_hash::PasswordHasher;
@@ -150,7 +150,9 @@ pub fn validate_token(token: &str) -> jsonwebtoken::errors::Result<TokenClaims> 
     validate_token_internal(token, secret_key)
 }
 
-pub fn validate_token_from_header(req: actix_web::HttpRequest) -> Result<TokenClaims, std::io::Error> {
+pub fn validate_token_from_header(
+    req: actix_web::HttpRequest,
+) -> Result<TokenClaims, std::io::Error> {
     match req.headers().get("X-Auth-Token") {
         Some(header) => {
             let token = header.to_str().unwrap_or("");
@@ -163,21 +165,25 @@ pub fn validate_token_from_header(req: actix_web::HttpRequest) -> Result<TokenCl
                     "Error validating token".to_string(),
                 )),
             }
-        },
-        None => {
-            Err(std::io::Error::new(
-                std::io::ErrorKind::NotFound,
-                "X-Auth-Token header is missing".to_string(),
-            ))
         }
+        None => Err(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "X-Auth-Token header is missing".to_string(),
+        )),
     }
 }
 
-pub fn validate_token_no_env(token: &str, secret_key: String) -> jsonwebtoken::errors::Result<TokenClaims> {
+pub fn validate_token_no_env(
+    token: &str,
+    secret_key: String,
+) -> jsonwebtoken::errors::Result<TokenClaims> {
     validate_token_internal(token, secret_key)
 }
 
-fn validate_token_internal(token: &str, secret_key: String) -> jsonwebtoken::errors::Result<TokenClaims> {
+fn validate_token_internal(
+    token: &str,
+    secret_key: String,
+) -> jsonwebtoken::errors::Result<TokenClaims> {
     // Define validation parameters
     let mut validation = jsonwebtoken::Validation::new(jsonwebtoken::Algorithm::HS256);
     validation.validate_exp = true;
@@ -227,7 +233,7 @@ pub fn parse_user_agent(ua_str: String) -> Result<UserAgent, std::io::Error> {
 
 pub fn authenticate_user(
     req: actix_web::HttpRequest,
-    conn: &mut PgConnection
+    conn: &mut PgConnection,
 ) -> Result<(UserRoleModel, TokenClaims, AuthTokenModel), std::io::Error> {
     match validate_token_from_header(req) {
         Ok(claims) => {
@@ -239,11 +245,12 @@ pub fn authenticate_user(
                             "Token is not active".to_string(),
                         ));
                     }
-                    
-                    match UserRoleModel::table().filter(crate::schema::user_roles::user_id.eq(claims.user_id)).first::<UserRoleModel>(conn) { 
-                        Ok(role) => {
-                            Ok((role, claims, token))
-                        },
+
+                    match UserRoleModel::table()
+                        .filter(crate::schema::user_roles::user_id.eq(claims.user_id))
+                        .first::<UserRoleModel>(conn)
+                    {
+                        Ok(role) => Ok((role, claims, token)),
                         Err(e) => {
                             return Err(std::io::Error::new(
                                 std::io::ErrorKind::Other,
@@ -251,7 +258,7 @@ pub fn authenticate_user(
                             ));
                         }
                     }
-                },
+                }
                 Err(e) => {
                     return Err(std::io::Error::new(
                         std::io::ErrorKind::Other,
@@ -259,7 +266,7 @@ pub fn authenticate_user(
                     ));
                 }
             }
-        },
+        }
         Err(e) => {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::PermissionDenied,

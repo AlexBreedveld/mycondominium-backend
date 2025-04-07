@@ -15,7 +15,10 @@ use super::*;
         ("Token" = [])
     )
 )]
-pub async fn new_community(body: web::Json<community_model::CommunityModelNew>, req: HttpRequest) -> HttpResponse {
+pub async fn new_community(
+    body: web::Json<community_model::CommunityModelNew>,
+    req: HttpRequest,
+) -> HttpResponse {
     let conn = &mut establish_connection_pg();
 
     let body = body.into_inner();
@@ -26,14 +29,14 @@ pub async fn new_community(body: web::Json<community_model::CommunityModelNew>, 
                 return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                     error: true,
                     message: "Unauthorized".to_string(),
-                })
+                });
             }
         }
         Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                 error: true,
                 message: "Unauthorized".to_string(),
-            })
+            });
         }
     }
 
@@ -89,7 +92,7 @@ pub async fn new_community(body: web::Json<community_model::CommunityModelNew>, 
 pub async fn update_community(
     id: web::Path<String>,
     body: web::Json<community_model::CommunityModelNew>,
-    req: HttpRequest
+    req: HttpRequest,
 ) -> HttpResponse {
     let conn = &mut establish_connection_pg();
     let body = body.into_inner();
@@ -105,30 +108,28 @@ pub async fn update_community(
     };
 
     match authenticate_user(req.clone(), conn) {
-        Ok((role, claims, token)) => {
-            match role.role {
-                UserRoles::Root => (),
-                UserRoles::Admin => {
-                    if role.community_id != Some(id) {
-                        return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
-                            error: true,
-                            message: "Unauthorized".to_string(),
-                        })
-                    }
-                },
-                _ => {
+        Ok((role, claims, token)) => match role.role {
+            UserRoles::Root => (),
+            UserRoles::Admin => {
+                if role.community_id != Some(id) {
                     return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                         error: true,
                         message: "Unauthorized".to_string(),
-                    })
+                    });
                 }
             }
-        }
+            _ => {
+                return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
+                    error: true,
+                    message: "Unauthorized".to_string(),
+                });
+            }
+        },
         Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                 error: true,
                 message: "Unauthorized".to_string(),
-            })
+            });
         }
     }
 
@@ -198,22 +199,20 @@ pub async fn delete_community(id: web::Path<String>, req: HttpRequest) -> HttpRe
     };
 
     match authenticate_user(req.clone(), conn) {
-        Ok((role, claims, token)) => {
-            match role.role {
-                UserRoles::Root => (),
-                _ => {
-                    return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
-                        error: true,
-                        message: "Unauthorized".to_string(),
-                    })
-                }
+        Ok((role, claims, token)) => match role.role {
+            UserRoles::Root => (),
+            _ => {
+                return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
+                    error: true,
+                    message: "Unauthorized".to_string(),
+                });
             }
-        }
+        },
         Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                 error: true,
                 message: "Unauthorized".to_string(),
-            })
+            });
         }
     }
 

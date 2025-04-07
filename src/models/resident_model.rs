@@ -1,6 +1,10 @@
 use super::prelude::*;
+use crate::models::admin_model::{AdminModel, AdminModelResult};
 use crate::models::lib::DatabaseTrait;
 use crate::models::lib::DatabaseTraitVec;
+use crate::models::user_model::{UserModel, UserModelResult};
+use crate::models::user_role_model::UserRoleModel;
+use crate::services::UserRoles;
 
 #[derive(
     Queryable,
@@ -24,7 +28,7 @@ pub struct ResidentModel {
     pub unit_number: Option<String>,
     pub address: Option<String>,
     pub phone: Option<String>,
-    pub email: Option<String>,
+    pub email: String,
     pub date_of_birth: Option<NaiveDate>,
     pub resident_since: NaiveDateTime,
     pub is_active: bool,
@@ -40,10 +44,20 @@ pub struct ResidentModelNew {
     pub unit_number: Option<String>,
     pub address: Option<String>,
     pub phone: Option<String>,
-    pub email: Option<String>,
+    pub email: String,
     pub date_of_birth: Option<NaiveDate>,
     pub resident_since: NaiveDateTime,
+    pub password: Option<String>,
+    pub role: UserRoles,
+    pub community_id: Option<Uuid>,
     pub is_active: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Validate, ToSchema)]
+pub struct ResidentModelResult {
+    pub resident: ResidentModel,
+    pub user: UserModelResult,
+    pub role: UserRoleModel,
 }
 
 impl ResidentModel {
@@ -83,5 +97,122 @@ impl ResidentModel {
         }
 
         uuid_new
+    }
+
+    pub fn db_read_all_matching_community_by_range(
+        user_role: UserRoleModel,
+        conn: &mut PgConnection,
+        per_page: i64,
+        offset: i64,
+    ) -> diesel::QueryResult<Vec<ResidentModelResult>> {
+        let mut all_roles_matching_comm =
+            Vec::<crate::models::user_role_model::UserRoleModel>::new();
+
+        if user_role.role == UserRoles::Root {
+            all_roles_matching_comm = crate::models::user_role_model::UserRoleModel::table()
+                .filter(
+                    user_roles::role
+                        .eq(UserRoles::Resident)
+                        .or(user_roles::role.eq(UserRoles::Guest)),
+                )
+                .limit(per_page)
+                .offset(offset)
+                .load::<crate::models::user_role_model::UserRoleModel>(conn)?;
+        } else if user_role.role == UserRoles::Admin {
+            all_roles_matching_comm = crate::models::user_role_model::UserRoleModel::table()
+                .filter(user_roles::community_id.eq(user_role.community_id))
+                .filter(
+                    user_roles::role
+                        .eq(UserRoles::Resident)
+                        .or(user_roles::role.eq(UserRoles::Guest)),
+                )
+                .limit(per_page)
+                .offset(offset)
+                .load::<crate::models::user_role_model::UserRoleModel>(conn)?;
+        } else {
+            return Err(diesel::result::Error::NotFound);
+        }
+
+        let all_users_matching_comm: Vec<ResidentModelResult> = all_roles_matching_comm
+            .into_iter()
+            .filter_map(|role| {
+                let user = match crate::models::user_model::UserModel::table()
+                    .filter(users::id.eq(role.user_id))
+                    .filter(users::entity_type.eq("resident"))
+                    .first::<crate::models::user_model::UserModel>(conn)
+                {
+                    Ok(user) => user,
+                    Err(e) => return None,
+                };
+
+                let resident = match crate::models::resident_model::ResidentModel::table()
+                    .filter(residents::id.eq(user.entity_id))
+                    .first::<crate::models::resident_model::ResidentModel>(conn)
+                {
+                    Ok(admin) => admin,
+                    Err(e) => return None,
+                };
+
+                let user_result = UserModelResult {
+                    id: user.id,
+                    entity_id: user.entity_id,
+                    entity_type: user.entity_type,
+                    admin_id: user.admin_id,
+                    resident_id: user.resident_id,
+                    created_at: user.created_at,
+                    updated_at: user.updated_at,
+                };
+
+                Some(ResidentModelResult {
+                    resident,
+                    user: user_result,
+                    role,
+                })
+            })
+            .collect();
+
+        Ok(all_users_matching_comm)
+    }
+
+    pub fn db_read_by_id_matching_community(
+        user_role: UserRoleModel,
+        conn: &mut PgConnection,
+        id: uuid::Uuid,
+    ) -> diesel::QueryResult<ResidentModelResult> {
+        let resident = crate::models::resident_model::ResidentModel::db_read_by_id(conn, id)?;
+
+        let user = crate::models::user_model::UserModel::table()
+            .filter(users::entity_id.eq(resident.id))
+            .filter(users::entity_type.eq("resident"))
+            .first::<crate::models::user_model::UserModel>(conn)?;
+
+        let role = crate::models::user_role_model::UserRoleModel::table()
+            .filter(user_roles::user_id.eq(user.id))
+            .first::<crate::models::user_role_model::UserRoleModel>(conn)?;
+
+        if user_role.role == UserRoles::Root
+            || (user_role.role == UserRoles::Admin && user_role.community_id == role.community_id)
+            || (user_role.role == UserRoles::Resident
+                && user_role.community_id == role.community_id)
+            || (user_role.role == UserRoles::Guest && user_role.community_id == role.community_id)
+        {
+            let user_result = UserModelResult {
+                id: user.id,
+                entity_id: user.entity_id,
+                entity_type: user.entity_type,
+                admin_id: user.admin_id,
+                resident_id: user.resident_id,
+                created_at: user.created_at,
+                updated_at: user.updated_at,
+            };
+
+            Ok(ResidentModelResult {
+                resident,
+                user: user_result,
+                role,
+            })
+        } else {
+            Err(diesel::result::Error::NotFound)
+        }
     }
 }

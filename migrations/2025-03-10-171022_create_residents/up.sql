@@ -5,7 +5,7 @@ CREATE TABLE residents (
     unit_number VARCHAR(20),
     address TEXT,
     phone TEXT,
-    email TEXT,
+    email TEXT NOT NULL,
     date_of_birth DATE,
     resident_since TIMESTAMP NOT NULL,
     is_active BOOLEAN NOT NULL,

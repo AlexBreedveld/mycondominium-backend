@@ -28,26 +28,26 @@ pub async fn get_admins(query: web::Query<PaginationParams>, req: HttpRequest) -
     let offset = (page - 1) * per_page;
 
     let conn = &mut establish_connection_pg();
-    
+
     let admin_role = match authenticate_user(req.clone(), conn) {
         Ok((role, claims, token)) => {
-            if role.role == UserRoles::Root || role.role == UserRoles::Admin { 
+            if role.role == UserRoles::Root || role.role == UserRoles::Admin {
                 role
             } else {
                 return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                     error: true,
                     message: "Unauthorized".to_string(),
-                })
+                });
             }
         }
         Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                 error: true,
                 message: "Unauthorized".to_string(),
-            })
+            });
         }
     };
-    
+
     let admin_user = match user_model::UserModel::db_read_by_id(conn, admin_role.user_id) {
         Ok(admin_user) => admin_user,
         Err(e) => {
@@ -57,7 +57,7 @@ pub async fn get_admins(query: web::Query<PaginationParams>, req: HttpRequest) -
             });
         }
     };
-    
+
     let admin = match admin_model::AdminModel::db_read_by_id(conn, admin_user.entity_id) {
         Ok(admin) => admin,
         Err(e) => {
@@ -65,13 +65,15 @@ pub async fn get_admins(query: web::Query<PaginationParams>, req: HttpRequest) -
                 error: true,
                 message: "Error getting admin".to_string(),
             });
-        }   
+        }
     };
-    
+
     if admin_role.role == UserRoles::Root {
         let total_items = match user_role_model::UserRoleModel::table()
             .filter(user_roles::role.eq(admin_role.role))
-            .count().get_result::<i64>(conn) {
+            .count()
+            .get_result::<i64>(conn)
+        {
             Ok(count) => count,
             Err(e) => {
                 return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
@@ -81,7 +83,7 @@ pub async fn get_admins(query: web::Query<PaginationParams>, req: HttpRequest) -
             }
         };
 
-        match admin.db_read_all_matching_community_by_range(conn, per_page, offset) {
+        match Vec::<admin_model::AdminModel>::db_read_by_range(conn, per_page, offset) {
             Ok(res) => {
                 let total_pages = (total_items as f64 / per_page as f64).ceil() as i64;
                 let remaining_pages = total_pages - page;
@@ -110,7 +112,9 @@ pub async fn get_admins(query: web::Query<PaginationParams>, req: HttpRequest) -
         let total_items = match user_role_model::UserRoleModel::table()
             .filter(user_roles::community_id.eq(admin_role.community_id))
             .filter(user_roles::role.eq(admin_role.role))
-            .count().get_result::<i64>(conn) {
+            .count()
+            .get_result::<i64>(conn)
+        {
             Ok(count) => count,
             Err(e) => {
                 return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
@@ -149,7 +153,7 @@ pub async fn get_admins(query: web::Query<PaginationParams>, req: HttpRequest) -
         return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
             error: true,
             message: "Unauthorized".to_string(),
-        })
+        });
     }
 }
 
@@ -193,14 +197,14 @@ pub async fn get_admin_by_id(id: web::Path<String>, req: HttpRequest) -> HttpRes
                 return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                     error: true,
                     message: "Unauthorized".to_string(),
-                })
+                });
             }
         }
         Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                 error: true,
                 message: "Unauthorized".to_string(),
-            })
+            });
         }
     };
 
@@ -223,7 +227,7 @@ pub async fn get_admin_by_id(id: web::Path<String>, req: HttpRequest) -> HttpRes
             });
         }
     };
-    
+
     match admin.db_read_by_id_matching_community(id, conn) {
         Ok(user_req) => HttpResponse::Ok().json(HttpResponseObject {
             error: false,

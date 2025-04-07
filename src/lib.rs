@@ -6,8 +6,8 @@ pub mod services;
 pub mod types;
 pub mod utilities;
 
+use diesel_migrations::{EmbeddedMigrations, embed_migrations};
 use std::env;
-use diesel_migrations::{embed_migrations, EmbeddedMigrations};
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 

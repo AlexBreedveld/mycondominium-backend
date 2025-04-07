@@ -51,7 +51,8 @@ pub fn community_route() -> actix_web::Scope {
         )
         .route(
             "/delete/{id}",
-            web::delete().to(crate::services::community_service::upsert_community::delete_community),
+            web::delete()
+                .to(crate::services::community_service::upsert_community::delete_community),
         )
 }
 

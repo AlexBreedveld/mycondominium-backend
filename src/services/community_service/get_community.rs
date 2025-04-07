@@ -22,7 +22,10 @@ use crate::internal::roles::UserRoles;
         ("Token" = [])
     )
 )]
-pub async fn get_communities(query: web::Query<PaginationParams>, req: HttpRequest) -> HttpResponse {
+pub async fn get_communities(
+    query: web::Query<PaginationParams>,
+    req: HttpRequest,
+) -> HttpResponse {
     let page = query.page.unwrap_or(1);
     let per_page = query.per_page.unwrap_or(10);
     let offset = (page - 1) * per_page;
@@ -35,19 +38,21 @@ pub async fn get_communities(query: web::Query<PaginationParams>, req: HttpReque
                 return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                     error: true,
                     message: "Unauthorized".to_string(),
-                })
+                });
             }
         }
         Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                 error: true,
                 message: "Unauthorized".to_string(),
-            })
+            });
         }
     };
 
     let total_items = match community_model::CommunityModel::table()
-        .count().get_result::<i64>(conn) {
+        .count()
+        .get_result::<i64>(conn)
+    {
         Ok(count) => count,
         Err(e) => {
             return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
@@ -57,7 +62,11 @@ pub async fn get_communities(query: web::Query<PaginationParams>, req: HttpReque
         }
     };
 
-    match community_model::CommunityModel::table().limit(per_page).offset(offset).load::<community_model::CommunityModel>(conn) {
+    match community_model::CommunityModel::table()
+        .limit(per_page)
+        .offset(offset)
+        .load::<community_model::CommunityModel>(conn)
+    {
         Ok(res) => {
             let total_pages = (total_items as f64 / per_page as f64).ceil() as i64;
             let remaining_pages = total_pages - page;
@@ -118,18 +127,20 @@ pub async fn get_community_by_id(id: web::Path<String>, req: HttpRequest) -> Htt
 
     match authenticate_user(req.clone(), conn) {
         Ok((role, claims, token)) => {
-            if !(role.role == UserRoles::Root || (role.role == UserRoles::Admin && role.community_id == Some(id))) {
+            if !(role.role == UserRoles::Root
+                || (role.role == UserRoles::Admin && role.community_id == Some(id)))
+            {
                 return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                     error: true,
                     message: "Unauthorized".to_string(),
-                })
+                });
             }
         }
         Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                 error: true,
                 message: "Unauthorized".to_string(),
-            })
+            });
         }
     };
 
