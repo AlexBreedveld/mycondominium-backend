@@ -7,7 +7,6 @@ CREATE TABLE residents (
     phone TEXT,
     email TEXT NOT NULL,
     date_of_birth DATE,
-    resident_since TIMESTAMP NOT NULL,
     is_active BOOLEAN NOT NULL,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL
