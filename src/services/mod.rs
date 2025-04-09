@@ -4,6 +4,7 @@ pub mod auth_service;
 pub mod community_service;
 mod prelude;
 pub mod resident_service;
+pub mod vehicle_service;
 
 pub use crate::services::prelude::*;
 use utoipa::openapi::security::{ApiKey, ApiKeyValue};
@@ -23,6 +24,7 @@ use utoipa::openapi::security::{ApiKey, ApiKeyValue};
         (path = "/api/admin", api = admin_service::AdminApi),
         (path = "/api/auth", api = auth_service::AuthApi),
         (path = "/api/community", api = community_service::CommunityApi),
+        (path = "/api/vehicle", api = vehicle_service::VehicleApi),
     )
 )]
 pub struct ApiDoc;

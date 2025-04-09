@@ -4,7 +4,7 @@ use crate::models::lib::DatabaseTrait;
 use crate::models::lib::DatabaseTraitVec;
 use crate::models::user_model::{UserModel, UserModelResult};
 use crate::models::user_role_model::UserRoleModel;
-use crate::services::UserRoles;
+use crate::services::{UserRoles, UserTypes};
 
 #[derive(
     Queryable,
@@ -30,7 +30,6 @@ pub struct ResidentModel {
     pub phone: Option<String>,
     pub email: String,
     pub date_of_birth: Option<NaiveDate>,
-    pub resident_since: NaiveDateTime,
     pub is_active: bool,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
@@ -46,7 +45,6 @@ pub struct ResidentModelNew {
     pub phone: Option<String>,
     pub email: String,
     pub date_of_birth: Option<NaiveDate>,
-    pub resident_since: NaiveDateTime,
     pub password: Option<String>,
     pub role: UserRoles,
     pub community_id: Option<Uuid>,
@@ -99,81 +97,6 @@ impl ResidentModel {
         uuid_new
     }
 
-    pub fn db_read_all_matching_community_by_range(
-        user_role: UserRoleModel,
-        conn: &mut PgConnection,
-        per_page: i64,
-        offset: i64,
-    ) -> diesel::QueryResult<Vec<ResidentModelResult>> {
-        let mut all_roles_matching_comm =
-            Vec::<crate::models::user_role_model::UserRoleModel>::new();
-
-        if user_role.role == UserRoles::Root {
-            all_roles_matching_comm = crate::models::user_role_model::UserRoleModel::table()
-                .filter(
-                    user_roles::role
-                        .eq(UserRoles::Resident)
-                        .or(user_roles::role.eq(UserRoles::Guest)),
-                )
-                .limit(per_page)
-                .offset(offset)
-                .load::<crate::models::user_role_model::UserRoleModel>(conn)?;
-        } else if user_role.role == UserRoles::Admin {
-            all_roles_matching_comm = crate::models::user_role_model::UserRoleModel::table()
-                .filter(user_roles::community_id.eq(user_role.community_id))
-                .filter(
-                    user_roles::role
-                        .eq(UserRoles::Resident)
-                        .or(user_roles::role.eq(UserRoles::Guest)),
-                )
-                .limit(per_page)
-                .offset(offset)
-                .load::<crate::models::user_role_model::UserRoleModel>(conn)?;
-        } else {
-            return Err(diesel::result::Error::NotFound);
-        }
-
-        let all_users_matching_comm: Vec<ResidentModelResult> = all_roles_matching_comm
-            .into_iter()
-            .filter_map(|role| {
-                let user = match crate::models::user_model::UserModel::table()
-                    .filter(users::id.eq(role.user_id))
-                    .filter(users::entity_type.eq("resident"))
-                    .first::<crate::models::user_model::UserModel>(conn)
-                {
-                    Ok(user) => user,
-                    Err(e) => return None,
-                };
-
-                let resident = match crate::models::resident_model::ResidentModel::table()
-                    .filter(residents::id.eq(user.entity_id))
-                    .first::<crate::models::resident_model::ResidentModel>(conn)
-                {
-                    Ok(admin) => admin,
-                    Err(e) => return None,
-                };
-
-                let user_result = UserModelResult {
-                    id: user.id,
-                    entity_id: user.entity_id,
-                    entity_type: user.entity_type,
-                    admin_id: user.admin_id,
-                    resident_id: user.resident_id,
-                    created_at: user.created_at,
-                    updated_at: user.updated_at,
-                };
-
-                Some(ResidentModelResult {
-                    resident,
-                    user: user_result,
-                    role,
-                })
-            })
-            .collect();
-
-        Ok(all_users_matching_comm)
-    }
-
     pub fn db_read_by_id_matching_community(
         user_role: UserRoleModel,
         conn: &mut PgConnection,
@@ -214,5 +137,62 @@ impl ResidentModel {
         } else {
             Err(diesel::result::Error::NotFound)
         }
+    }
+
+    pub fn db_read_all_matching_community_by_range(
+        user_role: UserRoleModel,
+        conn: &mut PgConnection,
+        per_page: i64,
+        offset: i64,
+    ) -> diesel::QueryResult<Vec<ResidentModelResult>> {
+        use crate::schema::{residents, user_roles, users};
+        use diesel::prelude::*;
+
+        // Base query
+        let mut query = user_roles::table
+            .inner_join(users::table.on(user_roles::user_id.eq(users::id)))
+            .inner_join(residents::table.on(users::entity_id.eq(residents::id)))
+            .filter(users::entity_type.eq(UserTypes::Resident))
+            .filter(
+                user_roles::role
+                    .eq(UserRoles::Resident)
+                    .or(user_roles::role.eq(UserRoles::Guest)),
+            )
+            .into_boxed(); // Needed for conditional filters
+
+        // Apply additional filter if role is Admin (not Root)
+        match user_role.role {
+            UserRoles::Root => { /* No additional filter required for Root */ }
+            UserRoles::Admin => {
+                query = query.filter(user_roles::community_id.eq(user_role.community_id));
+            }
+            _ => return Err(diesel::result::Error::NotFound), // Early return for unauthorized roles
+        }
+
+        // Fetch data with limit/offset (pagination)
+        let data_result: Vec<(UserRoleModel, UserModel, ResidentModel)> = query
+            .limit(per_page)
+            .offset(offset)
+            .load::<(UserRoleModel, UserModel, ResidentModel)>(conn)?;
+
+        // Map query result into desired `ResidentModelResult`
+        let results = data_result
+            .into_iter()
+            .map(|(role, user, resident)| ResidentModelResult {
+                resident,
+                role,
+                user: UserModelResult {
+                    id: user.id,
+                    entity_id: user.entity_id,
+                    entity_type: user.entity_type,
+                    admin_id: user.admin_id,
+                    resident_id: user.resident_id,
+                    created_at: user.created_at,
+                    updated_at: user.updated_at,
+                },
+            })
+            .collect();
+
+        Ok(results)
     }
 }

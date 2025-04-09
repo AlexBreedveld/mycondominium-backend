@@ -1,6 +1,6 @@
 use super::prelude::*;
 use crate::internal::roles::UserRoles;
-use crate::models::user_model::UserModelResult;
+use crate::models::user_model::{UserModel, UserModelResult};
 use crate::models::user_role_model::UserRoleModel;
 use db_ops_derive::DbOps;
 use diesel::{QueryResult, RunQueryDsl};
@@ -87,62 +87,50 @@ impl AdminModel {
     }
 
     pub fn db_read_all_matching_community_by_range(
-        &self,
+        user_role: UserRoleModel,
         conn: &mut PgConnection,
         per_page: i64,
         offset: i64,
     ) -> diesel::QueryResult<Vec<AdminModelResult>> {
-        let self_user = crate::models::user_model::UserModel::table()
-            .filter(users::admin_id.eq(self.id))
-            .first::<crate::models::user_model::UserModel>(conn)?;
+        use crate::schema::{admins, user_roles, users};
 
-        let self_role = crate::models::user_role_model::UserRoleModel::table()
-            .filter(user_roles::user_id.eq(self_user.id))
-            .first::<crate::models::user_role_model::UserRoleModel>(conn)?;
+        let mut query = user_roles::table
+            .inner_join(users::table.on(users::id.eq(user_roles::user_id)))
+            .inner_join(admins::table.on(admins::id.eq(users::entity_id)))
+            .filter(users::entity_type.eq("admin"))
+            .into_boxed();
 
-        let mut all_roles_matching_comm =
-            Vec::<crate::models::user_role_model::UserRoleModel>::new();
-
-        if self_role.role == UserRoles::Root {
-            all_roles_matching_comm = crate::models::user_role_model::UserRoleModel::table()
-                .filter(
+        match user_role.role {
+            UserRoles::Root => {
+                query = query.filter(
                     user_roles::role
                         .eq(UserRoles::Root)
                         .or(user_roles::role.eq(UserRoles::Admin)),
-                )
-                .limit(per_page)
-                .offset(offset)
-                .load::<crate::models::user_role_model::UserRoleModel>(conn)?;
-        } else if self_role.role == UserRoles::Admin {
-            all_roles_matching_comm = crate::models::user_role_model::UserRoleModel::table()
-                .filter(user_roles::community_id.eq(self_role.community_id))
-                .filter(user_roles::role.eq(self_role.role))
-                .limit(per_page)
-                .offset(offset)
-                .load::<crate::models::user_role_model::UserRoleModel>(conn)?;
-        }
+                );
+            }
+            UserRoles::Admin => {
+                query = query.filter(
+                    user_roles::role
+                        .eq(UserRoles::Admin)
+                        .and(user_roles::community_id.eq(user_role.community_id)),
+                );
+            }
+            _ => return Ok(vec![]),
+        };
 
-        let all_users_matching_comm: Vec<AdminModelResult> = all_roles_matching_comm
+        let results = query
+            .select((
+                AdminModel::as_select(),
+                UserModel::as_select(),
+                UserRoleModel::as_select(),
+            ))
+            .limit(per_page)
+            .offset(offset)
+            .load::<(AdminModel, UserModel, UserRoleModel)>(conn)?
             .into_iter()
-            .filter_map(|role| {
-                let user = match crate::models::user_model::UserModel::table()
-                    .filter(users::id.eq(role.user_id))
-                    .filter(users::entity_type.eq("admin"))
-                    .first::<crate::models::user_model::UserModel>(conn)
-                {
-                    Ok(user) => user,
-                    Err(e) => return None,
-                };
-
-                let admin = match crate::models::admin_model::AdminModel::table()
-                    .filter(admins::id.eq(user.entity_id))
-                    .first::<crate::models::admin_model::AdminModel>(conn)
-                {
-                    Ok(admin) => admin,
-                    Err(e) => return None,
-                };
-
-                let user_result = UserModelResult {
+            .map(|(admin, user, role)| AdminModelResult {
+                admin,
+                user: UserModelResult {
                     id: user.id,
                     entity_id: user.entity_id,
                     entity_type: user.entity_type,
@@ -150,18 +138,17 @@ impl AdminModel {
                     resident_id: user.resident_id,
                     created_at: user.created_at,
                     updated_at: user.updated_at,
-                };
-
-                Some(AdminModelResult {
-                    admin,
-                    user: user_result,
-                    role,
-                })
+                },
+                role,
             })
-            .collect();
+            .collect::<Vec<AdminModelResult>>();
 
-        Ok(all_users_matching_comm)
+        println!("reached code");
+        println!("{:?}", results);
+
+        Ok(results)
     }
+
 
     pub fn db_read_by_id_matching_community(
         &self,

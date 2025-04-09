@@ -181,7 +181,6 @@ diesel::table! {
         phone -> Nullable<Text>,
         email -> Text,
         date_of_birth -> Nullable<Date>,
-        resident_since -> Timestamp,
         is_active -> Bool,
         created_at -> Timestamp,
         updated_at -> Timestamp,
@@ -224,6 +223,7 @@ diesel::table! {
         #[max_length = 50]
         color -> Nullable<Varchar>,
         created_at -> Timestamp,
+        updated_at -> Timestamp,
     }
 }
 

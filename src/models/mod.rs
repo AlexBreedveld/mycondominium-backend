@@ -5,7 +5,7 @@ pub mod auth_token_model;
 pub mod common_area_model;
 pub mod community_model;
 pub mod document_model;
-mod document_share_model;
+pub mod document_share_model;
 pub mod election_model;
 pub mod incident_model;
 pub mod invoice_model;

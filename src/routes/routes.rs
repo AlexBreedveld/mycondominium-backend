@@ -79,3 +79,27 @@ pub fn resident_route() -> actix_web::Scope {
             web::delete().to(crate::services::resident_service::upsert_resident::delete_resident),
         )
 }
+
+pub fn vehicle_route() -> actix_web::Scope {
+    web::scope("/api/vehicle")
+        .route(
+            "/list",
+            web::get().to(crate::services::vehicle_service::get_vehicle::get_vehicles),
+        )
+        .route(
+            "/get/{id}",
+            web::get().to(crate::services::vehicle_service::get_vehicle::get_vehicle_by_id),
+        )
+        .route(
+            "/new",
+            web::post().to(crate::services::vehicle_service::upsert_vehicle::new_vehicle),
+        )
+        .route(
+            "/update/{id}",
+            web::put().to(crate::services::vehicle_service::upsert_vehicle::update_vehicle),
+        )
+        .route(
+            "/delete/{id}",
+            web::delete().to(crate::services::vehicle_service::upsert_vehicle::delete_vehicle),
+        )
+}

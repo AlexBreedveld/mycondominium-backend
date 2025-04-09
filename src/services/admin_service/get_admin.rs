@@ -48,112 +48,67 @@ pub async fn get_admins(query: web::Query<PaginationParams>, req: HttpRequest) -
         }
     };
 
-    let admin_user = match user_model::UserModel::db_read_by_id(conn, admin_role.user_id) {
-        Ok(admin_user) => admin_user,
-        Err(e) => {
-            return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
-                error: true,
-                message: "Error getting admin user".to_string(),
-            });
+    let mut total_items_query = user_role_model::UserRoleModel::table()
+        .inner_join(users::table.on(users::id.eq(user_roles::user_id)))
+        .inner_join(admins::table.on(admins::id.eq(users::entity_id)))
+        .filter(users::entity_type.eq("admin"))
+        .into_boxed();
+
+    match admin_role.role {
+        UserRoles::Root => {
+            total_items_query = total_items_query.filter(
+                user_roles::role
+                    .eq(UserRoles::Root)
+                    .or(user_roles::role.eq(UserRoles::Admin)),
+            );
         }
-    };
-
-    let admin = match admin_model::AdminModel::db_read_by_id(conn, admin_user.entity_id) {
-        Ok(admin) => admin,
-        Err(e) => {
-            return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
-                error: true,
-                message: "Error getting admin".to_string(),
-            });
+        UserRoles::Admin => {
+            total_items_query = total_items_query.filter(
+                user_roles::role
+                    .eq(UserRoles::Admin)
+                    .and(user_roles::community_id.eq(admin_role.community_id)),
+            );
         }
-    };
-
-    if admin_role.role == UserRoles::Root {
-        let total_items = match user_role_model::UserRoleModel::table()
-            .filter(user_roles::role.eq(admin_role.role))
-            .count()
-            .get_result::<i64>(conn)
-        {
-            Ok(count) => count,
-            Err(e) => {
-                return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
-                    error: true,
-                    message: format!("Error getting total items: {}", e),
-                });
-            }
-        };
-
-        match Vec::<admin_model::AdminModel>::db_read_by_range(conn, per_page, offset) {
-            Ok(res) => {
-                let total_pages = (total_items as f64 / per_page as f64).ceil() as i64;
-                let remaining_pages = total_pages - page;
-
-                HttpResponse::Ok()
-                    .insert_header((
-                        header::HeaderName::from_static("x-total-pages"),
-                        total_pages.to_string(),
-                    ))
-                    .insert_header((
-                        header::HeaderName::from_static("x-remaining-pages"),
-                        remaining_pages.to_string(),
-                    ))
-                    .json(HttpResponseObject {
-                        error: false,
-                        message: "Got admins successfully".to_string(),
-                        object: Some(res),
-                    })
-            }
-            Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
-                error: true,
-                message: format!("Error getting admins: {}", e),
-            }),
-        }
-    } else if admin_role.role == UserRoles::Admin {
-        let total_items = match user_role_model::UserRoleModel::table()
-            .filter(user_roles::community_id.eq(admin_role.community_id))
-            .filter(user_roles::role.eq(admin_role.role))
-            .count()
-            .get_result::<i64>(conn)
-        {
-            Ok(count) => count,
-            Err(e) => {
-                return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
-                    error: true,
-                    message: format!("Error getting total items: {}", e),
-                });
-            }
-        };
-
-        match admin.db_read_all_matching_community_by_range(conn, per_page, offset) {
-            Ok(res) => {
-                let total_pages = (total_items as f64 / per_page as f64).ceil() as i64;
-                let remaining_pages = total_pages - page;
-
-                HttpResponse::Ok()
-                    .insert_header((
-                        header::HeaderName::from_static("x-total-pages"),
-                        total_pages.to_string(),
-                    ))
-                    .insert_header((
-                        header::HeaderName::from_static("x-remaining-pages"),
-                        remaining_pages.to_string(),
-                    ))
-                    .json(HttpResponseObject {
-                        error: false,
-                        message: "Got admins successfully".to_string(),
-                        object: Some(res),
-                    })
-            }
-            Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
-                error: true,
-                message: format!("Error getting admins: {}", e),
-            }),
-        }
-    } else {
-        return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
+        _ => return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
             error: true,
-            message: "Unauthorized".to_string(),
-        });
+            message: "Error getting total items: Role not valid".to_string(),
+        }),
+    };
+    
+    let total_items = match total_items_query.count().get_result::<i64>(conn) {
+        Ok(count) => count,
+        Err(e) => {
+            return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+                error: true,
+                message: format!("Error getting total items: {}", e),
+            });
+        }   
+    };
+
+    match admin_model::AdminModel::db_read_all_matching_community_by_range(admin_role, conn, per_page, offset) {
+        Ok(res) => {
+            let total_pages = (total_items as f64 / per_page as f64).ceil() as i64;
+            let remaining_pages = total_pages - page;
+
+            HttpResponse::Ok()
+                .insert_header((
+                    header::HeaderName::from_static("x-total-pages"),
+                    total_pages.to_string(),
+                ))
+                .insert_header((
+                    header::HeaderName::from_static("x-remaining-pages"),
+                    remaining_pages.to_string(),
+                ))
+                .json(HttpResponseObject {
+                    error: false,
+                    message: "Got admins successfully".to_string(),
+                    object: Some(res),
+                })
+        }
+        Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+            error: true,
+            message: format!("Error getting admins: {}", e),
+        }),
     }
 }
 

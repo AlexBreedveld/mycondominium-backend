@@ -4,5 +4,6 @@ CREATE TABLE vehicles (
     license_plate VARCHAR(20) NOT NULL UNIQUE,
     model VARCHAR(100),
     color VARCHAR(50),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
 );
