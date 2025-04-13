@@ -35,7 +35,7 @@ deploy_dev:
     - ssh coder.${CODER_WORKSPACE_DEV}.main -t "sudo su coder -c \"mkdir -p ~/dev_deployment\""
     - ssh coder.${CODER_WORKSPACE_DEV}.main -t "sudo su coder -c \"if [ -f ~/dev_deployment/.env ]; then rm ~/dev_deployment/.env; fi\""
     - ssh coder.${CODER_WORKSPACE_DEV}.main -t "sudo su coder -c \"if [ -f ~/dev_deployment/mycondominium-backend ]; then rm ~/dev_deployment/mycondominium-backend; fi\""
-    - export BIN_URL=$(curl -X GET https://git.al3xdev.com/api/v4/projects/187/releases | jq 'map(select(.tag_name? | contains("nightly"))) | first' | jq -r '.assets.links[] | select(.name? | contains("linux-gnu-amd64")) | .url')
+    - export BIN_URL=$(curl -X GET https://git.al3xdev.com/api/v4/projects/187/releases | jq 'map(select(.tag_name? | contains("nightly"))) | first' | jq -r '.assets.links[] | select(.name? | contains("linux-gnu-amd64")) | .direct_asset_url')
     - ssh coder.${CODER_WORKSPACE_DEV}.main -t "sudo su coder -c \"wget -O ~/dev_deployment/mycondominium-backend '${BIN_URL}'\""
     - ssh coder.${CODER_WORKSPACE_DEV}.main -t "sudo su coder -c \"chmod +x ~/dev_deployment/mycondominium-backend\""
     - |
@@ -110,7 +110,7 @@ deploy_main:
     - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "sudo su coder -c \"mkdir -p ~/main_deployment\""
     - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "sudo su coder -c \"if [ -f ~/main_deployment/.env ]; then rm ~/main_deployment/.env; fi\""
     - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "sudo su coder -c \"if [ -f ~/main_deployment/mycondominium-backend ]; then rm ~/main_deployment/mycondominium-backend; fi\""
-    - export BIN_URL=$(curl -X GET https://git.al3xdev.com/api/v4/projects/187/releases | jq 'map(select(.tag_name? | contains("mainline"))) | first' | jq -r '.assets.links[] | select(.name? | contains("linux-gnu-amd64")) | .url')
+    - export BIN_URL=$(curl -X GET https://git.al3xdev.com/api/v4/projects/187/releases | jq 'map(select(.tag_name? | contains("mainline"))) | first' | jq -r '.assets.links[] | select(.name? | contains("linux-gnu-amd64")) | .direct_asset_url')
     - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "sudo su coder -c \"wget -O ~/main_deployment/mycondominium-backend '${BIN_URL}'\""
     - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "sudo su coder -c \"chmod +x ~/main_deployment/mycondominium-backend\""
     - |
