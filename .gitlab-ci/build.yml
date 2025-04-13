@@ -17,7 +17,7 @@ build:
   stage: build
   needs:
     job: tests
-    artifacts: false
+    artifacts: true
   tags:
     - dind
     - cloud-br9
@@ -37,11 +37,13 @@ build:
     CROSS_REMOTE: 1
     DOCKER_TLS_CERTDIR: ""
   before_script:
+    - if [ $(cat ./.pipeline_re_run_status) == "true" ]; then echo "Skipping because this is a re-run"; exit 0; fi
     - rustup target add ${TARGET} || true
     - echo "$CI_JOB_TOKEN" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
     - cargo add pq-sys -F bundled
     - cargo add openssl-sys -F vendored
   script:
+    - if [ $(cat ./.pipeline_re_run_status) == "true" ]; then echo "Skipping because this is a re-run"; exit 0; fi
     - echo "$JOB_ID_VAR=$CI_JOB_ID" >> build.env
     - echo "RUST_APP_VERSION=$(sed -n '/^\[package\]/,/^\[/{/version/s/.*version *= *"\([^"]*\)".*/\1/p}' Cargo.toml)" >> build.env
     - echo "Building for ${NAME} (${TARGET})..."
@@ -52,6 +54,7 @@ build:
     # Artifacts: any binary output in the target/{target}/release folder.
     paths:
       - target/${TARGET}/release/mycondominium-backend
+      - .pipeline_re_run_status
     expire_in: 1 week
   parallel:
     matrix:
