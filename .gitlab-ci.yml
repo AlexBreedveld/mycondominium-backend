@@ -15,7 +15,7 @@ include:
 tests:
   stage: test
   before_script:
-    - sudo apt update && sudo apt install -y jq
+    - apt update && apt install -y jq
   script:
     - echo "Checking if pipeline for this branch has already ran"
     - curl -s -X GET https://git.al3xdev.com/api/v4/projects/187/releases | jq --arg target_commit "${CI_COMMIT_SHA}" 'any(.[]; .commit.id == $target_commit)' > .pipeline_re_run_status
