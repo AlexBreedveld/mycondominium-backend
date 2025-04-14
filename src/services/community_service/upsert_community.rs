@@ -18,8 +18,9 @@ use super::*;
 pub async fn new_community(
     body: web::Json<community_model::CommunityModelNew>,
     req: HttpRequest,
+    conf: web::Data<Arc<MyCondominiumConfig>>
 ) -> HttpResponse {
-    let conn = &mut establish_connection_pg();
+    let conn = &mut establish_connection_pg(&conf);
 
     let body = body.into_inner();
 
@@ -93,8 +94,9 @@ pub async fn update_community(
     id: web::Path<String>,
     body: web::Json<community_model::CommunityModelNew>,
     req: HttpRequest,
+    conf: web::Data<Arc<MyCondominiumConfig>>
 ) -> HttpResponse {
-    let conn = &mut establish_connection_pg();
+    let conn = &mut establish_connection_pg(&conf);
     let body = body.into_inner();
 
     let id = match Uuid::parse_str(&id) {
@@ -185,8 +187,8 @@ pub async fn update_community(
         ("Token" = [])
     )
 )]
-pub async fn delete_community(id: web::Path<String>, req: HttpRequest) -> HttpResponse {
-    let conn = &mut establish_connection_pg();
+pub async fn delete_community(id: web::Path<String>, req: HttpRequest, conf: web::Data<Arc<MyCondominiumConfig>>) -> HttpResponse {
+    let conn = &mut establish_connection_pg(&conf);
 
     let id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,

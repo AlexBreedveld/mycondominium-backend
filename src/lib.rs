@@ -8,15 +8,15 @@ pub mod utilities;
 
 use diesel_migrations::{EmbeddedMigrations, embed_migrations};
 use std::env;
+use crate::internal::config::model::MyCondominiumConfig;
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 
-pub fn establish_connection_pg() -> diesel::PgConnection {
+pub fn establish_connection_pg(conf: &MyCondominiumConfig) -> diesel::PgConnection {
     use diesel::prelude::*;
-
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    PgConnection::establish(&database_url)
-        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
+    
+    PgConnection::establish(&conf.database.url)
+        .unwrap_or_else(|_| panic!("Error connecting to {}", &conf.database.url))
 }
 
 pub async fn establish_connection_minio()

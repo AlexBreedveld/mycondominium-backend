@@ -13,8 +13,8 @@ use std::io::ErrorKind;
         (status = 500, description = "Error signing in admin", body = HttpResponseObjectEmptyError),
     ),
 )]
-pub async fn sign_in(body: web::Json<auth_model::AuthModel>, req: HttpRequest) -> HttpResponse {
-    let conn = &mut establish_connection_pg();
+pub async fn sign_in(body: web::Json<auth_model::AuthModel>, req: HttpRequest, conf: web::Data<Arc<MyCondominiumConfig>>) -> HttpResponse {
+    let conn = &mut establish_connection_pg(&conf);
     let email = body.email.trim().to_string();
     let password = body.password.trim().to_string();
     let mut found = false;

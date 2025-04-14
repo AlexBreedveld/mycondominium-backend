@@ -15,8 +15,8 @@ use super::*;
         ("Token" = [])
     )
 )]
-pub async fn new_vehicle(body: web::Json<vehicle_model::VehicleModelNew>, req: HttpRequest) -> HttpResponse {
-    let conn = &mut establish_connection_pg();
+pub async fn new_vehicle(body: web::Json<vehicle_model::VehicleModelNew>, req: HttpRequest, conf: web::Data<&MyCondominiumConfig>) -> HttpResponse {
+    let conn = &mut establish_connection_pg(&conf);
     let body = body.into_inner();
 
     let (role, claims, token) = match authenticate_user(req.clone(), conn) {
@@ -113,8 +113,9 @@ pub async fn update_vehicle(
     id: web::Path<String>,
     body: web::Json<vehicle_model::VehicleModelNew>,
     req: HttpRequest,
+    conf: web::Data<&MyCondominiumConfig>
 ) -> HttpResponse {
-    let conn = &mut establish_connection_pg();
+    let conn = &mut establish_connection_pg(&conf);
     let id = id.into_inner();
     let body = body.into_inner();
 
@@ -226,8 +227,8 @@ pub async fn update_vehicle(
         ("Token" = [])
     )
 )]
-pub async fn delete_vehicle(id: web::Path<String>, req: HttpRequest) -> HttpResponse {
-    let conn = &mut establish_connection_pg();
+pub async fn delete_vehicle(id: web::Path<String>, req: HttpRequest, conf: web::Data<&MyCondominiumConfig>) -> HttpResponse {
+    let conn = &mut establish_connection_pg(&conf);
     let id = id.into_inner();
 
     let (role, claims, token) = match authenticate_user(req.clone(), conn) {

@@ -1,0 +1,25 @@
+database:
+  url: postgres://<DATABASE_USER>:<DATABASE_PASSWORD>@127.0.0.1/<DATABASE_NAME>
+
+smtp:
+  host: "<SMTP_HOST>"
+  port: "<SMTP_PORT>"
+  username: "<SMTP_USERNAME>"
+  password: "<SMTP_PASSWORD>"
+  from: "<SMTP_FROM>"
+  # Possible values: "PLAIN", "STARTLS", "TLS"
+  security: "<SMTP_SECURITY>"
+
+minio:
+  url: "<MINIO_URL>"
+  bucket_name: "<MINIO_BUCKET_NAME>"
+  access_key: "<MINIO_ACCESS_KEY>"
+  secret_key: "<MINIO_SECRET_KEY>"
+
+server:
+  host: "127.0.0.1"
+  port: "<SERVER_PORT>"
+
+auth:
+  token_expiration_days: <AUTH_TOKEN_EXPIRATION_DAYS>
+  token_secret_key: "<AUTH_TOKEN_SECRET_KEY>"

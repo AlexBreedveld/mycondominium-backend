@@ -8,9 +8,9 @@ stages:
   - deploy
 
 include:
-  - local: .gitlab-ci/build.yml
-  - local: .gitlab-ci/release.yml
-  - local: .gitlab-ci/deploy.yml
+  - local: .gitlab-ci/.gitlab-ci.build.yml
+  - local: .gitlab-ci/.gitlab-ci.release.yml
+  - local: .gitlab-ci/.gitlab-ci.deploy.yml
 
 tests:
   stage: test

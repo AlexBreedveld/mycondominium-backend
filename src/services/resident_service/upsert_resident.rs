@@ -16,8 +16,8 @@ use super::*;
         ("Token" = [])
     )
 )]
-pub async fn new_resident(body: web::Json<resident_model::ResidentModelNew>, req: HttpRequest) -> HttpResponse {
-    let conn = &mut establish_connection_pg();
+pub async fn new_resident(body: web::Json<resident_model::ResidentModelNew>, req: HttpRequest, conf: web::Data<Arc<MyCondominiumConfig>>) -> HttpResponse {
+    let conn = &mut establish_connection_pg(&conf);
 
     let body = body.into_inner();
 
@@ -179,9 +179,10 @@ pub async fn new_resident(body: web::Json<resident_model::ResidentModelNew>, req
 pub async fn update_resident(
     id: web::Path<String>,
     body: web::Json<resident_model::ResidentModelNew>,
-    req: HttpRequest
+    req: HttpRequest,
+    conf: web::Data<Arc<MyCondominiumConfig>>
 ) -> HttpResponse {
-    let conn = &mut establish_connection_pg();
+    let conn = &mut establish_connection_pg(&conf);
     let body = body.into_inner();
 
     match authenticate_user(req.clone(), conn) {
@@ -302,8 +303,8 @@ pub async fn update_resident(
         ("Token" = [])
     )
 )]
-pub async fn delete_resident(id: web::Path<String>, req: HttpRequest) -> HttpResponse {
-    let conn = &mut establish_connection_pg();
+pub async fn delete_resident(id: web::Path<String>, req: HttpRequest, conf: web::Data<Arc<MyCondominiumConfig>>) -> HttpResponse {
+    let conn = &mut establish_connection_pg(&conf);
 
     let id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,

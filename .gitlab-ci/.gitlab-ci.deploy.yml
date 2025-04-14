@@ -9,6 +9,14 @@ deploy_dev:
   variables:
     CODER_URL: "https://coder.al3xdev.net"
     CODER_SESSION_TOKEN: $CODER_TOKEN
+    DATABASE_USER: "postgres"
+    DATABASE_PASSWORD: "toor"
+    DATABASE_NAME: $DEV_DB_NAME
+    SERVER_PORT: "3030"
+    AUTH_TOKEN_EXPIRATION_DAYS: "30"
+    AUTH_TOKEN_SECRET_KEY: $DEF_AUTH_TOKEN_SECRET_KEY
+    SAMPLE_CONFIG_PATH: "./.dev-config.yaml"
+    OUTPUT_CONFIG_PATH: "./config.yaml"
   needs:
     job: release_nightly
     artifacts: true
@@ -38,19 +46,16 @@ deploy_dev:
     - export BIN_URL=$(curl -X GET https://git.al3xdev.com/api/v4/projects/187/releases | jq 'map(select(.tag_name? | contains("nightly"))) | first' | jq -r '.assets.links[] | select(.name? | contains("linux-gnu-amd64")) | .direct_asset_url')
     - ssh coder.${CODER_WORKSPACE_DEV}.main -t "sudo su coder -c \"wget -O ~/dev_deployment/mycondominium-backend '${BIN_URL}'\""
     - ssh coder.${CODER_WORKSPACE_DEV}.main -t "sudo su coder -c \"chmod +x ~/dev_deployment/mycondominium-backend\""
-    - |
-      echo -e "
-      DATABASE_URL=postgres://postgres:toor@127.0.0.1/${DEV_DB_NAME}
-      MINIO_URL=\"\"
-      MINIO_BUCKET_NAME=\"\"
-      MINIO_ACCESS_KEY=\"\"
-      MINIO_SECRET_KEY=\"\"
-      SERVER_HOST=\"127.0.0.1\"
-      SERVER_PORT=\"3030\"
-      AUTH_TOKEN_EXPIRATION_DAYS=30
-      AUTH_TOKEN_SECRET_KEY=${DEF_AUTH_TOKEN_SECRET_KEY}" > ./.dev-env
-    - scp ./.dev-env coder.${CODER_WORKSPACE_DEV}.main:/tmp/.mycondominium-dev-env
-    - ssh coder.${CODER_WORKSPACE_DEV}.main -t "sudo mv /tmp/.mycondominium-dev-env /home/coder/dev_deployment/.env && sudo chown coder:coder /home/coder/dev_deployment/.env"
+    - wget 'https://git.al3xdev.com/puc/software-engineering-v/mycondominium-backend/-/raw/dev/res/config_template.yaml?ref_type=heads' -O "${SAMPLE_CONFIG_PATH}"
+    - >
+      sed -e "s/<DATABASE_PASSWORD>/${DATABASE_PASSWORD}/" \
+      -e "s/<DATABASE_NAME>/${DATABASE_NAME}/" \
+      -e "s/<SERVER_PORT>/${SERVER_PORT}/" \
+      -e "s/<AUTH_TOKEN_EXPIRATION_DAYS>/${AUTH_TOKEN_EXPIRATION_DAYS}/" \
+      -e "s/<AUTH_TOKEN_SECRET_KEY>/${AUTH_TOKEN_SECRET_KEY}/" \
+      "${SAMPLE_CONFIG_PATH}" > "${OUTPUT_CONFIG_PATH}"
+    - scp ${OUTPUT_CONFIG_PATH} coder.${CODER_WORKSPACE_DEV}.main:/tmp/dev-config.yaml
+    - ssh coder.${CODER_WORKSPACE_DEV}.main -t "sudo mv /tmp/dev-config.yaml /home/coder/dev_deployment/config.yaml && sudo chown coder:coder /home/coder/dev_deployment/config.yaml"
     - ssh coder.${CODER_WORKSPACE_DEV}.main -t "sudo systemctl restart mycondominium-backend-dev.service"
   environment:
     name: Development
@@ -84,6 +89,14 @@ deploy_main:
   variables:
     CODER_URL: "https://coder.al3xdev.net"
     CODER_SESSION_TOKEN: $CODER_TOKEN
+    DATABASE_USER: "postgres"
+    DATABASE_PASSWORD: "toor"
+    DATABASE_NAME: $MAIN_DB_NAME
+    SERVER_PORT: "3030"
+    AUTH_TOKEN_EXPIRATION_DAYS: "30"
+    AUTH_TOKEN_SECRET_KEY: $DEF_AUTH_TOKEN_SECRET_KEY
+    SAMPLE_CONFIG_PATH: "./.main-config.yaml"
+    OUTPUT_CONFIG_PATH: "./config.yaml"
   needs:
     job: release_main
     artifacts: true
@@ -113,19 +126,16 @@ deploy_main:
     - export BIN_URL=$(curl -X GET https://git.al3xdev.com/api/v4/projects/187/releases | jq 'map(select(.tag_name? | contains("mainline"))) | first' | jq -r '.assets.links[] | select(.name? | contains("linux-gnu-amd64")) | .direct_asset_url')
     - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "sudo su coder -c \"wget -O ~/main_deployment/mycondominium-backend '${BIN_URL}'\""
     - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "sudo su coder -c \"chmod +x ~/main_deployment/mycondominium-backend\""
-    - |
-      echo -e "
-      DATABASE_URL=postgres://postgres:toor@127.0.0.1/${MAIN_DB_NAME}
-      MINIO_URL=\"\"
-      MINIO_BUCKET_NAME=\"\"
-      MINIO_ACCESS_KEY=\"\"
-      MINIO_SECRET_KEY=\"\"
-      SERVER_HOST=\"127.0.0.1\"
-      SERVER_PORT=\"3030\"
-      AUTH_TOKEN_EXPIRATION_DAYS=30
-      AUTH_TOKEN_SECRET_KEY=${DEF_AUTH_TOKEN_SECRET_KEY}" > ./.main-env
-    - scp ./.main-env coder.${CODER_WORKSPACE_MAIN}.main:/tmp/.mycondominium-main-env
-    - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "sudo mv /tmp/.mycondominium-main-env /home/coder/main_deployment/.env && sudo chown coder:coder /home/coder/main_deployment/.env"
+    - wget 'https://git.al3xdev.com/puc/software-engineering-v/mycondominium-backend/-/raw/main/res/config_template.yaml?ref_type=heads' -O "${SAMPLE_CONFIG_PATH}"
+    - >
+      sed -e "s/<DATABASE_PASSWORD>/${DATABASE_PASSWORD}/" \
+      -e "s/<DATABASE_NAME>/${DATABASE_NAME}/" \
+      -e "s/<SERVER_PORT>/${SERVER_PORT}/" \
+      -e "s/<AUTH_TOKEN_EXPIRATION_DAYS>/${AUTH_TOKEN_EXPIRATION_DAYS}/" \
+      -e "s/<AUTH_TOKEN_SECRET_KEY>/${AUTH_TOKEN_SECRET_KEY}/" \
+      "${SAMPLE_CONFIG_PATH}" > "${OUTPUT_CONFIG_PATH}"
+    - scp ${OUTPUT_CONFIG_PATH} coder.${CODER_WORKSPACE_MAIN}.main:/tmp/.main-config.yaml
+    - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "sudo mv /tmp/.main-config.yaml /home/coder/main_deployment/config.yaml && sudo chown coder:coder /home/coder/main_deployment/config.yaml"
     - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "sudo systemctl restart mycondominium-backend-main.service"
   environment:
     name: Mainline
