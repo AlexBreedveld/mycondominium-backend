@@ -6,6 +6,8 @@ release_nightly:
   image: registry.gitlab.com/gitlab-org/release-cli:latest
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
+    - if: $SKIP_BUILD == "true"
+      when: never
   variables:
     LINUX_AMD64_GLIB_BIN: "mycondominium-server-linux-gnu-amd64"
     LINUX_AMD64_MUSL_BIN: "mycondominium-server-linux-musl-amd64"
@@ -44,6 +46,8 @@ release_main:
   image: registry.gitlab.com/gitlab-org/release-cli:latest
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
+    - if: $SKIP_BUILD == "true"
+      when: never
   variables:
     LINUX_AMD64_GLIB_BIN: "mycondominium-server-linux-gnu-amd64"
     LINUX_AMD64_MUSL_BIN: "mycondominium-server-linux-musl-amd64"
