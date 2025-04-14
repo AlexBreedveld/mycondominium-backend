@@ -21,7 +21,7 @@ deploy_dev:
     job: release_nightly
     artifacts: true
   before_script:
-    - apt-get update && apt-get install -y curl sudo openssh-client openssl jq
+    - apt-get update && apt-get install -y curl sudo openssh-client openssl wget jq
     - curl -fsSL https://coder.al3xdev.net/install.sh | sh
   script:
     - mkdir -p ~/.ssh
@@ -101,7 +101,7 @@ deploy_main:
     job: release_main
     artifacts: true
   before_script:
-    - apt-get update && apt-get install -y curl sudo openssh-client openssl jq
+    - apt-get update && apt-get install -y curl sudo openssh-client openssl wget jq
     - curl -fsSL https://coder.al3xdev.net/install.sh | sh
   script:
     - mkdir -p ~/.ssh
