@@ -20,6 +20,7 @@ tests:
     - echo "Checking if pipeline for this branch has already ran"
     - curl -s -X GET https://git.al3xdev.com/api/v4/projects/187/releases | jq --arg target_commit "${CI_COMMIT_SHA}" 'any(.[]; .commit.id == $target_commit)' > .pipeline_re_run_status
     - if [ $(cat ./.pipeline_re_run_status) == "true" ]; then echo "Skipping because this is a re-run"; exit 0; fi
+    - if [ ${SKIP_BUILD} == "true" ]; then echo "Skipping because of SKIP_BUILD set to true"; exit 0; fi
     - cargo test --verbose
   artifacts:
     paths:
@@ -37,6 +38,7 @@ doc-rustdoc:
     artifacts: true
   script:
     - if [ $(cat ./.pipeline_re_run_status) == "true" ]; then echo "Skipping because this is a re-run"; exit 0; fi
+    - if [ ${SKIP_BUILD} == "true" ]; then echo "Skipping because of SKIP_BUILD set to true"; exit 0; fi
     - cargo doc --no-deps
     - mkdir swagger
     - cargo run -- generate-swagger > ./swagger/openapi.json
@@ -60,6 +62,7 @@ pages:
       artifacts: false
   script:
     - if [ $(cat ./.pipeline_re_run_status) == "true" ]; then echo "Skipping because this is a re-run"; exit 0; fi
+    - if [ ${SKIP_BUILD} == "true" ]; then echo "Skipping because of SKIP_BUILD set to true"; exit 0; fi
     - mkdir public
     - mkdir public/rustdoc
     - mkdir public/swagger
@@ -79,6 +82,7 @@ pages-swagger:
       artifacts: true
   script:
     - if [ $(cat ./.pipeline_re_run_status) == "true" ]; then echo "Skipping because this is a re-run"; exit 0; fi
+    - if [ ${SKIP_BUILD} == "true" ]; then echo "Skipping because of SKIP_BUILD set to true"; exit 0; fi
     - mkdir public-swagger
     - npx @redocly/cli build-docs -o public-swagger/index.html swagger/openapi.json
   artifacts:

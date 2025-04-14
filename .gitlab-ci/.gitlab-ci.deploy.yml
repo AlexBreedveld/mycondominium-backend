@@ -47,7 +47,7 @@ deploy_dev:
     - ssh coder.${CODER_WORKSPACE_DEV}.main -t "sudo su coder -c \"wget -O ~/dev_deployment/mycondominium-backend '${BIN_URL}'\""
     - ssh coder.${CODER_WORKSPACE_DEV}.main -t "sudo su coder -c \"chmod +x ~/dev_deployment/mycondominium-backend\""
     - wget 'https://git.al3xdev.com/puc/software-engineering-v/mycondominium-backend/-/raw/dev/res/config_template.yaml?ref_type=heads' -O "${SAMPLE_CONFIG_PATH}"
-    - >
+    - |
       sed -e "s/<DATABASE_PASSWORD>/${DATABASE_PASSWORD}/" \
       -e "s/<DATABASE_NAME>/${DATABASE_NAME}/" \
       -e "s/<SERVER_PORT>/${SERVER_PORT}/" \
@@ -127,7 +127,7 @@ deploy_main:
     - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "sudo su coder -c \"wget -O ~/main_deployment/mycondominium-backend '${BIN_URL}'\""
     - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "sudo su coder -c \"chmod +x ~/main_deployment/mycondominium-backend\""
     - wget 'https://git.al3xdev.com/puc/software-engineering-v/mycondominium-backend/-/raw/main/res/config_template.yaml?ref_type=heads' -O "${SAMPLE_CONFIG_PATH}"
-    - >
+    - |
       sed -e "s/<DATABASE_PASSWORD>/${DATABASE_PASSWORD}/" \
       -e "s/<DATABASE_NAME>/${DATABASE_NAME}/" \
       -e "s/<SERVER_PORT>/${SERVER_PORT}/" \
