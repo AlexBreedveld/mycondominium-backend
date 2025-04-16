@@ -23,6 +23,9 @@ build:
     - cloud-br9
   except:
     - tags
+  rules:
+    - if: $SKIP_BUILD == "true"
+      when: never
   image: registry.git.al3xdev.com:443/alex/rust-cross/rust-cross:latest
   services:
     - docker:dind
