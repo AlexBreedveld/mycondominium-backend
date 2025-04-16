@@ -51,6 +51,7 @@ deploy_dev:
     - |
       sed -e "s/<DATABASE_PASSWORD>/${DATABASE_PASSWORD}/" \
       -e "s/<DATABASE_NAME>/${DATABASE_NAME}/" \
+      -e "s/<DATABASE_USER>/${DATABASE_USER}/" \
       -e "s/<SERVER_PORT>/${SERVER_PORT}/" \
       -e "s/<AUTH_TOKEN_EXPIRATION_DAYS>/${AUTH_TOKEN_EXPIRATION_DAYS}/" \
       -e "s/<AUTH_TOKEN_SECRET_KEY>/${AUTH_TOKEN_SECRET_KEY}/" \
@@ -132,6 +133,7 @@ deploy_main:
     - |
       sed -e "s/<DATABASE_PASSWORD>/${DATABASE_PASSWORD}/" \
       -e "s/<DATABASE_NAME>/${DATABASE_NAME}/" \
+      -e "s/<DATABASE_USER>/${DATABASE_USER}/" \
       -e "s/<SERVER_PORT>/${SERVER_PORT}/" \
       -e "s/<AUTH_TOKEN_EXPIRATION_DAYS>/${AUTH_TOKEN_EXPIRATION_DAYS}/" \
       -e "s/<AUTH_TOKEN_SECRET_KEY>/${AUTH_TOKEN_SECRET_KEY}/" \
