@@ -18,8 +18,9 @@ deploy_dev:
     SAMPLE_CONFIG_PATH: "./.dev-config.yaml"
     OUTPUT_CONFIG_PATH: "./config.yaml"
   needs:
-    job: release_nightly
-    artifacts: true
+    - job: release_nightly
+      artifacts: true
+      optional: true
   before_script:
     - apt-get update && apt-get install -y curl sudo openssh-client openssl wget jq
     - curl -fsSL https://coder.al3xdev.net/install.sh | sh
@@ -98,8 +99,9 @@ deploy_main:
     SAMPLE_CONFIG_PATH: "./.main-config.yaml"
     OUTPUT_CONFIG_PATH: "./config.yaml"
   needs:
-    job: release_main
-    artifacts: true
+    - job: release_main
+      artifacts: true
+      optional: true
   before_script:
     - apt-get update && apt-get install -y curl sudo openssh-client openssl wget jq
     - curl -fsSL https://coder.al3xdev.net/install.sh | sh
