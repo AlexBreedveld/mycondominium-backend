@@ -7,7 +7,8 @@ release_nightly:
   rules:
     - if: $SKIP_BUILD == "true"
       when: never
-    - if: $CI_COMMIT_BRANCH == "dev"
+    - if: $CI_COMMIT_BRANCH != "dev"
+      when: never
     - if: $CI_COMMIT_TAG
       when: never
     - when: always
@@ -50,7 +51,8 @@ release_main:
   rules:
     - if: $SKIP_BUILD == "true"
       when: never
-    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH != "main"
+      when: never
     - if: $CI_COMMIT_TAG
       when: never
     - when: always
