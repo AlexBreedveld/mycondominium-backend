@@ -64,7 +64,6 @@ pub async fn get_residents(query: web::Query<PaginationParams>, req: HttpRequest
                 .filter(
                     user_roles::role
                         .eq(UserRoles::Resident)
-                        .or(user_roles::role.eq(UserRoles::Guest)),
                 )
                 .count()
                 .get_result::<i64>(conn)

@@ -62,13 +62,6 @@ pub async fn new_resident(body: web::Json<resident_model::ResidentModelNew>, req
         }
     }
 
-    if body.role == UserRoles::Admin || body.role == UserRoles::Root {
-        return HttpResponse::BadRequest().json(HttpResponseObjectEmptyError {
-            error: true,
-            message: "Admins can't be created through this endpoint".to_string(),
-        });
-    }
-
     let new_obj = resident_model::ResidentModel {
         id: Uuid::new_v4(),
         first_name: body.first_name,
@@ -129,7 +122,7 @@ pub async fn new_resident(body: web::Json<resident_model::ResidentModelNew>, req
             let new_obj_user_role = user_role_model::UserRoleModel {
                 id: user_role_model::UserRoleModel::new_id(conn),
                 user_id: new_obj_user.id,
-                role: body.role,
+                role: UserRoles::Resident,
                 community_id: body.community_id,
                 created_at: chrono::Utc::now().naive_utc(),
                 updated_at: chrono::Utc::now().naive_utc(),
@@ -187,7 +180,7 @@ pub async fn update_resident(
 
     match authenticate_user(req.clone(), conn) {
         Ok((role, claims, token)) => {
-            if body.role == UserRoles::Admin {
+            if role.role == UserRoles::Admin {
                 if role.role != UserRoles::Root {
                     if body.community_id.is_none() || role.community_id.is_none() {
                         return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
@@ -205,7 +198,7 @@ pub async fn update_resident(
                         });
                     }
                 }
-            } else if body.role == UserRoles::Root && role.role != UserRoles::Root {
+            } else if role.role == UserRoles::Root && role.role != UserRoles::Root {
                 return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                     error: true,
                     message: "Unauthorized".to_string(),

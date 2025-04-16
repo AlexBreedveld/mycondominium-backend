@@ -5,7 +5,7 @@ pub struct MyCondominiumConfig {
     #[serde(rename = "database")]
     pub database: ConfigDatabase,
 
-    #[serde(rename = "smtp", default)]
+    #[serde(rename = "smtp")]
     pub smtp: ConfigSmtp,
 
     #[serde(rename = "minio")]
@@ -23,8 +23,8 @@ pub struct ConfigDatabase {
     pub url: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
-struct ConfigSmtp {
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ConfigSmtp {
     pub host: String,
     pub port: String,
     pub username: String,

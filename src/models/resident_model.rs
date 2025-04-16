@@ -46,7 +46,6 @@ pub struct ResidentModelNew {
     pub email: String,
     pub date_of_birth: Option<NaiveDate>,
     pub password: Option<String>,
-    pub role: UserRoles,
     pub community_id: Option<Uuid>,
     pub is_active: bool,
 }
@@ -117,7 +116,6 @@ impl ResidentModel {
             || (user_role.role == UserRoles::Admin && user_role.community_id == role.community_id)
             || (user_role.role == UserRoles::Resident
                 && user_role.community_id == role.community_id)
-            || (user_role.role == UserRoles::Guest && user_role.community_id == role.community_id)
         {
             let user_result = UserModelResult {
                 id: user.id,
@@ -156,7 +154,6 @@ impl ResidentModel {
             .filter(
                 user_roles::role
                     .eq(UserRoles::Resident)
-                    .or(user_roles::role.eq(UserRoles::Guest)),
             )
             .into_boxed(); // Needed for conditional filters
 

@@ -49,7 +49,7 @@ pub async fn get_vehicles(query: web::Query<PaginationParams>, req: HttpRequest,
         UserRoles::Admin => {
             total_items_query = total_items_query.filter(user_roles::community_id.eq(role.community_id));;
         },
-        UserRoles::Resident | UserRoles::Guest => {
+        UserRoles::Resident => {
             total_items_query = total_items_query.filter(user_roles::user_id.eq(role.user_id));;
         },
     };
