@@ -28,7 +28,7 @@ pub async fn get_vehicles(query: web::Query<PaginationParams>, req: HttpRequest,
 
     let conn = &mut establish_connection_pg(&conf);
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn) {
+    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => (role, claims, token),
         Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
@@ -123,7 +123,7 @@ pub async fn get_vehicle_by_id(id: web::Path<String>, req: HttpRequest, conf: we
         }
     };
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn) {
+    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => (role, claims, token),
         Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {

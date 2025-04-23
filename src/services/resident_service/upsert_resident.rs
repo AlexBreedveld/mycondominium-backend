@@ -21,7 +21,7 @@ pub async fn new_resident(body: web::Json<resident_model::ResidentModelNew>, req
 
     let body = body.into_inner();
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn) {
+    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => {
             if role.role == UserRoles::Root || role.role == UserRoles::Admin {
                 (role, claims, token)
@@ -178,7 +178,7 @@ pub async fn update_resident(
     let conn = &mut establish_connection_pg(&conf);
     let body = body.into_inner();
 
-    match authenticate_user(req.clone(), conn) {
+    match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => {
             if role.role == UserRoles::Admin {
                 if role.role != UserRoles::Root {
@@ -345,7 +345,7 @@ pub async fn delete_resident(id: web::Path<String>, req: HttpRequest, conf: web:
         }
     };
 
-    match authenticate_user(req.clone(), conn) {
+    match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => {
             if role.role != UserRoles::Root {
                 if res_user_role.community_id.is_none() || role.community_id.is_none() {

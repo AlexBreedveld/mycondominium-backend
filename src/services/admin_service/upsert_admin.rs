@@ -41,7 +41,7 @@ pub async fn new_admin(
             }
         };
         if total_root_admins != 0 {
-            match authenticate_user(req.clone(), conn) {
+            match authenticate_user(req.clone(), conn, conf) {
                 Ok((role, claims, token)) => {
                     if role.role != UserRoles::Root {
                         return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
@@ -59,7 +59,7 @@ pub async fn new_admin(
             }
         }
     } else if body.role == UserRoles::Admin {
-        match authenticate_user(req.clone(), conn) {
+        match authenticate_user(req.clone(), conn, conf) {
             Ok((role, claims, token)) => {
                 if role.role != UserRoles::Root {
                     if body.community_id.is_none() || role.community_id.is_none() {
@@ -216,7 +216,7 @@ pub async fn update_admin(
     let conn = &mut establish_connection_pg(&conf);
     let body = body.into_inner();
 
-    match authenticate_user(req.clone(), conn) {
+    match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => {
             if body.role == UserRoles::Admin {
                 if role.role != UserRoles::Root {
@@ -378,7 +378,7 @@ pub async fn delete_admin(id: web::Path<String>, req: HttpRequest, conf: web::Da
         }
     };
 
-    match authenticate_user(req.clone(), conn) {
+    match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => {
             if role.role != UserRoles::Root {
                 if adm_user_role.community_id.is_none() || role.community_id.is_none() {

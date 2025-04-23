@@ -29,7 +29,7 @@ pub async fn get_admins(query: web::Query<PaginationParams>, req: HttpRequest, c
 
     let conn = &mut establish_connection_pg(&conf);
 
-    let admin_role = match authenticate_user(req.clone(), conn) {
+    let admin_role = match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => {
             if role.role == UserRoles::Root || role.role == UserRoles::Admin {
                 role
@@ -144,7 +144,7 @@ pub async fn get_admin_by_id(id: web::Path<String>, req: HttpRequest, conf: web:
         }
     };
 
-    let admin_role = match authenticate_user(req.clone(), conn) {
+    let admin_role = match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => {
             if role.role == UserRoles::Root || role.role == UserRoles::Admin {
                 role

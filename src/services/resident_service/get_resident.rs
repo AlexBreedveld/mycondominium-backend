@@ -27,7 +27,7 @@ pub async fn get_residents(query: web::Query<PaginationParams>, req: HttpRequest
 
     let conn = &mut establish_connection_pg(&conf);
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn) {
+    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => {
             if role.role == UserRoles::Root || role.role == UserRoles::Admin {
                 (role, claims, token)
@@ -144,7 +144,7 @@ pub async fn get_resident_by_id(id: web::Path<String>, req: HttpRequest, conf: w
         }
     };
 
-    let role = match authenticate_user(req.clone(), conn) {
+    let role = match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => {
             if role.role == UserRoles::Root || role.role == UserRoles::Admin {
                 role

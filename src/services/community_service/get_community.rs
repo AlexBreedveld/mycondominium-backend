@@ -33,7 +33,7 @@ pub async fn get_communities(
 
     let conn = &mut establish_connection_pg(&conf);
 
-    match authenticate_user(req.clone(), conn) {
+    match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => {
             if role.role != UserRoles::Root {
                 return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
@@ -126,7 +126,7 @@ pub async fn get_community_by_id(id: web::Path<String>, req: HttpRequest, conf: 
         }
     };
 
-    match authenticate_user(req.clone(), conn) {
+    match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => {
             if !(role.role == UserRoles::Root
                 || (role.role == UserRoles::Admin && role.community_id == Some(id)))

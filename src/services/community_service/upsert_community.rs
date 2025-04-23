@@ -24,7 +24,7 @@ pub async fn new_community(
 
     let body = body.into_inner();
 
-    match authenticate_user(req.clone(), conn) {
+    match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => {
             if role.role != UserRoles::Root {
                 return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
@@ -109,7 +109,7 @@ pub async fn update_community(
         }
     };
 
-    match authenticate_user(req.clone(), conn) {
+    match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => match role.role {
             UserRoles::Root => (),
             UserRoles::Admin => {
@@ -200,7 +200,7 @@ pub async fn delete_community(id: web::Path<String>, req: HttpRequest, conf: web
         }
     };
 
-    match authenticate_user(req.clone(), conn) {
+    match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => match role.role {
             UserRoles::Root => (),
             _ => {
