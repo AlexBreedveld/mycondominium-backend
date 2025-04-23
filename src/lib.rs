@@ -7,6 +7,7 @@ pub mod types;
 pub mod utilities;
 
 use diesel_migrations::{EmbeddedMigrations, embed_migrations};
+use crate::internal::config::model::ConfigRabbitmq;
 use std::env;
 use crate::internal::config::model::MyCondominiumConfig;
 
@@ -50,4 +51,9 @@ pub async fn establish_connection_minio()
     };
 
     Ok(client)
+}
+
+pub async fn establish_connection_rabbitmq(config: &ConfigRabbitmq) -> Result<lapin::Connection, lapin::Error> {
+    let addr = format!("amqp://{}:{}@{}:{}", config.username, config.password, config.host, config.port);
+    lapin::Connection::connect(&addr, lapin::ConnectionProperties::default()).await
 }

@@ -99,7 +99,7 @@ pub async fn sign_in(body: web::Json<auth_model::AuthModel>, req: HttpRequest, c
 
         let token_id = auth_token_model::AuthTokenModel::new_id(conn);
 
-        let token = match generate_jwt_token(user_obj.id, token_id) {
+        let token = match generate_jwt_token_no_env(user_obj.id, token_id, conf.auth.token_secret_key.clone(), conf.auth.token_expiration_days as i64) {
             Ok(new_token) => new_token,
             Err(e) => {
                 log::error!("Error generating JWT token: {}", e);

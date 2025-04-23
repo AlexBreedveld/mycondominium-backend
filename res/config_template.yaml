@@ -10,6 +10,12 @@ smtp:
   # Possible values: "PLAIN", "STARTLS", "TLS"
   security: "<SMTP_SECURITY>"
 
+rabbitmq:
+  host: "<RABBITMQ_HOST>"
+  port: "<RABBITMQ_PORT>"
+  username: "<RABBITMQ_USERNAME>"
+  password: "<RABBITMQ_PASSWORD>"
+
 minio:
   url: "<MINIO_URL>"
   bucket_name: "<MINIO_BUCKET_NAME>"

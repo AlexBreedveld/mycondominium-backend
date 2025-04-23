@@ -50,6 +50,33 @@ pub struct ResidentModelNew {
     pub is_active: bool,
 }
 
+#[derive(
+    Queryable,
+    Selectable,
+    Insertable,
+    Serialize,
+    Deserialize,
+    Clone,
+    Debug,
+    AsChangeset,
+    Validate,
+    ToSchema,
+    DbOps,
+)]
+#[diesel(table_name = crate::schema::resident_invites)]
+pub struct ResidentInviteModel {
+    pub id: Uuid,
+    pub email: String,
+    pub community_id: Uuid,
+    pub created_at: NaiveDateTime,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Validate, ToSchema)]
+pub struct ResidentInviteModelNew {
+    pub email: String,
+    pub community_id: Uuid,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, Validate, ToSchema)]
 pub struct ResidentModelResult {
     pub resident: ResidentModel,

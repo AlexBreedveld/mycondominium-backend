@@ -171,6 +171,15 @@ diesel::table! {
 }
 
 diesel::table! {
+    resident_invites (id) {
+        id -> Uuid,
+        email -> Text,
+        community_id -> Uuid,
+        created_at -> Timestamp,
+    }
+}
+
+diesel::table! {
     residents (id) {
         id -> Uuid,
         first_name -> Text,
@@ -253,6 +262,7 @@ diesel::joinable!(parcels -> communities (community_id));
 diesel::joinable!(parcels -> residents (resident_id));
 diesel::joinable!(reservations -> common_areas (common_area_id));
 diesel::joinable!(reservations -> residents (resident_id));
+diesel::joinable!(resident_invites -> communities (community_id));
 diesel::joinable!(user_roles -> communities (community_id));
 diesel::joinable!(user_roles -> users (user_id));
 diesel::joinable!(users -> admins (admin_id));
@@ -275,6 +285,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     maintenance_schedules,
     parcels,
     reservations,
+    resident_invites,
     residents,
     user_roles,
     users,

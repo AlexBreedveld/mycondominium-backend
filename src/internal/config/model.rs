@@ -16,6 +16,9 @@ pub struct MyCondominiumConfig {
 
     #[serde(rename = "auth")]
     pub auth: ConfigAuth,
+
+    #[serde(rename = "rabbitmq")]
+    pub rabbitmq: ConfigRabbitmq,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -53,4 +56,12 @@ pub struct ConfigAuth {
     pub token_expiration_days: u32,
     #[serde(rename = "token_secret_key")]
     pub token_secret_key: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ConfigRabbitmq {
+    pub host: String,
+    pub port: String,
+    pub username: String,
+    pub password: String,
 }

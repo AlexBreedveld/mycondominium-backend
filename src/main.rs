@@ -6,7 +6,6 @@ use actix_web::{App, HttpResponse, HttpServer, web};
 use clap::Parser;
 use diesel_migrations::MigrationHarness;
 use dotenvy::dotenv;
-use log::log;
 use mycondominium_backend::routes::routes::*;
 use mycondominium_backend::services::ApiDoc;
 use mycondominium_backend::{MIGRATIONS, establish_connection_pg};
