@@ -56,6 +56,30 @@ pub fn community_route() -> actix_web::Scope {
         )
 }
 
+pub fn maintenance_schedule_route() -> actix_web::Scope {
+    web::scope("/api/maintenance_schedule")
+        .route(
+            "/list",
+            web::get().to(crate::services::maintenance_schedule_service::get_maintenance_schedule::get_maintenance_schedules),
+        )
+        .route(
+            "/get/{id}",
+            web::get().to(crate::services::maintenance_schedule_service::get_maintenance_schedule::get_maintenance_schedule_by_id),
+        )
+        .route(
+            "/new",
+            web::post().to(crate::services::maintenance_schedule_service::upsert_maintenance_schedule::new_maintenance_schedule),
+        )
+        .route(
+            "/update/{id}",
+            web::put().to(crate::services::maintenance_schedule_service::upsert_maintenance_schedule::update_maintenance_schedule),
+        )
+        .route(
+            "/delete/{id}",
+            web::delete().to(crate::services::maintenance_schedule_service::upsert_maintenance_schedule::delete_maintenance_schedule),
+        )
+}
+
 pub fn resident_route() -> actix_web::Scope {
     web::scope("/api/resident")
         .route(

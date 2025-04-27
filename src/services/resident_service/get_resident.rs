@@ -20,7 +20,11 @@ use super::*;
         ("Token" = [])
     )
 )]
-pub async fn get_residents(query: web::Query<PaginationParams>, req: HttpRequest, conf: web::Data<Arc<MyCondominiumConfig>>) -> HttpResponse {
+pub async fn get_residents(
+    query: web::Query<PaginationParams>,
+    req: HttpRequest,
+    conf: web::Data<Arc<MyCondominiumConfig>>,
+) -> HttpResponse {
     let page = query.page.unwrap_or(1);
     let per_page = query.per_page.unwrap_or(10);
     let offset = (page - 1) * per_page;
@@ -47,24 +51,19 @@ pub async fn get_residents(query: web::Query<PaginationParams>, req: HttpRequest
     };
 
     let total_items = match role.role {
-        UserRoles::Root => {
-            match resident_model::ResidentModel::db_count_all(conn) {
-                Ok(count) => count,
-                Err(e) => {
-                    return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
-                        error: true,
-                        message: "Error getting total items".to_string(),
-                    });
-                }
+        UserRoles::Root => match resident_model::ResidentModel::db_count_all(conn) {
+            Ok(count) => count,
+            Err(e) => {
+                return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+                    error: true,
+                    message: "Error getting total items".to_string(),
+                });
             }
         },
         UserRoles::Admin => {
             match user_role_model::UserRoleModel::table()
                 .filter(user_roles::community_id.eq(role.community_id))
-                .filter(
-                    user_roles::role
-                        .eq(UserRoles::Resident)
-                )
+                .filter(user_roles::role.eq(UserRoles::Resident))
                 .count()
                 .get_result::<i64>(conn)
             {
@@ -76,11 +75,13 @@ pub async fn get_residents(query: web::Query<PaginationParams>, req: HttpRequest
                     });
                 }
             }
-        },
-        _ => return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
-            error: true,
-            message: "Unauthorized".to_string(),
-        })
+        }
+        _ => {
+            return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: "Unauthorized".to_string(),
+            });
+        }
     };
 
     match resident_model::ResidentModel::db_read_all_matching_community_by_range(
@@ -129,7 +130,11 @@ pub async fn get_residents(query: web::Query<PaginationParams>, req: HttpRequest
         ("Token" = [])
     )
 )]
-pub async fn get_resident_by_id(id: web::Path<String>, req: HttpRequest, conf: web::Data<Arc<MyCondominiumConfig>>) -> HttpResponse {
+pub async fn get_resident_by_id(
+    id: web::Path<String>,
+    req: HttpRequest,
+    conf: web::Data<Arc<MyCondominiumConfig>>,
+) -> HttpResponse {
     let id = id.into_inner();
 
     let conn = &mut establish_connection_pg(&conf);
@@ -154,6 +159,7 @@ pub async fn get_resident_by_id(id: web::Path<String>, req: HttpRequest, conf: w
                     message: "Unauthorized".to_string(),
                 });
             }
+            //TODO: Allow resident to get its own info.
         }
         Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
