@@ -5,7 +5,7 @@ use actix_web::http::header;
 pub fn cors() -> Cors {
     Cors::default()
         
-        .allowed_origin("http://localhost:3000")
+        .allow_any_origin()
         
         .supports_credentials()
         .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "OPTIONS"])
