@@ -1,4 +1,5 @@
 mod cli;
+mod middleware; // importa o diretório middleware
 
 use crate::cli::{CliArgs, Commands};
 use actix_web::middleware::Logger;
@@ -6,7 +7,7 @@ use actix_web::{App, HttpResponse, HttpServer, web};
 use clap::Parser;
 use diesel_migrations::MigrationHarness;
 use dotenvy::dotenv;
-use log::log;
+use log::info;
 use mycondominium_backend::routes::routes::*;
 use mycondominium_backend::services::ApiDoc;
 use mycondominium_backend::{MIGRATIONS, establish_connection_pg};
@@ -14,29 +15,38 @@ use std::env;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
+
+use middleware::cors::cors;
+
 #[tokio::main]
 async fn main() {
+    
     env_logger::init();
     dotenv().ok();
+
     let args = CliArgs::parse();
 
     match &args.command {
         Some(Commands::Daemon) => {
+            // Roda migrations
             let conn = &mut establish_connection_pg();
             conn.run_pending_migrations(MIGRATIONS)
                 .expect("Failed to run database migrations");
 
+            // Lê host e port do .env
             let http_host = env::var("SERVER_HOST").expect("SERVER_HOST must be set");
             let http_port: i32 = env::var("SERVER_PORT")
                 .expect("SERVER_PORT must be set")
                 .parse()
                 .unwrap();
 
-            log::info!("Starting server on {}:{}", http_host, http_port);
+            info!("Starting server on {}:{}", http_host, http_port);
 
-            HttpServer::new(|| {
+            
+            HttpServer::new(move || {
                 App::new()
                     .wrap(Logger::default())
+                    .wrap(cors())                
                     .service(resident_route())
                     .service(admin_route())
                     .service(auth_route())
@@ -61,30 +71,38 @@ async fn main() {
             .await
             .unwrap();
         }
+
         Some(Commands::GenerateSwagger) => {
+            // Apenas imprime o JSON do OpenAPI
             println!("{}", ApiDoc::openapi().to_pretty_json().unwrap());
         }
+
         Some(Commands::ServeSwagger) => {
+            // Roda apenas o Swagger UI
             let http_host = env::var("SERVER_HOST").expect("SERVER_HOST must be set");
             let http_port: i32 = env::var("SERVER_PORT")
                 .expect("SERVER_PORT must be set")
                 .parse()
                 .unwrap();
 
-            log::info!("Starting server on {}:{}", http_host, http_port);
+            info!("Starting Swagger server on {}:{}", http_host, http_port);
 
             HttpServer::new(|| {
-                App::new().wrap(Logger::default()).service(
-                    SwaggerUi::new("/docs-v1/{_:.*}")
-                        .url("/api-docs/openapi.json", ApiDoc::openapi()),
-                )
+                App::new()
+                    .wrap(Logger::default())
+                    .wrap(cors())            
+                    .service(
+                        SwaggerUi::new("/docs-v1/{_:.*}")
+                            .url("/api-docs/openapi.json", ApiDoc::openapi()),
+                    )
             })
             .bind(format!("{http_host}:{http_port}"))
-            .unwrap_or_else(|_| panic!("Error binding server to: {}:{}", http_host, http_port))
+            .unwrap_or_else(|_| panic!("Error binding Swagger server to: {}:{}", http_host, http_port))
             .run()
             .await
             .unwrap();
         }
+
         None => {
             println!("No command provided. Use --help for more information.");
         }
