@@ -36,7 +36,7 @@ deploy_dev:
     - coder start -y ${CODER_WORKSPACE_DEV} || true
     - coder config-ssh -y
     - ssh coder.${CODER_WORKSPACE_DEV}.main -t "sudo grep -q '^coder:' /etc/passwd && echo \"User 'coder' exists\" || sudo useradd -m -U -s /bin/bash coder"
-    - ssh coder.${CODER_WORKSPACE_DEV}.main -t 'sudo apt-get update && sudo apt-get install -y curl wget postgresql openssl jq gnupg apt-transport-https'
+    - ssh coder.${CODER_WORKSPACE_DEV}.main -t 'sudo apt-get update && sudo apt-get install -y curl wget postgresql openssl jq gnupg apt-transport-https' || true
     - ssh coder.${CODER_WORKSPACE_DEV}.main -t "curl -s 'https://git.al3xdev.com/puc/software-engineering-v/mycondominium-backend/-/snippets/21/raw/main/rabbitmq_installation.sh' | sudo bash" || true
     - ssh coder.${CODER_WORKSPACE_DEV}.main -t "sudo rabbitmqctl add_user ${RABBITMQ_USER} ${RABBITMQ_PASSWORD} && sudo rabbitmqctl set_user_tags ${RABBITMQ_USER} administrator && sudo rabbitmqctl set_permissions -p / ${RABBITMQ_USER} '.*' '.*' '.*' && sudo rabbitmq-plugins enable rabbitmq_management" || true
     - ssh coder.${CODER_WORKSPACE_DEV}.main -t "if [ -f /etc/systemd/system/mycondominium-backend-dev.service ]; then sudo rm /etc/systemd/system/mycondominium-backend-dev.service; fi"
@@ -136,7 +136,7 @@ deploy_main:
     - coder start -y ${CODER_WORKSPACE_MAIN} || true
     - coder config-ssh -y
     - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "sudo grep -q '^coder:' /etc/passwd && echo \"User 'coder' exists\" || sudo useradd -m -U -s /bin/bash coder"
-    - ssh coder.${CODER_WORKSPACE_MAIN}.main -t 'sudo apt-get update && sudo apt-get install -y curl wget postgresql openssl jq gnupg apt-transport-https'
+    - ssh coder.${CODER_WORKSPACE_MAIN}.main -t 'sudo apt-get update && sudo apt-get install -y curl wget postgresql openssl jq gnupg apt-transport-https' || true
     - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "curl -s 'https://git.al3xdev.com/puc/software-engineering-v/mycondominium-backend/-/snippets/21/raw/main/rabbitmq_installation.sh' | sudo bash" || true
     - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "sudo rabbitmqctl add_user ${RABBITMQ_USER} ${RABBITMQ_PASSWORD} && sudo rabbitmqctl set_user_tags ${RABBITMQ_USER} administrator && sudo rabbitmqctl set_permissions -p / ${RABBITMQ_USER} '.*' '.*' '.*' && sudo rabbitmq-plugins enable rabbitmq_management" || true
     - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "if [ -f /etc/systemd/system/mycondominium-backend-main.service ]; then sudo rm /etc/systemd/system/mycondominium-backend-main.service; fi"
