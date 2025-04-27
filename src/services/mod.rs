@@ -2,6 +2,7 @@ pub mod admin_service;
 pub mod api;
 pub mod auth_service;
 pub mod community_service;
+mod maintenance_schedule_service;
 mod prelude;
 pub mod resident_service;
 pub mod vehicle_service;

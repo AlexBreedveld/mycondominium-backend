@@ -49,6 +49,7 @@ pub struct ConfigMinio {
 pub struct ConfigServer {
     pub host: String,
     pub port: String,
+    pub cors_permissive: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

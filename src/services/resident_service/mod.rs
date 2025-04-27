@@ -1,4 +1,5 @@
 pub mod get_resident;
+pub mod invite_resident;
 pub mod upsert_resident;
 
 use super::prelude::*;

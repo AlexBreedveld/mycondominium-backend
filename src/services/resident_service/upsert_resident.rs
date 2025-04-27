@@ -1,5 +1,7 @@
-use crate::utilities::user_utils::{check_email_exist, user_check_email_valid};
 use super::*;
+use crate::internal::rabbitmq::rabbitmq_client::RabbitMqClient;
+use crate::internal::smtp::smtp_client::SmtpEmailPayload;
+use crate::utilities::user_utils::{check_email_exist, user_check_email_valid};
 
 #[utoipa::path(
     post,
@@ -16,12 +18,16 @@ use super::*;
         ("Token" = [])
     )
 )]
-pub async fn new_resident(body: web::Json<resident_model::ResidentModelNew>, req: HttpRequest, conf: web::Data<Arc<MyCondominiumConfig>>) -> HttpResponse {
+pub async fn new_resident(
+    body: web::Json<resident_model::ResidentModelNew>,
+    req: HttpRequest,
+    conf: web::Data<Arc<MyCondominiumConfig>>,
+) -> HttpResponse {
     let conn = &mut establish_connection_pg(&conf);
 
     let body = body.into_inner();
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf) {
+    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf.clone()) {
         Ok((role, claims, token)) => {
             if role.role == UserRoles::Root || role.role == UserRoles::Admin {
                 (role, claims, token)
@@ -40,7 +46,9 @@ pub async fn new_resident(body: web::Json<resident_model::ResidentModelNew>, req
         }
     };
 
-    if !(role.role == UserRoles::Root || (role.role == UserRoles::Admin && role.community_id == body.community_id)) {
+    if !(role.role == UserRoles::Root
+        || (role.role == UserRoles::Admin && role.community_id == body.community_id))
+    {
         return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
             error: true,
             message: "Unauthorized".to_string(),
@@ -78,10 +86,12 @@ pub async fn new_resident(body: web::Json<resident_model::ResidentModelNew>, req
 
     match new_obj.db_insert(conn) {
         Ok(_) => (),
-        Err(e) => return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
-            error: true,
-            message: format!("Error creating resident: {}", e),
-        }),
+        Err(e) => {
+            return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: format!("Error creating resident: {}", e),
+            });
+        }
     };
 
     match body.password {
@@ -90,10 +100,12 @@ pub async fn new_resident(body: web::Json<resident_model::ResidentModelNew>, req
                 Ok(passwd) => passwd,
                 Err(e) => {
                     log::error!("Error creating resident: {}", e);
-                    return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
-                        error: true,
-                        message: "Error creating resident".to_string(),
-                    });
+                    return HttpResponse::InternalServerError().json(
+                        HttpResponseObjectEmptyError {
+                            error: true,
+                            message: "Error creating resident".to_string(),
+                        },
+                    );
                 }
             };
 
@@ -112,10 +124,12 @@ pub async fn new_resident(body: web::Json<resident_model::ResidentModelNew>, req
                 Ok(_) => (),
                 Err(e) => {
                     log::error!("Error creating resident: {}", e);
-                    return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
-                        error: true,
-                        message: "Error creating resident".to_string(),
-                    });
+                    return HttpResponse::InternalServerError().json(
+                        HttpResponseObjectEmptyError {
+                            error: true,
+                            message: "Error creating resident".to_string(),
+                        },
+                    );
                 }
             };
 
@@ -132,19 +146,35 @@ pub async fn new_resident(body: web::Json<resident_model::ResidentModelNew>, req
                 Ok(_) => (),
                 Err(e) => {
                     log::error!("Error creating resident: {}", e);
-                    return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
-                        error: true,
-                        message: "Error creating resident".to_string(),
-                    });
+                    return HttpResponse::InternalServerError().json(
+                        HttpResponseObjectEmptyError {
+                            error: true,
+                            message: "Error creating resident".to_string(),
+                        },
+                    );
                 }
             };
+
+            /*
+            let rmq = RabbitMqClient::new(&conf.rabbitmq, "mycondominium_smtp".to_string()).await.unwrap();
+            let email = SmtpEmailPayload {
+                to: "example@al3xdev.com".to_string(),
+                subject: "Test - New Resident".to_string(),
+                body: "A New Resident has been added.".to_string(),
+            };
+
+            let payload = serde_json::to_vec(&email).unwrap();
+
+            rmq.publish(&payload).await.unwrap();
+
+             */
 
             HttpResponse::Ok().json(HttpResponseObjectEmptyEntity {
                 error: false,
                 message: "Resident created successfully".to_string(),
                 entity_id: Some(new_obj.id),
             })
-        },
+        }
         None => {
             todo!("Implement sending email to new resident to create password");
         }
@@ -173,7 +203,7 @@ pub async fn update_resident(
     id: web::Path<String>,
     body: web::Json<resident_model::ResidentModelNew>,
     req: HttpRequest,
-    conf: web::Data<Arc<MyCondominiumConfig>>
+    conf: web::Data<Arc<MyCondominiumConfig>>,
 ) -> HttpResponse {
     let conn = &mut establish_connection_pg(&conf);
     let body = body.into_inner();
@@ -221,7 +251,6 @@ pub async fn update_resident(
     if let Err(validation_errors) = body.validate() {
         return HttpResponse::BadRequest().json(validation_errors);
     }
-
 
     let id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
@@ -296,7 +325,11 @@ pub async fn update_resident(
         ("Token" = [])
     )
 )]
-pub async fn delete_resident(id: web::Path<String>, req: HttpRequest, conf: web::Data<Arc<MyCondominiumConfig>>) -> HttpResponse {
+pub async fn delete_resident(
+    id: web::Path<String>,
+    req: HttpRequest,
+    conf: web::Data<Arc<MyCondominiumConfig>>,
+) -> HttpResponse {
     let conn = &mut establish_connection_pg(&conf);
 
     let id = match Uuid::parse_str(&id) {

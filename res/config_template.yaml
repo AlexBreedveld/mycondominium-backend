@@ -7,7 +7,7 @@ smtp:
   username: "<SMTP_USERNAME>"
   password: "<SMTP_PASSWORD>"
   from: "<SMTP_FROM>"
-  # Possible values: "PLAIN", "STARTLS", "TLS"
+  # Possible values: "SSL", "STARTLS", "TLS"
   security: "<SMTP_SECURITY>"
 
 rabbitmq:
@@ -25,6 +25,7 @@ minio:
 server:
   host: "127.0.0.1"
   port: "<SERVER_PORT>"
+  cors_permissive: true
 
 auth:
   token_expiration_days: <AUTH_TOKEN_EXPIRATION_DAYS>

@@ -14,6 +14,10 @@ use super::*;
         ("Token" = [])
     )
 )]
-pub async fn new_resident_invite(body: web::Json<resident_model::ResidentModelInviteNew>, req: HttpRequest, conf: web::Data<Arc<MyCondominiumConfig>>) -> HttpResponse {
-    
+pub async fn new_resident_invite(
+    body: web::Json<resident_model::ResidentInviteModelNew>,
+    req: HttpRequest,
+    conf: web::Data<Arc<MyCondominiumConfig>>,
+) -> HttpResponse {
+    todo!()
 }

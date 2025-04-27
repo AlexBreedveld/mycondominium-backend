@@ -12,6 +12,12 @@ deploy_dev:
     DATABASE_USER: "postgres"
     DATABASE_PASSWORD: "toor"
     DATABASE_NAME: $DEV_DB_NAME
+    RABBITMQ_USER: $RABBITMQ_USER
+    RABBITMQ_PASSWORD: $RABBITMQ_PASSWORD
+    SMTP_HOST: $SMTP_HOST
+    SMTP_PASSWORD: $SMTP_PASSWORD
+    SMTP_PORT: $SMTP_PORT
+    SMTP_USER: $SMTP_USER
     SERVER_PORT: "3030"
     AUTH_TOKEN_EXPIRATION_DAYS: "30"
     AUTH_TOKEN_SECRET_KEY: $DEF_AUTH_TOKEN_SECRET_KEY
@@ -30,7 +36,9 @@ deploy_dev:
     - coder start -y ${CODER_WORKSPACE_DEV} || true
     - coder config-ssh -y
     - ssh coder.${CODER_WORKSPACE_DEV}.main -t "sudo grep -q '^coder:' /etc/passwd && echo \"User 'coder' exists\" || sudo useradd -m -U -s /bin/bash coder"
-    - ssh coder.${CODER_WORKSPACE_DEV}.main -t 'sudo apt-get update && sudo apt-get install -y curl wget postgresql openssl jq'
+    - ssh coder.${CODER_WORKSPACE_DEV}.main -t 'sudo apt-get update && sudo apt-get install -y curl wget postgresql openssl jq gnupg apt-transport-https'
+    - ssh coder.${CODER_WORKSPACE_DEV}.main -t "curl -s 'https://git.al3xdev.com/puc/software-engineering-v/mycondominium-backend/-/snippets/21/raw/main/rabbitmq_installation.sh' | sudo bash"
+    - ssh coder.${CODER_WORKSPACE_DEV}.main -t "sudo rabbitmqctl add_user ${RABBITMQ_USER} ${RABBITMQ_PASSWORD} && sudo rabbitmqctl set_user_tags ${RABBITMQ_USER} administrator"
     - ssh coder.${CODER_WORKSPACE_DEV}.main -t "if [ -f /etc/systemd/system/mycondominium-backend-dev.service ]; then sudo rm /etc/systemd/system/mycondominium-backend-dev.service; fi"
     - ssh coder.${CODER_WORKSPACE_DEV}.main -t "sudo wget -O /etc/systemd/system/mycondominium-backend-dev.service '${DEV_SYSTEMD_SERVICE_URL}'"
     - ssh coder.${CODER_WORKSPACE_DEV}.main -t "sudo systemctl daemon-reload"
@@ -52,6 +60,16 @@ deploy_dev:
       sed -e "s/<DATABASE_PASSWORD>/${DATABASE_PASSWORD}/" \
       -e "s/<DATABASE_NAME>/${DATABASE_NAME}/" \
       -e "s/<DATABASE_USER>/${DATABASE_USER}/" \
+      -e "s/<SMTP_HOST>/${SMTP_HOST}/" \
+      -e "s/<SMTP_PORT>/${SMTP_PORT}/" \
+      -e "s/<SMTP_USERNAME>/${SMTP_USER}/" \
+      -e "s/<SMTP_PASSWORD>/${SMTP_PASSWORD}/" \
+      -e "s/<SMTP_FROM>/${SMTP_USER}/" \
+      -e "s/<SMTP_SECURITY>/SSL/" \
+      -e "s/<RABBITMQ_HOST>/127.0.0.1/" \
+      -e "s/<RABBITMQ_PORT>/5672/" \
+      -e "s/<RABBITMQ_USERNAME>/${RABBITMQ_USER}/" \
+      -e "s/<RABBITMQ_PASSWORD>/${RABBITMQ_PASSWORD}/" \
       -e "s/<SERVER_PORT>/${SERVER_PORT}/" \
       -e "s/<AUTH_TOKEN_EXPIRATION_DAYS>/${AUTH_TOKEN_EXPIRATION_DAYS}/" \
       -e "s/<AUTH_TOKEN_SECRET_KEY>/${AUTH_TOKEN_SECRET_KEY}/" \
@@ -94,6 +112,12 @@ deploy_main:
     DATABASE_USER: "postgres"
     DATABASE_PASSWORD: "toor"
     DATABASE_NAME: $MAIN_DB_NAME
+    RABBITMQ_USER: $RABBITMQ_USER
+    RABBITMQ_PASSWORD: $RABBITMQ_PASSWORD
+    SMTP_HOST: $SMTP_HOST
+    SMTP_PASSWORD: $SMTP_PASSWORD
+    SMTP_PORT: $SMTP_PORT
+    SMTP_USER: $SMTP_USER
     SERVER_PORT: "3030"
     AUTH_TOKEN_EXPIRATION_DAYS: "30"
     AUTH_TOKEN_SECRET_KEY: $DEF_AUTH_TOKEN_SECRET_KEY
@@ -112,7 +136,9 @@ deploy_main:
     - coder start -y ${CODER_WORKSPACE_MAIN} || true
     - coder config-ssh -y
     - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "sudo grep -q '^coder:' /etc/passwd && echo \"User 'coder' exists\" || sudo useradd -m -U -s /bin/bash coder"
-    - ssh coder.${CODER_WORKSPACE_MAIN}.main -t 'sudo apt-get update && sudo apt-get install -y curl wget postgresql openssl jq'
+    - ssh coder.${CODER_WORKSPACE_DEV}.main -t 'sudo apt-get update && sudo apt-get install -y curl wget postgresql openssl jq gnupg apt-transport-https'
+    - ssh coder.${CODER_WORKSPACE_DEV}.main -t "curl -s 'https://git.al3xdev.com/puc/software-engineering-v/mycondominium-backend/-/snippets/21/raw/main/rabbitmq_installation.sh' | sudo bash"
+    - ssh coder.${CODER_WORKSPACE_DEV}.main -t "sudo rabbitmqctl add_user ${RABBITMQ_USER} ${RABBITMQ_PASSWORD} && sudo rabbitmqctl set_user_tags ${RABBITMQ_USER} administrator"
     - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "if [ -f /etc/systemd/system/mycondominium-backend-main.service ]; then sudo rm /etc/systemd/system/mycondominium-backend-main.service; fi"
     - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "sudo wget -O /etc/systemd/system/mycondominium-backend-main.service '${MAIN_SYSTEMD_SERVICE_URL}'"
     - ssh coder.${CODER_WORKSPACE_MAIN}.main -t "sudo systemctl daemon-reload"
@@ -134,6 +160,16 @@ deploy_main:
       sed -e "s/<DATABASE_PASSWORD>/${DATABASE_PASSWORD}/" \
       -e "s/<DATABASE_NAME>/${DATABASE_NAME}/" \
       -e "s/<DATABASE_USER>/${DATABASE_USER}/" \
+      -e "s/<SMTP_HOST>/${SMTP_HOST}/" \
+      -e "s/<SMTP_PORT>/${SMTP_PORT}/" \
+      -e "s/<SMTP_USERNAME>/${SMTP_USER}/" \
+      -e "s/<SMTP_PASSWORD>/${SMTP_PASSWORD}/" \
+      -e "s/<SMTP_FROM>/${SMTP_USER}/" \
+      -e "s/<SMTP_SECURITY>/SSL/" \
+      -e "s/<RABBITMQ_HOST>/127.0.0.1/" \
+      -e "s/<RABBITMQ_PORT>/5672/" \
+      -e "s/<RABBITMQ_USERNAME>/${RABBITMQ_USER}/" \
+      -e "s/<RABBITMQ_PASSWORD>/${RABBITMQ_PASSWORD}/" \
       -e "s/<SERVER_PORT>/${SERVER_PORT}/" \
       -e "s/<AUTH_TOKEN_EXPIRATION_DAYS>/${AUTH_TOKEN_EXPIRATION_DAYS}/" \
       -e "s/<AUTH_TOKEN_SECRET_KEY>/${AUTH_TOKEN_SECRET_KEY}/" \

@@ -1,1 +1,2 @@
-pub mod rabbitmq_service;
+pub mod rabbitmq_client;
+mod rabbitmq_service;
