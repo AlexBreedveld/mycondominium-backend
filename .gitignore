@@ -3,3 +3,4 @@
 /db_ops_derive/target/
 config.yaml
 .vscode/settings.json
+.DS_Store
