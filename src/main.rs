@@ -1,4 +1,5 @@
 mod cli;
+mod middleware; // garante que o módulo cors esteja visível
 
 use crate::cli::{CliArgs, Commands};
 use actix_web::middleware::Logger;
@@ -6,15 +7,20 @@ use actix_web::{App, HttpResponse, HttpServer, web};
 use clap::Parser;
 use diesel_migrations::MigrationHarness;
 use dotenvy::dotenv;
+use log::info;
+use mycondominium_backend::internal::config::model::MyCondominiumConfig;
 use mycondominium_backend::routes::routes::*;
 use mycondominium_backend::services::ApiDoc;
 use mycondominium_backend::{MIGRATIONS, establish_connection_pg};
+use serde_yaml;
 use std::env;
 use std::path::PathBuf;
 use std::sync::Arc;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
-use mycondominium_backend::internal::config::model::MyCondominiumConfig;
+
+
+use middleware::cors::cors;
 
 #[tokio::main]
 async fn main() {
@@ -22,11 +28,12 @@ async fn main() {
     dotenv().ok();
     let args = CliArgs::parse();
     let conf: MyCondominiumConfig;
+
     match &args.command {
         Some(Commands::Daemon(daemon_args)) => {
             let config_path = match &daemon_args.config_path {
                 Some(path) => path,
-                None => { &PathBuf::from("config.yaml") },
+                None => &PathBuf::from("config.yaml"),
             };
 
             if !config_path.exists() || !config_path.is_file() {
@@ -61,6 +68,7 @@ async fn main() {
             HttpServer::new(move || {
                 App::new()
                     .wrap(Logger::default())
+                    .wrap(cors()) 
                     .app_data(web::Data::new(conf_clone.clone()))
                     .service(resident_route())
                     .service(admin_route())
@@ -99,10 +107,13 @@ async fn main() {
             log::info!("Starting server on {}:{}", http_host, http_port);
 
             HttpServer::new(|| {
-                App::new().wrap(Logger::default()).service(
-                    SwaggerUi::new("/docs-v1/{_:.*}")
-                        .url("/api-docs/openapi.json", ApiDoc::openapi()),
-                )
+                App::new()
+                    .wrap(Logger::default())
+                    .wrap(cors()) 
+                    .service(
+                        SwaggerUi::new("/docs-v1/{_:.*}")
+                            .url("/api-docs/openapi.json", ApiDoc::openapi()),
+                    )
             })
             .bind(format!("{http_host}:{http_port}"))
             .unwrap_or_else(|_| panic!("Error binding server to: {}:{}", http_host, http_port))
