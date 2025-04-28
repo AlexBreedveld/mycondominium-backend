@@ -1,11 +1,11 @@
-use std::io::ErrorKind;
-use diesel::{PgConnection, RunQueryDsl};
 use diesel::prelude::*;
+use diesel::{PgConnection, RunQueryDsl};
+use std::io::ErrorKind;
 
 pub fn check_email_exist(conn: &mut PgConnection, email: String) -> Result<(), std::io::Error> {
     let email = email.trim().to_string();
     match crate::schema::admins::table
-        .filter(crate::schema::admins::email.eq(email.clone()))
+        .filter(crate::schema::admins::email.eq(&email))
         .count()
         .get_result::<i64>(conn)
     {
@@ -26,7 +26,28 @@ pub fn check_email_exist(conn: &mut PgConnection, email: String) -> Result<(), s
     };
 
     match crate::schema::residents::table
-        .filter(crate::schema::residents::email.eq(email))
+        .filter(crate::schema::residents::email.eq(&email))
+        .count()
+        .get_result::<i64>(conn)
+    {
+        Ok(num) => {
+            if num != 0 {
+                return Err(std::io::Error::new(
+                    ErrorKind::AddrInUse,
+                    "Email already exists",
+                ));
+            }
+        }
+        Err(e) => {
+            return Err(std::io::Error::new(
+                ErrorKind::Other,
+                "Error checking if email exists",
+            ));
+        }
+    };
+
+    match crate::schema::resident_invites::table
+        .filter(crate::schema::resident_invites::email.eq(&email))
         .count()
         .get_result::<i64>(conn)
     {

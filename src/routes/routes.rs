@@ -102,6 +102,10 @@ pub fn resident_route() -> actix_web::Scope {
             "/delete/{id}",
             web::delete().to(crate::services::resident_service::upsert_resident::delete_resident),
         )
+        .route(
+            "/invite/new",
+            web::post().to(crate::services::resident_service::invite_resident::new_resident_invite),
+        )
 }
 
 pub fn vehicle_route() -> actix_web::Scope {

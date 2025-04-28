@@ -69,6 +69,7 @@ deploy_dev:
       -e "s/<RABBITMQ_PORT>/5672/" \
       -e "s/<RABBITMQ_USERNAME>/${RABBITMQ_USER}/" \
       -e "s/<RABBITMQ_PASSWORD>/${RABBITMQ_PASSWORD}/" \
+      -e "s/<BASE_URL>/https:\/\/3000--main--mycondominium-backend-runner-dev--alex.coder.al3xdev.net/" \
       -e "s/<SERVER_PORT>/${SERVER_PORT}/" \
       -e "s/<AUTH_TOKEN_EXPIRATION_DAYS>/${AUTH_TOKEN_EXPIRATION_DAYS}/" \
       -e "s/<AUTH_TOKEN_SECRET_KEY>/${AUTH_TOKEN_SECRET_KEY}/" \
@@ -168,6 +169,7 @@ deploy_main:
       -e "s/<RABBITMQ_PORT>/5672/" \
       -e "s/<RABBITMQ_USERNAME>/${RABBITMQ_USER}/" \
       -e "s/<RABBITMQ_PASSWORD>/${RABBITMQ_PASSWORD}/" \
+      -e "s/<BASE_URL>/https:\/\/3000--main--mycondominium-backend-runner-dev--alex.coder.al3xdev.net/" \
       -e "s/<SERVER_PORT>/${SERVER_PORT}/" \
       -e "s/<AUTH_TOKEN_EXPIRATION_DAYS>/${AUTH_TOKEN_EXPIRATION_DAYS}/" \
       -e "s/<AUTH_TOKEN_SECRET_KEY>/${AUTH_TOKEN_SECRET_KEY}/" \

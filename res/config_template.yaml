@@ -7,6 +7,9 @@ smtp:
   username: "<SMTP_USERNAME>"
   password: "<SMTP_PASSWORD>"
   from: "<SMTP_FROM>"
+  # Base url needed for handling email links for password recovery, user invitation, etc.
+  # Example: "https://domain.com (Do not include trailing slash)
+  base_url: "<BASE_URL>"
 
 rabbitmq:
   host: "<RABBITMQ_HOST>"

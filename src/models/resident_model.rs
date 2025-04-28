@@ -45,7 +45,8 @@ pub struct ResidentModelNew {
     pub phone: Option<String>,
     pub email: String,
     pub date_of_birth: Option<NaiveDate>,
-    pub password: Option<String>,
+    #[validate(length(min = 8, message = "Password is too short"))]
+    pub password: String,
     pub community_id: Option<Uuid>,
     pub is_active: bool,
 }
@@ -68,6 +69,7 @@ pub struct ResidentInviteModel {
     pub id: Uuid,
     pub email: String,
     pub community_id: Uuid,
+    pub key: String,
     pub created_at: NaiveDateTime,
 }
 
@@ -178,10 +180,7 @@ impl ResidentModel {
             .inner_join(users::table.on(user_roles::user_id.eq(users::id)))
             .inner_join(residents::table.on(users::entity_id.eq(residents::id)))
             .filter(users::entity_type.eq(UserTypes::Resident))
-            .filter(
-                user_roles::role
-                    .eq(UserRoles::Resident)
-            )
+            .filter(user_roles::role.eq(UserRoles::Resident))
             .into_boxed(); // Needed for conditional filters
 
         // Apply additional filter if role is Admin (not Root)

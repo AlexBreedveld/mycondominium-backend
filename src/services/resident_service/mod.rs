@@ -14,6 +14,7 @@ type ResidentGetHttpResponse = HttpResponseObject<resident_model::ResidentModel>
         upsert_resident::new_resident,
         upsert_resident::update_resident,
         upsert_resident::delete_resident,
+        invite_resident::new_resident_invite
     ),
     components(schemas(resident_model::ResidentModel, resident_model::ResidentModelNew))
 )]

@@ -175,6 +175,7 @@ diesel::table! {
         id -> Uuid,
         email -> Text,
         community_id -> Uuid,
+        key -> Text,
         created_at -> Timestamp,
     }
 }

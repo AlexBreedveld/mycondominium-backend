@@ -33,8 +33,7 @@ pub struct ConfigSmtp {
     pub username: String,
     pub password: String,
     pub from: String,
-    #[serde(rename = "security")]
-    pub security: Option<String>,
+    pub base_url: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

@@ -108,90 +108,77 @@ pub async fn new_resident(
         }
     };
 
-    match body.password {
-        Some(password) => {
-            let hashed_password = match hash_password(password) {
-                Ok(passwd) => passwd,
-                Err(e) => {
-                    log::error!("Error creating resident: {}", e);
-                    return HttpResponse::InternalServerError().json(
-                        HttpResponseObjectEmptyError {
-                            error: true,
-                            message: "Error creating resident".to_string(),
-                        },
-                    );
-                }
-            };
-
-            let new_obj_user = user_model::UserModel {
-                id: user_model::UserModel::new_id(conn),
-                entity_id: new_obj.id,
-                entity_type: UserTypes::Resident,
-                admin_id: None,
-                resident_id: Some(new_obj.id),
-                password: hashed_password,
-                created_at: chrono::Utc::now().naive_utc(),
-                updated_at: chrono::Utc::now().naive_utc(),
-            };
-
-            match new_obj_user.db_insert(conn) {
-                Ok(_) => (),
-                Err(e) => {
-                    log::error!("Error creating resident: {}", e);
-                    return HttpResponse::InternalServerError().json(
-                        HttpResponseObjectEmptyError {
-                            error: true,
-                            message: "Error creating resident".to_string(),
-                        },
-                    );
-                }
-            };
-
-            let new_obj_user_role = user_role_model::UserRoleModel {
-                id: user_role_model::UserRoleModel::new_id(conn),
-                user_id: new_obj_user.id,
-                role: UserRoles::Resident,
-                community_id: body.community_id,
-                created_at: chrono::Utc::now().naive_utc(),
-                updated_at: chrono::Utc::now().naive_utc(),
-            };
-
-            match new_obj_user_role.db_insert(conn) {
-                Ok(_) => (),
-                Err(e) => {
-                    log::error!("Error creating resident: {}", e);
-                    return HttpResponse::InternalServerError().json(
-                        HttpResponseObjectEmptyError {
-                            error: true,
-                            message: "Error creating resident".to_string(),
-                        },
-                    );
-                }
-            };
-
-            let rmq = RabbitMqClient::new(&conf.rabbitmq, "mycondominium_smtp".to_string())
-                .await
-                .unwrap();
-            let email = SmtpEmailPayload {
-                to: "alex@al3xdev.com".to_string(),
-                subject: "Test - New Resident".to_string(),
-                body: "A New Resident has been added.".to_string(),
-            };
-
-            let payload = serde_json::to_vec(&email).unwrap();
-
-            rmq.publish(&payload).await.unwrap();
-
-            HttpResponse::Ok().json(HttpResponseObjectEmptyEntity {
-                error: false,
-                message: "Resident created successfully".to_string(),
-                entity_id: Some(new_obj.id),
-            })
+    let hashed_password = match hash_password(body.password) {
+        Ok(passwd) => passwd,
+        Err(e) => {
+            log::error!("Error creating resident: {}", e);
+            return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: "Error creating resident".to_string(),
+            });
         }
-        None => {
-            todo!("Implement sending email to new resident to create password");
+    };
+
+    let new_obj_user = user_model::UserModel {
+        id: user_model::UserModel::new_id(conn),
+        entity_id: new_obj.id,
+        entity_type: UserTypes::Resident,
+        admin_id: None,
+        resident_id: Some(new_obj.id),
+        password: hashed_password,
+        created_at: chrono::Utc::now().naive_utc(),
+        updated_at: chrono::Utc::now().naive_utc(),
+    };
+
+    match new_obj_user.db_insert(conn) {
+        Ok(_) => (),
+        Err(e) => {
+            log::error!("Error creating resident: {}", e);
+            return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: "Error creating resident".to_string(),
+            });
         }
-    }
+    };
+
+    let new_obj_user_role = user_role_model::UserRoleModel {
+        id: user_role_model::UserRoleModel::new_id(conn),
+        user_id: new_obj_user.id,
+        role: UserRoles::Resident,
+        community_id: body.community_id,
+        created_at: chrono::Utc::now().naive_utc(),
+        updated_at: chrono::Utc::now().naive_utc(),
+    };
+
+    match new_obj_user_role.db_insert(conn) {
+        Ok(_) => (),
+        Err(e) => {
+            log::error!("Error creating resident: {}", e);
+            return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: "Error creating resident".to_string(),
+            });
+        }
+    };
+
+    let rmq = RabbitMqClient::new(&conf.rabbitmq, "mycondominium_smtp".to_string())
+        .await
+        .unwrap();
+    let email = SmtpEmailPayload {
+        to: "alex@al3xdev.com".to_string(),
+        subject: "Test - New Resident".to_string(),
+        body: "A New Resident has been added.".to_string(),
+    };
+
+    let payload = serde_json::to_vec(&email).unwrap();
+
+    rmq.publish(&payload).await.unwrap();
+
+    HttpResponse::Ok().json(HttpResponseObjectEmptyEntity {
+        error: false,
+        message: "Resident created successfully".to_string(),
+        entity_id: Some(new_obj.id),
+    })
 }
 
 #[utoipa::path(
