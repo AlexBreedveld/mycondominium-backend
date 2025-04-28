@@ -7,8 +7,6 @@ smtp:
   username: "<SMTP_USERNAME>"
   password: "<SMTP_PASSWORD>"
   from: "<SMTP_FROM>"
-  # Possible values: "SSL", "STARTLS", "TLS"
-  security: "<SMTP_SECURITY>"
 
 rabbitmq:
   host: "<RABBITMQ_HOST>"

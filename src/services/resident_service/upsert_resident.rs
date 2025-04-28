@@ -59,6 +59,20 @@ pub async fn new_resident(
         return HttpResponse::BadRequest().json(validation_errors);
     }
 
+    if body.community_id.is_none() {
+        return HttpResponse::BadRequest().json(HttpResponseObjectEmptyError {
+            error: true,
+            message: "Invalid Community ID".to_string(),
+        });
+    }
+
+    if community_model::CommunityModel::db_read_by_id(conn, body.community_id.unwrap()).is_err() {
+        return HttpResponse::BadRequest().json(HttpResponseObjectEmptyError {
+            error: true,
+            message: "Invalid Community ID".to_string(),
+        });
+    }
+
     match check_email_exist(conn, body.email.clone()) {
         Ok(()) => (),
         Err(e) => {
@@ -155,10 +169,11 @@ pub async fn new_resident(
                 }
             };
 
-            /*
-            let rmq = RabbitMqClient::new(&conf.rabbitmq, "mycondominium_smtp".to_string()).await.unwrap();
+            let rmq = RabbitMqClient::new(&conf.rabbitmq, "mycondominium_smtp".to_string())
+                .await
+                .unwrap();
             let email = SmtpEmailPayload {
-                to: "example@al3xdev.com".to_string(),
+                to: "alex@al3xdev.com".to_string(),
                 subject: "Test - New Resident".to_string(),
                 body: "A New Resident has been added.".to_string(),
             };
@@ -166,8 +181,6 @@ pub async fn new_resident(
             let payload = serde_json::to_vec(&email).unwrap();
 
             rmq.publish(&payload).await.unwrap();
-
-             */
 
             HttpResponse::Ok().json(HttpResponseObjectEmptyEntity {
                 error: false,
@@ -271,6 +284,20 @@ pub async fn update_resident(
             });
         }
     };
+
+    if body.community_id.is_none() {
+        return HttpResponse::BadRequest().json(HttpResponseObjectEmptyError {
+            error: true,
+            message: "Invalid Community ID".to_string(),
+        });
+    }
+
+    if community_model::CommunityModel::db_read_by_id(conn, body.community_id.unwrap()).is_err() {
+        return HttpResponse::BadRequest().json(HttpResponseObjectEmptyError {
+            error: true,
+            message: "Invalid Community ID".to_string(),
+        });
+    }
 
     match user_check_email_valid(conn, body.email.clone(), curr_obj.email) {
         Ok(()) => (),
