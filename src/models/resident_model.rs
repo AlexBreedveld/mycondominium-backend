@@ -51,6 +51,20 @@ pub struct ResidentModelNew {
     pub is_active: bool,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, Validate, ToSchema)]
+pub struct ResidentModelEdit {
+    pub first_name: String,
+    pub last_name: String,
+    #[validate(length(max = 20, message = "Unit number is too long"))]
+    pub unit_number: Option<String>,
+    pub address: Option<String>,
+    pub phone: Option<String>,
+    pub email: String,
+    pub date_of_birth: Option<NaiveDate>,
+    pub community_id: Option<Uuid>,
+    pub is_active: bool,
+}
+
 #[derive(
     Queryable,
     Selectable,

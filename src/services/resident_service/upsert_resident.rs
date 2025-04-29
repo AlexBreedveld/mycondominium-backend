@@ -185,7 +185,7 @@ pub async fn new_resident(
     put,
     tag = "Resident",
     path = "/update/{id}",
-    request_body = resident_model::ResidentModelNew,
+    request_body = resident_model::ResidentModelEdit,
     params(
         ("id" = Uuid, Path, description = "Resident ID"),
     ),
@@ -201,7 +201,7 @@ pub async fn new_resident(
 )]
 pub async fn update_resident(
     id: web::Path<String>,
-    body: web::Json<resident_model::ResidentModelNew>,
+    body: web::Json<resident_model::ResidentModelEdit>,
     req: HttpRequest,
     conf: web::Data<Arc<MyCondominiumConfig>>,
 ) -> HttpResponse {

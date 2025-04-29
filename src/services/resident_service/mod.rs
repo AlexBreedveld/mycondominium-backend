@@ -16,6 +16,10 @@ type ResidentGetHttpResponse = HttpResponseObject<resident_model::ResidentModel>
         upsert_resident::delete_resident,
         invite_resident::new_resident_invite
     ),
-    components(schemas(resident_model::ResidentModel, resident_model::ResidentModelNew))
+    components(schemas(
+        resident_model::ResidentModel,
+        resident_model::ResidentModelNew,
+        resident_model::ResidentModelEdit
+    ))
 )]
 pub struct ResidentApi;
