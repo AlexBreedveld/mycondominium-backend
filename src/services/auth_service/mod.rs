@@ -1,4 +1,4 @@
-mod auth;
+pub mod auth;
 pub mod sign_in;
 
 use super::prelude::*;

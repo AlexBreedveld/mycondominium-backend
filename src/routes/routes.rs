@@ -25,10 +25,15 @@ pub fn admin_route() -> actix_web::Scope {
 }
 
 pub fn auth_route() -> actix_web::Scope {
-    web::scope("/api/auth").route(
-        "/signin",
-        web::post().to(crate::services::auth_service::sign_in::sign_in),
-    )
+    web::scope("/api/auth")
+        .route(
+            "/signin",
+            web::post().to(crate::services::auth_service::sign_in::sign_in),
+        )
+        .route(
+            "/auth",
+            web::get().to(crate::services::auth_service::auth::auth),
+        )
 }
 
 pub fn community_route() -> actix_web::Scope {
