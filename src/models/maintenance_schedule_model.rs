@@ -1,9 +1,10 @@
 use super::prelude::*;
-use crate::models::maintenance_schedule_model;
-use crate::models::user_model::{UserModel, UserModelResult};
 use crate::models::user_role_model::UserRoleModel;
-use crate::services::{HttpResponseObjectEmpty, UserRoles, UserTypes};
-use actix_web::HttpResponse;
+use crate::services::UserRoles;
+use diesel::backend::Backend;
+use diesel::deserialize::FromSql;
+use diesel::serialize::{Output, ToSql};
+use diesel::{AsExpression, FromSqlRow, deserialize, serialize};
 use validator::ValidateLength;
 
 #[derive(
@@ -25,8 +26,7 @@ pub struct MaintenanceScheduleModel {
     pub community_id: Option<Uuid>,
     pub description: String,
     pub scheduled_date: NaiveDateTime,
-    #[validate(length(max = 20, message = "Status is too long"))]
-    pub status: String,
+    pub status: MaintenanceScheduleStatus,
     pub details: Option<String>,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
@@ -37,12 +37,14 @@ pub struct MaintenanceScheduleModelNew {
     pub community_id: Option<Uuid>,
     pub description: String,
     pub scheduled_date: NaiveDateTime,
-    #[validate(length(max = 20, message = "Status is too long"))]
-    pub status: String,
+    pub status: MaintenanceScheduleStatus,
     pub details: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, ToSchema)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, AsExpression, FromSqlRow,
+)]
+#[diesel(sql_type = diesel::sql_types::Text)]
 pub enum MaintenanceScheduleStatus {
     Scheduled,
     Ongoing,
@@ -108,6 +110,38 @@ impl MaintenanceScheduleModel {
                 }
             }
             None => Err(diesel::result::Error::NotFound),
+        }
+    }
+}
+
+impl<DB> ToSql<diesel::sql_types::Text, DB> for MaintenanceScheduleStatus
+where
+    DB: Backend,
+    str: ToSql<diesel::sql_types::Text, DB>,
+{
+    fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, DB>) -> serialize::Result {
+        let s = match self {
+            MaintenanceScheduleStatus::Scheduled => "Scheduled",
+            MaintenanceScheduleStatus::Ongoing => "Ongoing",
+            MaintenanceScheduleStatus::Completed => "Completed",
+            MaintenanceScheduleStatus::Immediate => "Immediate",
+        };
+        s.to_sql(out)
+    }
+}
+
+impl<DB> FromSql<diesel::sql_types::Text, DB> for MaintenanceScheduleStatus
+where
+    DB: Backend,
+    String: FromSql<diesel::sql_types::Text, DB>,
+{
+    fn from_sql(bytes: DB::RawValue<'_>) -> deserialize::Result<Self> {
+        match <String as FromSql<diesel::sql_types::Text, DB>>::from_sql(bytes)?.as_str() {
+            "Scheduled" => Ok(MaintenanceScheduleStatus::Scheduled),
+            "Ongoing" => Ok(MaintenanceScheduleStatus::Ongoing),
+            "Completed" => Ok(MaintenanceScheduleStatus::Completed),
+            "Immediate" => Ok(MaintenanceScheduleStatus::Immediate),
+            x => Err(format!("Unrecognized variant {}", x).into()),
         }
     }
 }
