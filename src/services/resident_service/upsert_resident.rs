@@ -209,37 +209,23 @@ pub async fn update_resident(
     let body = body.into_inner();
 
     match authenticate_user(req.clone(), conn, conf) {
-        Ok((role, claims, token)) => {
-            if role.role == UserRoles::Admin {
-                if role.role != UserRoles::Root {
-                    if body.community_id.is_none() || role.community_id.is_none() {
-                        return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
-                            error: true,
-                            message: "Unauthorized".to_string(),
-                        });
-                    }
-
-                    if !(role.role == UserRoles::Admin
-                        && body.community_id.unwrap() == role.community_id.unwrap())
-                    {
-                        return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
-                            error: true,
-                            message: "Unauthorized".to_string(),
-                        });
-                    }
+        Ok((role, claims, token)) => match role.role {
+            UserRoles::Root => {}
+            UserRoles::Admin => {
+                if body.community_id.unwrap() != role.community_id.unwrap() {
+                    return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
+                        error: true,
+                        message: "Unauthorized".to_string(),
+                    });
                 }
-            } else if role.role == UserRoles::Root && role.role != UserRoles::Root {
+            }
+            _ => {
                 return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                     error: true,
                     message: "Unauthorized".to_string(),
                 });
-            } else {
-                return HttpResponse::BadRequest().json(HttpResponseObjectEmptyError {
-                    error: true,
-                    message: "Invalid Admin Role".to_string(),
-                });
             }
-        }
+        },
         Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                 error: true,

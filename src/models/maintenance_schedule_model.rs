@@ -42,6 +42,14 @@ pub struct MaintenanceScheduleModelNew {
     pub details: Option<String>,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, ToSchema)]
+pub enum MaintenanceScheduleStatus {
+    Scheduled,
+    Ongoing,
+    Completed,
+    Immediate,
+}
+
 impl MaintenanceScheduleModel {
     pub fn db_read_by_id_matching_community(
         user_role: UserRoleModel,
