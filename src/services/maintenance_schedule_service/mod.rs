@@ -11,6 +11,7 @@ type MaintenanceScheduleGetHttpResponse =
 #[openapi(
     paths(
         get_maintenance_schedule::get_maintenance_schedules,
+        get_maintenance_schedule::count_maintenance_schedule,
         get_maintenance_schedule::get_maintenance_schedule_by_id,
         upsert_maintenance_schedule::new_maintenance_schedule,
         upsert_maintenance_schedule::update_maintenance_schedule,
@@ -18,7 +19,8 @@ type MaintenanceScheduleGetHttpResponse =
     ),
     components(schemas(
         maintenance_schedule_model::MaintenanceScheduleModel,
-        maintenance_schedule_model::MaintenanceScheduleModelNew
+        maintenance_schedule_model::MaintenanceScheduleModelNew,
+        maintenance_schedule_model::MaintenanceScheduleStatus,
     ))
 )]
 pub struct MaintenanceScheduleApi;

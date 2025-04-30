@@ -32,19 +32,7 @@ pub async fn get_maintenance_schedules(
     let conn = &mut establish_connection_pg(&conf);
 
     let (role, claims, token) = match authenticate_user(req.clone(), conn, conf) {
-        Ok((role, claims, token)) => {
-            if role.role == UserRoles::Root
-                || role.role == UserRoles::Admin
-                || role.role == UserRoles::Resident
-            {
-                (role, claims, token)
-            } else {
-                return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
-                    error: true,
-                    message: "Unauthorized".to_string(),
-                });
-            }
-        }
+        Ok((role, claims, token)) => (role, claims, token),
         Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                 error: true,
@@ -110,6 +98,56 @@ pub async fn get_maintenance_schedules(
                     object: Some(res),
                 })
         }
+        Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+            error: true,
+            message: format!("Error getting Maintenance Schedules: {}", e),
+        }),
+    }
+}
+
+#[utoipa::path(
+    get,
+    tag = "MaintenanceSchedule",
+    path = "/count/{status}",
+    params(
+        ("status" = maintenance_schedule_model::MaintenanceScheduleStatus, Path, description = "Maintenance Schedule Status"),
+    ),
+    responses(
+        (status = 200, description = "Got Maintenance Schedules successfully", body = HttpResponseObject<i64>),
+        (status = 401, description = "Unauthorized", body = HttpResponseObjectEmptyError),
+        (status = 500, description = "Internal server error", body = HttpResponseObjectEmptyError)
+    ),
+    security(
+        ("Token" = [])
+    )
+)]
+pub async fn count_maintenance_schedule(
+    status: web::Path<maintenance_schedule_model::MaintenanceScheduleStatus>,
+    req: HttpRequest,
+    conf: web::Data<Arc<MyCondominiumConfig>>,
+) -> HttpResponse {
+    let conn = &mut establish_connection_pg(&conf);
+
+    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf) {
+        Ok((role, claims, token)) => (role, claims, token),
+        Err(_) => {
+            return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: "Unauthorized".to_string(),
+            });
+        }
+    };
+
+    match maintenance_schedule_model::MaintenanceScheduleModel::db_count_all_matching_community(
+        role,
+        status.into_inner(),
+        conn,
+    ) {
+        Ok(res) => HttpResponse::Ok().json(HttpResponseObject {
+            error: false,
+            message: "Got Maintenance Schedules successfully".to_string(),
+            object: Some(res),
+        }),
         Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
             error: true,
             message: format!("Error getting Maintenance Schedules: {}", e),

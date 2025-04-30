@@ -180,6 +180,31 @@ impl ResidentModel {
         }
     }
 
+    pub fn db_count_all_matching_community(
+        user_role: UserRoleModel,
+        conn: &mut PgConnection,
+    ) -> diesel::QueryResult<i64> {
+        use crate::schema::maintenance_schedules;
+        use diesel::prelude::*;
+
+        // Base query
+        let mut query = UserRoleModel::table()
+            .filter(user_roles::role.eq(UserRoles::Resident))
+            .into_boxed(); // Needed for conditional filters
+
+        // Apply additional filter if role is Admin (not Root)
+        match user_role.role {
+            UserRoles::Root => {}
+            UserRoles::Admin => {
+                query = query.filter(user_roles::community_id.eq(user_role.community_id));
+            }
+            UserRoles::Resident => return Err(diesel::result::Error::NotFound),
+        }
+
+        // Count data
+        query.count().get_result::<i64>(conn)
+    }
+
     pub fn db_read_all_matching_community_by_range(
         user_role: UserRoleModel,
         conn: &mut PgConnection,

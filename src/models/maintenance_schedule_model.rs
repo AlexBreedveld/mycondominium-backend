@@ -72,6 +72,31 @@ impl MaintenanceScheduleModel {
         }
     }
 
+    pub fn db_count_all_matching_community(
+        user_role: UserRoleModel,
+        status: MaintenanceScheduleStatus,
+        conn: &mut PgConnection,
+    ) -> diesel::QueryResult<i64> {
+        use crate::schema::maintenance_schedules;
+        use diesel::prelude::*;
+
+        // Base query
+        let mut query = MaintenanceScheduleModel::table().into_boxed(); // Needed for conditional filters
+
+        // Apply additional filter if role is Admin (not Root)
+        match user_role.role {
+            UserRoles::Root => query = query.filter(maintenance_schedules::status.eq(status)),
+            UserRoles::Admin | UserRoles::Resident => {
+                query = query
+                    .filter(maintenance_schedules::community_id.eq(user_role.community_id))
+                    .filter(maintenance_schedules::status.eq(status));
+            }
+        }
+
+        // Count data
+        query.count().get_result::<i64>(conn)
+    }
+
     pub fn db_read_all_matching_community_by_range(
         user_role: UserRoleModel,
         conn: &mut PgConnection,

@@ -68,6 +68,10 @@ pub fn maintenance_schedule_route() -> actix_web::Scope {
             web::get().to(crate::services::maintenance_schedule_service::get_maintenance_schedule::get_maintenance_schedules),
         )
         .route(
+            "/count/{status}",
+            web::get().to(crate::services::maintenance_schedule_service::get_maintenance_schedule::count_maintenance_schedule),
+        )
+        .route(
             "/get/{id}",
             web::get().to(crate::services::maintenance_schedule_service::get_maintenance_schedule::get_maintenance_schedule_by_id),
         )
@@ -90,6 +94,10 @@ pub fn resident_route() -> actix_web::Scope {
         .route(
             "/list",
             web::get().to(crate::services::resident_service::get_resident::get_residents),
+        )
+        .route(
+            "/count",
+            web::get().to(crate::services::resident_service::get_resident::count_resident),
         )
         .route(
             "/get/{id}",

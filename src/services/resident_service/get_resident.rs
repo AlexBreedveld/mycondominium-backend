@@ -116,6 +116,57 @@ pub async fn get_residents(
 #[utoipa::path(
     get,
     tag = "Resident",
+    path = "/count",
+    responses(
+        (status = 200, description = "Got residents successfully", body = HttpResponseObject<i64>),
+        (status = 401, description = "Unauthorized", body = HttpResponseObjectEmptyError),
+        (status = 500, description = "Internal server error", body = HttpResponseObjectEmptyError)
+    ),
+    security(
+        ("Token" = [])
+    )
+)]
+pub async fn count_resident(
+    req: HttpRequest,
+    conf: web::Data<Arc<MyCondominiumConfig>>,
+) -> HttpResponse {
+    let conn = &mut establish_connection_pg(&conf);
+
+    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf) {
+        Ok((role, claims, token)) => match role.role {
+            UserRoles::Root => (role, claims, token),
+            UserRoles::Admin => (role, claims, token),
+            UserRoles::Resident => {
+                return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
+                    error: true,
+                    message: "Unauthorized".to_string(),
+                });
+            }
+        },
+        Err(_) => {
+            return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: "Unauthorized".to_string(),
+            });
+        }
+    };
+
+    match resident_model::ResidentModel::db_count_all_matching_community(role, conn) {
+        Ok(res) => HttpResponse::Ok().json(HttpResponseObject {
+            error: false,
+            message: "Got Residents successfully".to_string(),
+            object: Some(res),
+        }),
+        Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+            error: true,
+            message: format!("Error counting Residents: {}", e),
+        }),
+    }
+}
+
+#[utoipa::path(
+    get,
+    tag = "Resident",
     path = "/get/{id}",
     params(
         ("id" = Uuid, Path, description = "Resident ID"),

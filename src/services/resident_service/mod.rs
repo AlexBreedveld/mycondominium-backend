@@ -10,6 +10,7 @@ type ResidentGetHttpResponse = HttpResponseObject<resident_model::ResidentModel>
 #[openapi(
     paths(
         get_resident::get_residents,
+        get_resident::count_resident,
         get_resident::get_resident_by_id,
         upsert_resident::new_resident,
         upsert_resident::update_resident,
