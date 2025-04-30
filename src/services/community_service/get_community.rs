@@ -25,7 +25,7 @@ use crate::internal::roles::UserRoles;
 pub async fn get_communities(
     query: web::Query<PaginationParams>,
     req: HttpRequest,
-    conf: web::Data<Arc<MyCondominiumConfig>>
+    conf: web::Data<Arc<MyCondominiumConfig>>,
 ) -> HttpResponse {
     let page = query.page.unwrap_or(1);
     let per_page = query.per_page.unwrap_or(10);
@@ -111,7 +111,11 @@ pub async fn get_communities(
         ("Token" = [])
     )
 )]
-pub async fn get_community_by_id(id: web::Path<String>, req: HttpRequest, conf: web::Data<Arc<MyCondominiumConfig>>) -> HttpResponse {
+pub async fn get_community_by_id(
+    id: web::Path<String>,
+    req: HttpRequest,
+    conf: web::Data<Arc<MyCondominiumConfig>>,
+) -> HttpResponse {
     let id = id.into_inner();
 
     let conn = &mut establish_connection_pg(&conf);

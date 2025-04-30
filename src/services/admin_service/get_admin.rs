@@ -22,7 +22,11 @@ use crate::internal::roles::UserRoles;
         ("Token" = [])
     )
 )]
-pub async fn get_admins(query: web::Query<PaginationParams>, req: HttpRequest, conf: web::Data<Arc<MyCondominiumConfig>>) -> HttpResponse {
+pub async fn get_admins(
+    query: web::Query<PaginationParams>,
+    req: HttpRequest,
+    conf: web::Data<Arc<MyCondominiumConfig>>,
+) -> HttpResponse {
     let page = query.page.unwrap_or(1);
     let per_page = query.per_page.unwrap_or(10);
     let offset = (page - 1) * per_page;
@@ -69,12 +73,14 @@ pub async fn get_admins(query: web::Query<PaginationParams>, req: HttpRequest, c
                     .and(user_roles::community_id.eq(admin_role.community_id)),
             );
         }
-        _ => return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
-            error: true,
-            message: "Error getting total items: Role not valid".to_string(),
-        }),
+        _ => {
+            return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+                error: true,
+                message: "Error getting total items: Role not valid".to_string(),
+            });
+        }
     };
-    
+
     let total_items = match total_items_query.count().get_result::<i64>(conn) {
         Ok(count) => count,
         Err(e) => {
@@ -82,10 +88,12 @@ pub async fn get_admins(query: web::Query<PaginationParams>, req: HttpRequest, c
                 error: true,
                 message: format!("Error getting total items: {}", e),
             });
-        }   
+        }
     };
 
-    match admin_model::AdminModel::db_read_all_matching_community_by_range(admin_role, conn, per_page, offset) {
+    match admin_model::AdminModel::db_read_all_matching_community_by_range(
+        admin_role, conn, per_page, offset,
+    ) {
         Ok(res) => {
             let total_pages = (total_items as f64 / per_page as f64).ceil() as i64;
             let remaining_pages = total_pages - page;
@@ -129,7 +137,11 @@ pub async fn get_admins(query: web::Query<PaginationParams>, req: HttpRequest, c
         ("Token" = [])
     )
 )]
-pub async fn get_admin_by_id(id: web::Path<String>, req: HttpRequest, conf: web::Data<Arc<MyCondominiumConfig>>) -> HttpResponse {
+pub async fn get_admin_by_id(
+    id: web::Path<String>,
+    req: HttpRequest,
+    conf: web::Data<Arc<MyCondominiumConfig>>,
+) -> HttpResponse {
     let id = id.into_inner();
 
     let conn = &mut establish_connection_pg(&conf);

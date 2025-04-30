@@ -13,7 +13,11 @@ use std::io::ErrorKind;
         (status = 500, description = "Error signing in admin", body = HttpResponseObjectEmptyError),
     ),
 )]
-pub async fn sign_in(body: web::Json<auth_model::AuthModel>, req: HttpRequest, conf: web::Data<Arc<MyCondominiumConfig>>) -> HttpResponse {
+pub async fn sign_in(
+    body: web::Json<auth_model::AuthModel>,
+    req: HttpRequest,
+    conf: web::Data<Arc<MyCondominiumConfig>>,
+) -> HttpResponse {
     let conn = &mut establish_connection_pg(&conf);
     let email = body.email.trim().to_string();
     let password = body.password.trim().to_string();
@@ -99,7 +103,12 @@ pub async fn sign_in(body: web::Json<auth_model::AuthModel>, req: HttpRequest, c
 
         let token_id = auth_token_model::AuthTokenModel::new_id(conn);
 
-        let token = match generate_jwt_token_no_env(user_obj.id, token_id, conf.auth.token_secret_key.clone(), conf.auth.token_expiration_days as i64) {
+        let token = match generate_jwt_token_no_env(
+            user_obj.id,
+            token_id,
+            conf.auth.token_secret_key.clone(),
+            conf.auth.token_expiration_days as i64,
+        ) {
             Ok(new_token) => new_token,
             Err(e) => {
                 log::error!("Error generating JWT token: {}", e);

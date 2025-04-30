@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use super::*;
+use std::sync::Arc;
 
 #[utoipa::path(
     get,
@@ -21,7 +21,11 @@ use super::*;
         ("Token" = [])
     )
 )]
-pub async fn get_vehicles(query: web::Query<PaginationParams>, req: HttpRequest, conf: web::Data<Arc<MyCondominiumConfig>>) -> HttpResponse {
+pub async fn get_vehicles(
+    query: web::Query<PaginationParams>,
+    req: HttpRequest,
+    conf: web::Data<Arc<MyCondominiumConfig>>,
+) -> HttpResponse {
     let page = query.page.unwrap_or(1);
     let per_page = query.per_page.unwrap_or(10);
     let offset = (page - 1) * per_page;
@@ -47,14 +51,19 @@ pub async fn get_vehicles(query: web::Query<PaginationParams>, req: HttpRequest,
     match role.role {
         UserRoles::Root => (),
         UserRoles::Admin => {
-            total_items_query = total_items_query.filter(user_roles::community_id.eq(role.community_id));;
-        },
+            total_items_query =
+                total_items_query.filter(user_roles::community_id.eq(role.community_id));
+        }
         UserRoles::Resident => {
-            total_items_query = total_items_query.filter(user_roles::user_id.eq(role.user_id));;
-        },
+            total_items_query = total_items_query.filter(user_roles::user_id.eq(role.user_id));
+        }
     };
 
-    let total_items = match total_items_query.select(vehicle_model::VehicleModel::as_select()).count().get_result::<i64>(conn) {
+    let total_items = match total_items_query
+        .select(vehicle_model::VehicleModel::as_select())
+        .count()
+        .get_result::<i64>(conn)
+    {
         Ok(count) => count,
         Err(e) => {
             return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
@@ -64,7 +73,9 @@ pub async fn get_vehicles(query: web::Query<PaginationParams>, req: HttpRequest,
         }
     };
 
-    match vehicle_model::VehicleModel::db_read_all_matching_community_by_range(role, conn, per_page, offset) {
+    match vehicle_model::VehicleModel::db_read_all_matching_community_by_range(
+        role, conn, per_page, offset,
+    ) {
         Ok(res) => {
             let total_pages = (total_items as f64 / per_page as f64).ceil() as i64;
             let remaining_pages = total_pages - page;
@@ -108,7 +119,11 @@ pub async fn get_vehicles(query: web::Query<PaginationParams>, req: HttpRequest,
         ("Token" = [])
     )
 )]
-pub async fn get_vehicle_by_id(id: web::Path<String>, req: HttpRequest, conf: web::Data<Arc<MyCondominiumConfig>>) -> HttpResponse {
+pub async fn get_vehicle_by_id(
+    id: web::Path<String>,
+    req: HttpRequest,
+    conf: web::Data<Arc<MyCondominiumConfig>>,
+) -> HttpResponse {
     let id = id.into_inner();
 
     let conn = &mut establish_connection_pg(&conf);
@@ -132,7 +147,7 @@ pub async fn get_vehicle_by_id(id: web::Path<String>, req: HttpRequest, conf: we
             });
         }
     };
-    
+
     match vehicle_model::VehicleModel::db_read_by_id_matching_community(role, conn, id) {
         Ok(res) => HttpResponse::Ok().json(HttpResponseObject {
             error: false,
@@ -142,6 +157,6 @@ pub async fn get_vehicle_by_id(id: web::Path<String>, req: HttpRequest, conf: we
         Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
             error: true,
             message: "Error getting vehicles".to_string(),
-        })
+        }),
     }
 }

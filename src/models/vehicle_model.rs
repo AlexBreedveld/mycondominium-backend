@@ -1,8 +1,8 @@
+use super::prelude::*;
 use crate::models::resident_model::{ResidentModel, ResidentModelResult};
 use crate::models::user_role_model::UserRoleModel;
-use super::prelude::*;
-use diesel::prelude::*;
 use crate::services::UserRoles;
+use diesel::prelude::*;
 
 #[derive(
     Queryable,
@@ -104,5 +104,4 @@ impl VehicleModel {
 
         query.select(VehicleModel::as_select()).first(conn)
     }
-
 }

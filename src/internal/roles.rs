@@ -12,7 +12,7 @@ use utoipa::ToSchema;
 pub enum UserRoles {
     Root,
     Admin,
-    Resident
+    Resident,
 }
 
 impl<DB> ToSql<diesel::sql_types::Text, DB> for UserRoles

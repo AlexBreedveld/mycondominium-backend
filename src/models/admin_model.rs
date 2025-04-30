@@ -149,7 +149,6 @@ impl AdminModel {
         Ok(results)
     }
 
-
     pub fn db_read_by_id_matching_community(
         &self,
         id: uuid::Uuid,

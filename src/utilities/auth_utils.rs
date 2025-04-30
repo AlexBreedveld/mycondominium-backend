@@ -152,7 +152,7 @@ pub fn validate_token(token: &str) -> jsonwebtoken::errors::Result<TokenClaims> 
 
 pub fn validate_token_from_header(
     req: actix_web::HttpRequest,
-    secret_key: String
+    secret_key: String,
 ) -> Result<TokenClaims, std::io::Error> {
     match req.headers().get("X-Auth-Token") {
         Some(header) => {
@@ -233,7 +233,7 @@ pub fn parse_user_agent(ua_str: String) -> Result<UserAgent, std::io::Error> {
 pub fn authenticate_user(
     req: actix_web::HttpRequest,
     conn: &mut PgConnection,
-    conf: actix_web::web::Data<std::sync::Arc<crate::MyCondominiumConfig>>
+    conf: actix_web::web::Data<std::sync::Arc<crate::MyCondominiumConfig>>,
 ) -> Result<(UserRoleModel, TokenClaims, AuthTokenModel), std::io::Error> {
     match validate_token_from_header(req, conf.auth.token_secret_key.clone()) {
         Ok(claims) => {

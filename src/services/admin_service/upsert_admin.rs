@@ -2,8 +2,8 @@ use super::*;
 use crate::internal::roles::UserRoles;
 use crate::models::admin_model::AdminModel;
 use crate::utilities::auth_utils::hash_password;
-use std::io::ErrorKind;
 use crate::utilities::user_utils::{check_email_exist, user_check_email_valid};
+use std::io::ErrorKind;
 
 #[utoipa::path(
     post,
@@ -23,7 +23,7 @@ use crate::utilities::user_utils::{check_email_exist, user_check_email_valid};
 pub async fn new_admin(
     body: web::Json<admin_model::AdminModelNew>,
     req: HttpRequest,
-    conf: web::Data<Arc<MyCondominiumConfig>>
+    conf: web::Data<Arc<MyCondominiumConfig>>,
 ) -> HttpResponse {
     let conn = &mut establish_connection_pg(&conf);
 
@@ -211,7 +211,7 @@ pub async fn update_admin(
     id: web::Path<String>,
     body: web::Json<admin_model::AdminModelNew>,
     req: HttpRequest,
-    conf: web::Data<Arc<MyCondominiumConfig>>
+    conf: web::Data<Arc<MyCondominiumConfig>>,
 ) -> HttpResponse {
     let conn = &mut establish_connection_pg(&conf);
     let body = body.into_inner();
@@ -329,7 +329,11 @@ pub async fn update_admin(
         ("Token" = [])
     )
 )]
-pub async fn delete_admin(id: web::Path<String>, req: HttpRequest, conf: web::Data<Arc<MyCondominiumConfig>>) -> HttpResponse {
+pub async fn delete_admin(
+    id: web::Path<String>,
+    req: HttpRequest,
+    conf: web::Data<Arc<MyCondominiumConfig>>,
+) -> HttpResponse {
     let conn = &mut establish_connection_pg(&conf);
 
     let id = match Uuid::parse_str(&id) {

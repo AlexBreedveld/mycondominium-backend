@@ -62,29 +62,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    document_shares (id) {
-        id -> Uuid,
-        user_id -> Uuid,
-        document_id -> Uuid,
-        read_only -> Bool,
-    }
-}
-
-diesel::table! {
-    documents (id) {
-        id -> Uuid,
-        #[max_length = 150]
-        title -> Varchar,
-        description -> Nullable<Text>,
-        file_url -> Text,
-        #[max_length = 50]
-        document_type -> Nullable<Varchar>,
-        created_at -> Timestamp,
-        updated_at -> Timestamp,
-    }
-}
-
-diesel::table! {
     elections (id) {
         id -> Uuid,
         community_id -> Nullable<Uuid>,
@@ -251,8 +228,6 @@ diesel::table! {
 diesel::joinable!(announcements -> communities (community_id));
 diesel::joinable!(auth_tokens -> users (user_id));
 diesel::joinable!(common_areas -> communities (community_id));
-diesel::joinable!(document_shares -> documents (document_id));
-diesel::joinable!(document_shares -> users (user_id));
 diesel::joinable!(elections -> communities (community_id));
 diesel::joinable!(incidents -> communities (community_id));
 diesel::joinable!(incidents -> residents (resident_id));
@@ -278,8 +253,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     auth_tokens,
     common_areas,
     communities,
-    document_shares,
-    documents,
     elections,
     incidents,
     invoices,

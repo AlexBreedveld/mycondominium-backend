@@ -15,7 +15,11 @@ use super::*;
         ("Token" = [])
     )
 )]
-pub async fn new_vehicle(body: web::Json<vehicle_model::VehicleModelNew>, req: HttpRequest, conf: web::Data<Arc<MyCondominiumConfig>>) -> HttpResponse {
+pub async fn new_vehicle(
+    body: web::Json<vehicle_model::VehicleModelNew>,
+    req: HttpRequest,
+    conf: web::Data<Arc<MyCondominiumConfig>>,
+) -> HttpResponse {
     let conn = &mut establish_connection_pg(&conf);
     let body = body.into_inner();
 
@@ -113,7 +117,7 @@ pub async fn update_vehicle(
     id: web::Path<String>,
     body: web::Json<vehicle_model::VehicleModelNew>,
     req: HttpRequest,
-    conf: web::Data<Arc<MyCondominiumConfig>>
+    conf: web::Data<Arc<MyCondominiumConfig>>,
 ) -> HttpResponse {
     let conn = &mut establish_connection_pg(&conf);
     let id = id.into_inner();
@@ -227,7 +231,11 @@ pub async fn update_vehicle(
         ("Token" = [])
     )
 )]
-pub async fn delete_vehicle(id: web::Path<String>, req: HttpRequest, conf: web::Data<Arc<MyCondominiumConfig>>) -> HttpResponse {
+pub async fn delete_vehicle(
+    id: web::Path<String>,
+    req: HttpRequest,
+    conf: web::Data<Arc<MyCondominiumConfig>>,
+) -> HttpResponse {
     let conn = &mut establish_connection_pg(&conf);
     let id = id.into_inner();
 
