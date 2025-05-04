@@ -14,6 +14,10 @@ type ParcelGetHttpResponse = HttpResponseObject<parcel_model::ParcelModel>;
         upsert_parcel::update_parcel,
         upsert_parcel::delete_parcel,
     ),
-    components(schemas(parcel_model::ParcelModel, parcel_model::ParcelModelNew,))
+    components(schemas(
+        parcel_model::ParcelModel,
+        parcel_model::ParcelModelNew,
+        parcel_model::ParcelType
+    ))
 )]
 pub struct ParcelApi;

@@ -1,10 +1,12 @@
 use super::prelude::*;
-use crate::models::maintenance_schedule_model::MaintenanceScheduleModel;
+use crate::models::maintenance_schedule_model::MaintenanceScheduleStatus;
 use crate::models::resident_model;
-use crate::models::resident_model::ResidentModel;
-use crate::models::user_model::UserModel;
 use crate::models::user_role_model::UserRoleModel;
 use crate::services::{UserRoles, UserTypes, user_model};
+use diesel::backend::Backend;
+use diesel::deserialize::FromSql;
+use diesel::serialize::{Output, ToSql};
+use diesel::{AsExpression, FromSqlRow, deserialize, serialize};
 
 #[derive(
     Queryable,
@@ -23,8 +25,7 @@ use crate::services::{UserRoles, UserTypes, user_model};
 pub struct ParcelModel {
     pub id: Uuid,
     pub resident_id: Uuid,
-    #[validate(length(max = 50, message = "Type is too long"))]
-    pub parcel_type: String,
+    pub parcel_type: ParcelType,
     pub description: Option<String>,
     pub arrival_date: NaiveDateTime,
     pub received: bool,
@@ -34,12 +35,21 @@ pub struct ParcelModel {
 #[derive(Serialize, Deserialize, Clone, Debug, Validate, ToSchema)]
 pub struct ParcelModelNew {
     pub resident_id: Uuid,
-    #[validate(length(max = 50, message = "Type is too long"))]
-    pub parcel_type: String,
+    pub parcel_type: ParcelType,
     pub description: Option<String>,
     pub arrival_date: NaiveDateTime,
     pub received: bool,
     pub received_at: Option<NaiveDateTime>,
+}
+
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, AsExpression, FromSqlRow,
+)]
+#[diesel(sql_type = diesel::sql_types::Text)]
+pub enum ParcelType {
+    Letter,
+    Package,
+    Groceries,
 }
 
 impl ParcelModel {
@@ -125,5 +135,35 @@ impl ParcelModel {
             .select(parcels::all_columns)
             .count()
             .get_result::<i64>(conn)
+    }
+}
+
+impl<DB> ToSql<diesel::sql_types::Text, DB> for ParcelType
+where
+    DB: Backend,
+    str: ToSql<diesel::sql_types::Text, DB>,
+{
+    fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, DB>) -> serialize::Result {
+        let s = match self {
+            ParcelType::Letter => "Letter",
+            ParcelType::Package => "Package",
+            ParcelType::Groceries => "Groceries",
+        };
+        s.to_sql(out)
+    }
+}
+
+impl<DB> FromSql<diesel::sql_types::Text, DB> for ParcelType
+where
+    DB: Backend,
+    String: FromSql<diesel::sql_types::Text, DB>,
+{
+    fn from_sql(bytes: DB::RawValue<'_>) -> deserialize::Result<Self> {
+        match <String as FromSql<diesel::sql_types::Text, DB>>::from_sql(bytes)?.as_str() {
+            "Letter" => Ok(ParcelType::Letter),
+            "Package" => Ok(ParcelType::Package),
+            "Groceries" => Ok(ParcelType::Groceries),
+            x => Err(format!("Unrecognized variant {}", x).into()),
+        }
     }
 }
