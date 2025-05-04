@@ -5,7 +5,13 @@ release_nightly:
   stage: release
   image: registry.gitlab.com/gitlab-org/release-cli:latest
   rules:
-    - if: $CI_COMMIT_BRANCH == "dev"
+    - if: $SKIP_BUILD == "true"
+      when: never
+    - if: $CI_COMMIT_BRANCH != "dev"
+      when: never
+    - if: $CI_COMMIT_TAG
+      when: never
+    - when: always
   variables:
     LINUX_AMD64_GLIB_BIN: "mycondominium-server-linux-gnu-amd64"
     LINUX_AMD64_MUSL_BIN: "mycondominium-server-linux-musl-amd64"
@@ -14,6 +20,7 @@ release_nightly:
     artifacts: true
   script:
     - if [ $(cat ./.pipeline_re_run_status) == "true" ]; then echo "Skipping because this is a re-run"; exit 0; fi
+    - if [ ${SKIP_BUILD} == "true" ]; then echo "Skipping because of SKIP_BUILD set to true"; exit 0; fi
     - echo "LINUX_GNU_AMD64_BIN_URL=${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID_LINUX_AMD64_GNU}/artifacts/raw/target/x86_64-unknown-linux-gnu/release/mycondominium-backend" >> release_nightly.env
     - echo "LINUX_MUSL_AMD64_BIN_URL=${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID_LINUX_AMD64_MUSL}/artifacts/raw/target/x86_64-unknown-linux-musl/release/mycondominium-backend" >> release_nightly.env
     - echo "Running release_nightly for v${RUST_APP_VERSION}-${CI_COMMIT_SHORT_SHA}"
@@ -42,7 +49,13 @@ release_main:
   stage: release
   image: registry.gitlab.com/gitlab-org/release-cli:latest
   rules:
-    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $SKIP_BUILD == "true"
+      when: never
+    - if: $CI_COMMIT_BRANCH != "main"
+      when: never
+    - if: $CI_COMMIT_TAG
+      when: never
+    - when: always
   variables:
     LINUX_AMD64_GLIB_BIN: "mycondominium-server-linux-gnu-amd64"
     LINUX_AMD64_MUSL_BIN: "mycondominium-server-linux-musl-amd64"
@@ -50,6 +63,8 @@ release_main:
     job: build
     artifacts: true
   script:
+    - if [ $(cat ./.pipeline_re_run_status) == "true" ]; then echo "Skipping because this is a re-run"; exit 0; fi
+    - if [ ${SKIP_BUILD} == "true" ]; then echo "Skipping because of SKIP_BUILD set to true"; exit 0; fi
     - echo "LINUX_GNU_AMD64_BIN_URL=${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID_LINUX_AMD64_GNU}/artifacts/raw/target/x86_64-unknown-linux-gnu/release/mycondominium-backend" >> release_main.env
     - echo "LINUX_MUSL_AMD64_BIN_URL=${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID_LINUX_AMD64_MUSL}/artifacts/raw/target/x86_64-unknown-linux-musl/release/mycondominium-backend" >> release_main.env
     - echo "Running release_main for v${RUST_APP_VERSION}"

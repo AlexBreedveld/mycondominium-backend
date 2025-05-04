@@ -25,14 +25,15 @@ use crate::internal::roles::UserRoles;
 pub async fn get_communities(
     query: web::Query<PaginationParams>,
     req: HttpRequest,
+    conf: web::Data<Arc<MyCondominiumConfig>>,
 ) -> HttpResponse {
     let page = query.page.unwrap_or(1);
     let per_page = query.per_page.unwrap_or(10);
     let offset = (page - 1) * per_page;
 
-    let conn = &mut establish_connection_pg();
+    let conn = &mut establish_connection_pg(&conf);
 
-    match authenticate_user(req.clone(), conn) {
+    match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => {
             if role.role != UserRoles::Root {
                 return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
@@ -110,10 +111,14 @@ pub async fn get_communities(
         ("Token" = [])
     )
 )]
-pub async fn get_community_by_id(id: web::Path<String>, req: HttpRequest) -> HttpResponse {
+pub async fn get_community_by_id(
+    id: web::Path<String>,
+    req: HttpRequest,
+    conf: web::Data<Arc<MyCondominiumConfig>>,
+) -> HttpResponse {
     let id = id.into_inner();
 
-    let conn = &mut establish_connection_pg();
+    let conn = &mut establish_connection_pg(&conf);
 
     let id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
@@ -125,7 +130,7 @@ pub async fn get_community_by_id(id: web::Path<String>, req: HttpRequest) -> Htt
         }
     };
 
-    match authenticate_user(req.clone(), conn) {
+    match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => {
             if !(role.role == UserRoles::Root
                 || (role.role == UserRoles::Admin && role.community_id == Some(id)))

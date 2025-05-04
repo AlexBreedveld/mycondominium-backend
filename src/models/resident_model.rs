@@ -45,10 +45,52 @@ pub struct ResidentModelNew {
     pub phone: Option<String>,
     pub email: String,
     pub date_of_birth: Option<NaiveDate>,
-    pub password: Option<String>,
-    pub role: UserRoles,
+    #[validate(length(min = 8, message = "Password is too short"))]
+    pub password: String,
     pub community_id: Option<Uuid>,
     pub is_active: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Validate, ToSchema)]
+pub struct ResidentModelEdit {
+    pub first_name: String,
+    pub last_name: String,
+    #[validate(length(max = 20, message = "Unit number is too long"))]
+    pub unit_number: Option<String>,
+    pub address: Option<String>,
+    pub phone: Option<String>,
+    pub email: String,
+    pub date_of_birth: Option<NaiveDate>,
+    pub community_id: Option<Uuid>,
+    pub is_active: bool,
+}
+
+#[derive(
+    Queryable,
+    Selectable,
+    Insertable,
+    Serialize,
+    Deserialize,
+    Clone,
+    Debug,
+    AsChangeset,
+    Validate,
+    ToSchema,
+    DbOps,
+)]
+#[diesel(table_name = crate::schema::resident_invites)]
+pub struct ResidentInviteModel {
+    pub id: Uuid,
+    pub email: String,
+    pub community_id: Uuid,
+    pub key: String,
+    pub created_at: NaiveDateTime,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Validate, ToSchema)]
+pub struct ResidentInviteModelNew {
+    pub email: String,
+    pub community_id: Uuid,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Validate, ToSchema)]
@@ -97,6 +139,38 @@ impl ResidentModel {
         uuid_new
     }
 
+    pub fn db_get_user(
+        conn: &mut PgConnection,
+        id: uuid::Uuid,
+    ) -> diesel::QueryResult<ResidentModelResult> {
+        let resident = crate::models::resident_model::ResidentModel::db_read_by_id(conn, id)?;
+
+        let user = crate::models::user_model::UserModel::table()
+            .filter(users::entity_id.eq(resident.id))
+            .filter(users::entity_type.eq("resident"))
+            .first::<crate::models::user_model::UserModel>(conn)?;
+
+        let role = crate::models::user_role_model::UserRoleModel::table()
+            .filter(user_roles::user_id.eq(user.id))
+            .first::<crate::models::user_role_model::UserRoleModel>(conn)?;
+
+        let user_result = UserModelResult {
+            id: user.id,
+            entity_id: user.entity_id,
+            entity_type: user.entity_type,
+            admin_id: user.admin_id,
+            resident_id: user.resident_id,
+            created_at: user.created_at,
+            updated_at: user.updated_at,
+        };
+
+        Ok(ResidentModelResult {
+            resident,
+            user: user_result,
+            role,
+        })
+    }
+
     pub fn db_read_by_id_matching_community(
         user_role: UserRoleModel,
         conn: &mut PgConnection,
@@ -117,7 +191,6 @@ impl ResidentModel {
             || (user_role.role == UserRoles::Admin && user_role.community_id == role.community_id)
             || (user_role.role == UserRoles::Resident
                 && user_role.community_id == role.community_id)
-            || (user_role.role == UserRoles::Guest && user_role.community_id == role.community_id)
         {
             let user_result = UserModelResult {
                 id: user.id,
@@ -139,6 +212,31 @@ impl ResidentModel {
         }
     }
 
+    pub fn db_count_all_matching_community(
+        user_role: UserRoleModel,
+        conn: &mut PgConnection,
+    ) -> diesel::QueryResult<i64> {
+        use crate::schema::maintenance_schedules;
+        use diesel::prelude::*;
+
+        // Base query
+        let mut query = UserRoleModel::table()
+            .filter(user_roles::role.eq(UserRoles::Resident))
+            .into_boxed(); // Needed for conditional filters
+
+        // Apply additional filter if role is Admin (not Root)
+        match user_role.role {
+            UserRoles::Root => {}
+            UserRoles::Admin => {
+                query = query.filter(user_roles::community_id.eq(user_role.community_id));
+            }
+            UserRoles::Resident => return Err(diesel::result::Error::NotFound),
+        }
+
+        // Count data
+        query.count().get_result::<i64>(conn)
+    }
+
     pub fn db_read_all_matching_community_by_range(
         user_role: UserRoleModel,
         conn: &mut PgConnection,
@@ -153,11 +251,7 @@ impl ResidentModel {
             .inner_join(users::table.on(user_roles::user_id.eq(users::id)))
             .inner_join(residents::table.on(users::entity_id.eq(residents::id)))
             .filter(users::entity_type.eq(UserTypes::Resident))
-            .filter(
-                user_roles::role
-                    .eq(UserRoles::Resident)
-                    .or(user_roles::role.eq(UserRoles::Guest)),
-            )
+            .filter(user_roles::role.eq(UserRoles::Resident))
             .into_boxed(); // Needed for conditional filters
 
         // Apply additional filter if role is Admin (not Root)

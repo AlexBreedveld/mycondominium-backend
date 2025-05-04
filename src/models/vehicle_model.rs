@@ -1,8 +1,8 @@
+use super::prelude::*;
 use crate::models::resident_model::{ResidentModel, ResidentModelResult};
 use crate::models::user_role_model::UserRoleModel;
-use super::prelude::*;
-use diesel::prelude::*;
 use crate::services::UserRoles;
+use diesel::prelude::*;
 
 #[derive(
     Queryable,
@@ -64,7 +64,7 @@ impl VehicleModel {
             UserRoles::Admin => {
                 query = query.filter(user_roles::community_id.eq(user_role.community_id));
             }
-            UserRoles::Resident | UserRoles::Guest => {
+            UserRoles::Resident => {
                 //query = query.filter(residents::id.eq(user_role.user_id));
                 query = query.filter(user_roles::user_id.eq(user_role.user_id));
             }
@@ -96,7 +96,7 @@ impl VehicleModel {
             UserRoles::Admin => {
                 query = query.filter(user_roles::community_id.eq(user_role.community_id));
             }
-            UserRoles::Resident | UserRoles::Guest => {
+            UserRoles::Resident => {
                 //query = query.filter(residents::id.eq(user_role.user_id));
                 query = query.filter(user_roles::user_id.eq(user_role.user_id));
             }
@@ -104,5 +104,4 @@ impl VehicleModel {
 
         query.select(VehicleModel::as_select()).first(conn)
     }
-
 }

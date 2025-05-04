@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -10,9 +11,16 @@ pub struct CliArgs {
 #[derive(Subcommand)]
 pub enum Commands {
     /// Run the Web server.
-    Daemon,
+    Daemon(DaemonArgs),
     /// Generate OpenAPI-Swagger documentation.
     GenerateSwagger,
     /// Serve only OpenAPI-Swagger documentation.
     ServeSwagger,
+}
+
+#[derive(Parser)]
+#[clap(rename_all = "kebab-case")]
+pub struct DaemonArgs {
+    #[arg(short, long, help = "Path to the configuration file")]
+    pub config_path: Option<PathBuf>,
 }

@@ -13,7 +13,6 @@ pub enum UserRoles {
     Root,
     Admin,
     Resident,
-    Guest,
 }
 
 impl<DB> ToSql<diesel::sql_types::Text, DB> for UserRoles
@@ -26,7 +25,6 @@ where
             UserRoles::Root => "Root",
             UserRoles::Admin => "Admin",
             UserRoles::Resident => "Resident",
-            UserRoles::Guest => "Guest",
         };
         s.to_sql(out)
     }
@@ -42,7 +40,6 @@ where
             "Root" => Ok(UserRoles::Root),
             "Admin" => Ok(UserRoles::Admin),
             "Resident" => Ok(UserRoles::Resident),
-            "Guest" => Ok(UserRoles::Guest),
             x => Err(format!("Unrecognized variant {}", x).into()),
         }
     }

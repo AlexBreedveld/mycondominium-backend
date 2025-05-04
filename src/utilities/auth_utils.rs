@@ -152,13 +152,12 @@ pub fn validate_token(token: &str) -> jsonwebtoken::errors::Result<TokenClaims> 
 
 pub fn validate_token_from_header(
     req: actix_web::HttpRequest,
+    secret_key: String,
 ) -> Result<TokenClaims, std::io::Error> {
     match req.headers().get("X-Auth-Token") {
         Some(header) => {
             let token = header.to_str().unwrap_or("");
-            let secret_key =
-                std::env::var("AUTH_TOKEN_SECRET_KEY").expect("AUTH_TOKEN_SECRET_KEY must be set");
-            match validate_token_internal(token, secret_key) {
+            match validate_token_no_env(token, secret_key) {
                 Ok(claims) => Ok(claims),
                 Err(e) => Err(std::io::Error::new(
                     std::io::ErrorKind::PermissionDenied,
@@ -234,8 +233,9 @@ pub fn parse_user_agent(ua_str: String) -> Result<UserAgent, std::io::Error> {
 pub fn authenticate_user(
     req: actix_web::HttpRequest,
     conn: &mut PgConnection,
+    conf: actix_web::web::Data<std::sync::Arc<crate::MyCondominiumConfig>>,
 ) -> Result<(UserRoleModel, TokenClaims, AuthTokenModel), std::io::Error> {
-    match validate_token_from_header(req) {
+    match validate_token_from_header(req, conf.auth.token_secret_key.clone()) {
         Ok(claims) => {
             match auth_token_model::AuthTokenModel::db_read_by_id(conn, claims.token_id) {
                 Ok(token) => {

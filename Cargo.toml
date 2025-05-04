@@ -10,7 +10,6 @@ chrono = { version = "0.4.40", features = ["serde"] }
 diesel = { version = "2.2.8", features = ["postgres", "uuid", "chrono", "serde_json"] }
 diesel_migrations = "2.2.0"
 dotenvy = "0.15.7"
-minio = "0.1.0"
 serde = { version =  "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
 tokio = { version = "1.44.0", features = ["full"] }
@@ -22,10 +21,14 @@ log = "0.4.26"
 clap = { version = "4.5.32", features = ["derive"] }
 env_logger = "0.11.7"
 utoipa-swagger-ui = { version = "9.0.0", features = ["actix-web"] }
-password-hash = "0.5.0"
+password-hash = { version = "0.5.0", features = ["rand_core", "getrandom"] }
 argon2 = "0.5.3"
 db_ops_derive = { path = "./db_ops_derive" }
 jsonwebtoken = "9.3.1"
 user-agent-parser = "0.3.6"
-lettre = "0.11.15"
+lettre = { version = "0.11.15", features = ["tokio1", "tokio1-native-tls"] }
 serde_yaml = "0.9.34"
+lapin = "2.5.3"
+futures-util = "0.3.31"
+actix-cors = "0.7.1"
+thiserror = "2.0.12"

@@ -62,29 +62,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    document_shares (id) {
-        id -> Uuid,
-        user_id -> Uuid,
-        document_id -> Uuid,
-        read_only -> Bool,
-    }
-}
-
-diesel::table! {
-    documents (id) {
-        id -> Uuid,
-        #[max_length = 150]
-        title -> Varchar,
-        description -> Nullable<Text>,
-        file_url -> Text,
-        #[max_length = 50]
-        document_type -> Nullable<Varchar>,
-        created_at -> Timestamp,
-        updated_at -> Timestamp,
-    }
-}
-
-diesel::table! {
     elections (id) {
         id -> Uuid,
         community_id -> Nullable<Uuid>,
@@ -145,7 +122,6 @@ diesel::table! {
     parcels (id) {
         id -> Uuid,
         resident_id -> Uuid,
-        community_id -> Nullable<Uuid>,
         #[max_length = 50]
         parcel_type -> Varchar,
         description -> Nullable<Text>,
@@ -167,6 +143,16 @@ diesel::table! {
         status -> Varchar,
         created_at -> Timestamp,
         updated_at -> Timestamp,
+    }
+}
+
+diesel::table! {
+    resident_invites (id) {
+        id -> Uuid,
+        email -> Text,
+        community_id -> Uuid,
+        key -> Text,
+        created_at -> Timestamp,
     }
 }
 
@@ -241,18 +227,16 @@ diesel::table! {
 diesel::joinable!(announcements -> communities (community_id));
 diesel::joinable!(auth_tokens -> users (user_id));
 diesel::joinable!(common_areas -> communities (community_id));
-diesel::joinable!(document_shares -> documents (document_id));
-diesel::joinable!(document_shares -> users (user_id));
 diesel::joinable!(elections -> communities (community_id));
 diesel::joinable!(incidents -> communities (community_id));
 diesel::joinable!(incidents -> residents (resident_id));
 diesel::joinable!(invoices -> communities (community_id));
 diesel::joinable!(invoices -> residents (resident_id));
 diesel::joinable!(maintenance_schedules -> communities (community_id));
-diesel::joinable!(parcels -> communities (community_id));
 diesel::joinable!(parcels -> residents (resident_id));
 diesel::joinable!(reservations -> common_areas (common_area_id));
 diesel::joinable!(reservations -> residents (resident_id));
+diesel::joinable!(resident_invites -> communities (community_id));
 diesel::joinable!(user_roles -> communities (community_id));
 diesel::joinable!(user_roles -> users (user_id));
 diesel::joinable!(users -> admins (admin_id));
@@ -267,14 +251,13 @@ diesel::allow_tables_to_appear_in_same_query!(
     auth_tokens,
     common_areas,
     communities,
-    document_shares,
-    documents,
     elections,
     incidents,
     invoices,
     maintenance_schedules,
     parcels,
     reservations,
+    resident_invites,
     residents,
     user_roles,
     users,

@@ -25,10 +25,15 @@ pub fn admin_route() -> actix_web::Scope {
 }
 
 pub fn auth_route() -> actix_web::Scope {
-    web::scope("/api/auth").route(
-        "/signin",
-        web::post().to(crate::services::auth_service::sign_in::sign_in),
-    )
+    web::scope("/api/auth")
+        .route(
+            "/signin",
+            web::post().to(crate::services::auth_service::sign_in::sign_in),
+        )
+        .route(
+            "/auth",
+            web::get().to(crate::services::auth_service::auth::auth),
+        )
 }
 
 pub fn community_route() -> actix_web::Scope {
@@ -56,11 +61,67 @@ pub fn community_route() -> actix_web::Scope {
         )
 }
 
+pub fn maintenance_schedule_route() -> actix_web::Scope {
+    web::scope("/api/maintenance_schedule")
+        .route(
+            "/list",
+            web::get().to(crate::services::maintenance_schedule_service::get_maintenance_schedule::get_maintenance_schedules),
+        )
+        .route(
+            "/count/{status}",
+            web::get().to(crate::services::maintenance_schedule_service::get_maintenance_schedule::count_maintenance_schedule),
+        )
+        .route(
+            "/get/{id}",
+            web::get().to(crate::services::maintenance_schedule_service::get_maintenance_schedule::get_maintenance_schedule_by_id),
+        )
+        .route(
+            "/new",
+            web::post().to(crate::services::maintenance_schedule_service::upsert_maintenance_schedule::new_maintenance_schedule),
+        )
+        .route(
+            "/update/{id}",
+            web::put().to(crate::services::maintenance_schedule_service::upsert_maintenance_schedule::update_maintenance_schedule),
+        )
+        .route(
+            "/delete/{id}",
+            web::delete().to(crate::services::maintenance_schedule_service::upsert_maintenance_schedule::delete_maintenance_schedule),
+        )
+}
+
+pub fn parcel_route() -> actix_web::Scope {
+    web::scope("/api/parcel")
+        .route(
+            "/list",
+            web::get().to(crate::services::parcel_service::get_parcel::get_parcels),
+        )
+        .route(
+            "/get/{id}",
+            web::get().to(crate::services::parcel_service::get_parcel::get_parcel_by_id),
+        )
+        .route(
+            "/new",
+            web::post().to(crate::services::parcel_service::upsert_parcel::new_parcel),
+        )
+        .route(
+            "/update/{id}",
+            web::put().to(crate::services::parcel_service::upsert_parcel::update_parcel),
+        )
+        .route(
+            "/delete/{id}",
+            web::delete().to(crate::services::parcel_service::upsert_parcel::delete_parcel),
+        )
+}
+
 pub fn resident_route() -> actix_web::Scope {
     web::scope("/api/resident")
         .route(
             "/list",
             web::get().to(crate::services::resident_service::get_resident::get_residents),
+        )
+        .route(
+            "/count",
+            web::get().to(crate::services::resident_service::get_resident::count_resident),
         )
         .route(
             "/get/{id}",
@@ -77,6 +138,10 @@ pub fn resident_route() -> actix_web::Scope {
         .route(
             "/delete/{id}",
             web::delete().to(crate::services::resident_service::upsert_resident::delete_resident),
+        )
+        .route(
+            "/invite/new",
+            web::post().to(crate::services::resident_service::invite_resident::new_resident_invite),
         )
 }
 

@@ -1,5 +1,7 @@
-use crate::utilities::user_utils::{check_email_exist, user_check_email_valid};
 use super::*;
+use crate::internal::rabbitmq::rabbitmq_client::RabbitMqClient;
+use crate::internal::smtp::smtp_client::SmtpEmailPayload;
+use crate::utilities::user_utils::{check_email_exist, user_check_email_valid};
 
 #[utoipa::path(
     post,
@@ -16,12 +18,16 @@ use super::*;
         ("Token" = [])
     )
 )]
-pub async fn new_resident(body: web::Json<resident_model::ResidentModelNew>, req: HttpRequest) -> HttpResponse {
-    let conn = &mut establish_connection_pg();
+pub async fn new_resident(
+    body: web::Json<resident_model::ResidentModelNew>,
+    req: HttpRequest,
+    conf: web::Data<Arc<MyCondominiumConfig>>,
+) -> HttpResponse {
+    let conn = &mut establish_connection_pg(&conf);
 
     let body = body.into_inner();
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn) {
+    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf.clone()) {
         Ok((role, claims, token)) => {
             if role.role == UserRoles::Root || role.role == UserRoles::Admin {
                 (role, claims, token)
@@ -40,7 +46,9 @@ pub async fn new_resident(body: web::Json<resident_model::ResidentModelNew>, req
         }
     };
 
-    if !(role.role == UserRoles::Root || (role.role == UserRoles::Admin && role.community_id == body.community_id)) {
+    if !(role.role == UserRoles::Root
+        || (role.role == UserRoles::Admin && role.community_id == body.community_id))
+    {
         return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
             error: true,
             message: "Unauthorized".to_string(),
@@ -49,6 +57,20 @@ pub async fn new_resident(body: web::Json<resident_model::ResidentModelNew>, req
 
     if let Err(validation_errors) = body.validate() {
         return HttpResponse::BadRequest().json(validation_errors);
+    }
+
+    if body.community_id.is_none() {
+        return HttpResponse::BadRequest().json(HttpResponseObjectEmptyError {
+            error: true,
+            message: "Invalid Community ID".to_string(),
+        });
+    }
+
+    if community_model::CommunityModel::db_read_by_id(conn, body.community_id.unwrap()).is_err() {
+        return HttpResponse::BadRequest().json(HttpResponseObjectEmptyError {
+            error: true,
+            message: "Invalid Community ID".to_string(),
+        });
     }
 
     match check_email_exist(conn, body.email.clone()) {
@@ -60,13 +82,6 @@ pub async fn new_resident(body: web::Json<resident_model::ResidentModelNew>, req
                 message: "Error creating resident: Email already in use".to_string(),
             });
         }
-    }
-
-    if body.role == UserRoles::Admin || body.role == UserRoles::Root {
-        return HttpResponse::BadRequest().json(HttpResponseObjectEmptyError {
-            error: true,
-            message: "Admins can't be created through this endpoint".to_string(),
-        });
     }
 
     let new_obj = resident_model::ResidentModel {
@@ -85,84 +100,92 @@ pub async fn new_resident(body: web::Json<resident_model::ResidentModelNew>, req
 
     match new_obj.db_insert(conn) {
         Ok(_) => (),
-        Err(e) => return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
-            error: true,
-            message: format!("Error creating resident: {}", e),
-        }),
+        Err(e) => {
+            return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: format!("Error creating resident: {}", e),
+            });
+        }
     };
 
-    match body.password {
-        Some(password) => {
-            let hashed_password = match hash_password(password) {
-                Ok(passwd) => passwd,
-                Err(e) => {
-                    log::error!("Error creating resident: {}", e);
-                    return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
-                        error: true,
-                        message: "Error creating resident".to_string(),
-                    });
-                }
-            };
-
-            let new_obj_user = user_model::UserModel {
-                id: user_model::UserModel::new_id(conn),
-                entity_id: new_obj.id,
-                entity_type: UserTypes::Resident,
-                admin_id: None,
-                resident_id: Some(new_obj.id),
-                password: hashed_password,
-                created_at: chrono::Utc::now().naive_utc(),
-                updated_at: chrono::Utc::now().naive_utc(),
-            };
-
-            match new_obj_user.db_insert(conn) {
-                Ok(_) => (),
-                Err(e) => {
-                    log::error!("Error creating resident: {}", e);
-                    return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
-                        error: true,
-                        message: "Error creating resident".to_string(),
-                    });
-                }
-            };
-
-            let new_obj_user_role = user_role_model::UserRoleModel {
-                id: user_role_model::UserRoleModel::new_id(conn),
-                user_id: new_obj_user.id,
-                role: body.role,
-                community_id: body.community_id,
-                created_at: chrono::Utc::now().naive_utc(),
-                updated_at: chrono::Utc::now().naive_utc(),
-            };
-
-            match new_obj_user_role.db_insert(conn) {
-                Ok(_) => (),
-                Err(e) => {
-                    log::error!("Error creating resident: {}", e);
-                    return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
-                        error: true,
-                        message: "Error creating resident".to_string(),
-                    });
-                }
-            };
-
-            HttpResponse::Ok().json(HttpResponseObjectEmptyEntity {
-                error: false,
-                message: "Resident created successfully".to_string(),
-                entity_id: Some(new_obj.id),
-            })
-        },
-        None => {
-            todo!("Implement sending email to new resident to create password");
+    let hashed_password = match hash_password(body.password) {
+        Ok(passwd) => passwd,
+        Err(e) => {
+            log::error!("Error creating resident: {}", e);
+            return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: "Error creating resident".to_string(),
+            });
         }
-    }
+    };
+
+    let new_obj_user = user_model::UserModel {
+        id: user_model::UserModel::new_id(conn),
+        entity_id: new_obj.id,
+        entity_type: UserTypes::Resident,
+        admin_id: None,
+        resident_id: Some(new_obj.id),
+        password: hashed_password,
+        created_at: chrono::Utc::now().naive_utc(),
+        updated_at: chrono::Utc::now().naive_utc(),
+    };
+
+    match new_obj_user.db_insert(conn) {
+        Ok(_) => (),
+        Err(e) => {
+            log::error!("Error creating resident: {}", e);
+            return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: "Error creating resident".to_string(),
+            });
+        }
+    };
+
+    let new_obj_user_role = user_role_model::UserRoleModel {
+        id: user_role_model::UserRoleModel::new_id(conn),
+        user_id: new_obj_user.id,
+        role: UserRoles::Resident,
+        community_id: body.community_id,
+        created_at: chrono::Utc::now().naive_utc(),
+        updated_at: chrono::Utc::now().naive_utc(),
+    };
+
+    match new_obj_user_role.db_insert(conn) {
+        Ok(_) => (),
+        Err(e) => {
+            log::error!("Error creating resident: {}", e);
+            return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: "Error creating resident".to_string(),
+            });
+        }
+    };
+
+    let rmq = RabbitMqClient::new(&conf.rabbitmq, "mycondominium_smtp".to_string())
+        .await
+        .unwrap();
+    let email = SmtpEmailPayload {
+        to: "alex@al3xdev.com".to_string(),
+        subject: "Test - New Resident".to_string(),
+        body: "A New Resident has been added.".to_string(),
+    };
+
+    let payload = serde_json::to_vec(&email).unwrap();
+
+    rmq.publish(&payload).await.unwrap();
+
+    HttpResponse::Ok().json(HttpResponseObjectEmptyEntity {
+        error: false,
+        message: "Resident created successfully".to_string(),
+        entity_id: Some(new_obj.id),
+    })
 }
 
 #[utoipa::path(
     put,
     tag = "Resident",
     path = "/update/{id}",
-    request_body = resident_model::ResidentModelNew,
+    request_body = resident_model::ResidentModelEdit,
     params(
         ("id" = Uuid, Path, description = "Resident ID"),
     ),
@@ -178,44 +201,31 @@ pub async fn new_resident(body: web::Json<resident_model::ResidentModelNew>, req
 )]
 pub async fn update_resident(
     id: web::Path<String>,
-    body: web::Json<resident_model::ResidentModelNew>,
-    req: HttpRequest
+    body: web::Json<resident_model::ResidentModelEdit>,
+    req: HttpRequest,
+    conf: web::Data<Arc<MyCondominiumConfig>>,
 ) -> HttpResponse {
-    let conn = &mut establish_connection_pg();
+    let conn = &mut establish_connection_pg(&conf);
     let body = body.into_inner();
 
-    match authenticate_user(req.clone(), conn) {
-        Ok((role, claims, token)) => {
-            if body.role == UserRoles::Admin {
-                if role.role != UserRoles::Root {
-                    if body.community_id.is_none() || role.community_id.is_none() {
-                        return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
-                            error: true,
-                            message: "Unauthorized".to_string(),
-                        });
-                    }
-
-                    if !(role.role == UserRoles::Admin
-                        && body.community_id.unwrap() == role.community_id.unwrap())
-                    {
-                        return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
-                            error: true,
-                            message: "Unauthorized".to_string(),
-                        });
-                    }
+    match authenticate_user(req.clone(), conn, conf) {
+        Ok((role, claims, token)) => match role.role {
+            UserRoles::Root => {}
+            UserRoles::Admin => {
+                if body.community_id.unwrap() != role.community_id.unwrap() {
+                    return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
+                        error: true,
+                        message: "Unauthorized".to_string(),
+                    });
                 }
-            } else if body.role == UserRoles::Root && role.role != UserRoles::Root {
+            }
+            _ => {
                 return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                     error: true,
                     message: "Unauthorized".to_string(),
                 });
-            } else {
-                return HttpResponse::BadRequest().json(HttpResponseObjectEmptyError {
-                    error: true,
-                    message: "Invalid Admin Role".to_string(),
-                });
             }
-        }
+        },
         Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                 error: true,
@@ -227,7 +237,6 @@ pub async fn update_resident(
     if let Err(validation_errors) = body.validate() {
         return HttpResponse::BadRequest().json(validation_errors);
     }
-
 
     let id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
@@ -248,6 +257,20 @@ pub async fn update_resident(
             });
         }
     };
+
+    if body.community_id.is_none() {
+        return HttpResponse::BadRequest().json(HttpResponseObjectEmptyError {
+            error: true,
+            message: "Invalid Community ID".to_string(),
+        });
+    }
+
+    if community_model::CommunityModel::db_read_by_id(conn, body.community_id.unwrap()).is_err() {
+        return HttpResponse::BadRequest().json(HttpResponseObjectEmptyError {
+            error: true,
+            message: "Invalid Community ID".to_string(),
+        });
+    }
 
     match user_check_email_valid(conn, body.email.clone(), curr_obj.email) {
         Ok(()) => (),
@@ -302,8 +325,12 @@ pub async fn update_resident(
         ("Token" = [])
     )
 )]
-pub async fn delete_resident(id: web::Path<String>, req: HttpRequest) -> HttpResponse {
-    let conn = &mut establish_connection_pg();
+pub async fn delete_resident(
+    id: web::Path<String>,
+    req: HttpRequest,
+    conf: web::Data<Arc<MyCondominiumConfig>>,
+) -> HttpResponse {
+    let conn = &mut establish_connection_pg(&conf);
 
     let id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
@@ -351,7 +378,7 @@ pub async fn delete_resident(id: web::Path<String>, req: HttpRequest) -> HttpRes
         }
     };
 
-    match authenticate_user(req.clone(), conn) {
+    match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => {
             if role.role != UserRoles::Root {
                 if res_user_role.community_id.is_none() || role.community_id.is_none() {

@@ -16,10 +16,10 @@ use actix_web::{HttpRequest, HttpResponse, web};
         ("Token" = [])
     )
 )]
-pub async fn auth(req: HttpRequest) -> HttpResponse {
-    let conn = &mut establish_connection_pg();
+pub async fn auth(req: HttpRequest, conf: web::Data<Arc<MyCondominiumConfig>>) -> HttpResponse {
+    let conn = &mut establish_connection_pg(&conf);
 
-    match authenticate_user(req, conn) {
+    match authenticate_user(req, conn, conf) {
         Ok((role, claims, token)) => HttpResponse::Ok().json(HttpResponseObject {
             error: false,
             message: "Successfully authenticated".to_string(),

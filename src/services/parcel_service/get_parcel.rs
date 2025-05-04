@@ -1,16 +1,15 @@
 use super::*;
-use std::sync::Arc;
 
 #[utoipa::path(
     get,
-    tag = "Vehicle",
+    tag = "Parcel",
     path = "/list",
     params(
         ("page" = Option<i64>, Query, description = "Page number for pagination (default: 1)"),
         ("per_page" = Option<i64>, Query, description = "Number of items per page for pagination (default: 10)"),
     ),
     responses(
-        (status = 200, description = "Got vehicles successfully", body = VehicleListHttpResponse, headers(
+        (status = 200, description = "Got Parcels successfully", body = ParcelListHttpResponse, headers(
             ("X-Total-Pages" = i64, description = "Total number of pages"),
             ("X-Remaining-Pages" = i64, description = "Remaining number of pages")
         )),
@@ -21,7 +20,7 @@ use std::sync::Arc;
         ("Token" = [])
     )
 )]
-pub async fn get_vehicles(
+pub async fn get_parcels(
     query: web::Query<PaginationParams>,
     req: HttpRequest,
     conf: web::Data<Arc<MyCondominiumConfig>>,
@@ -42,40 +41,17 @@ pub async fn get_vehicles(
         }
     };
 
-    let mut total_items_query = vehicles::table
-        .inner_join(residents::table.on(vehicles::resident_id.eq(residents::id)))
-        .inner_join(users::table.on(users::entity_id.eq(residents::id)))
-        .inner_join(user_roles::table.on(user_roles::user_id.eq(users::id)))
-        .into_boxed();
-
-    match role.role {
-        UserRoles::Root => (),
-        UserRoles::Admin => {
-            total_items_query =
-                total_items_query.filter(user_roles::community_id.eq(role.community_id));
-        }
-        UserRoles::Resident => {
-            total_items_query = total_items_query.filter(user_roles::user_id.eq(role.user_id));
-        }
-    };
-
-    let total_items = match total_items_query
-        .select(vehicle_model::VehicleModel::as_select())
-        .count()
-        .get_result::<i64>(conn)
-    {
-        Ok(count) => count,
+    let total_items = match parcel_model::ParcelModel::db_count_all_matching(role.clone(), conn) {
+        Ok(res) => res,
         Err(e) => {
-            return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+            return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
                 error: true,
-                message: format!("Error getting total items: {}", e),
+                message: "Error getting Parcels".to_string(),
             });
         }
     };
 
-    match vehicle_model::VehicleModel::db_read_all_matching_community_by_range(
-        role, conn, per_page, offset,
-    ) {
+    match parcel_model::ParcelModel::db_read_all_matching_by_range(role, conn, per_page, offset) {
         Ok(res) => {
             let total_pages = (total_items as f64 / per_page as f64).ceil() as i64;
             let remaining_pages = total_pages - page;
@@ -91,27 +67,27 @@ pub async fn get_vehicles(
                 ))
                 .json(HttpResponseObject {
                     error: false,
-                    message: "Got vehicles successfully".to_string(),
+                    message: "Got Parcels successfully".to_string(),
                     object: Some(res),
                 })
         }
         Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
             error: true,
-            message: format!("Error getting vehicles: {}", e),
+            message: format!("Error getting Parcels: {}", e),
         }),
     }
 }
 
 #[utoipa::path(
     get,
-    tag = "Vehicle",
+    tag = "Parcel",
     path = "/get/{id}",
     params(
-        ("id" = Uuid, Path, description = "Vehicle ID"),
+        ("id" = Uuid, Path, description = "Parcel ID"),
     ),
     responses(
-        (status = 200, description = "Got Vehicle successfully", body = VehicleGetHttpResponse),
-        (status = 400, description = "Invalid Vehicle ID format or Vehicle ID is required", body = HttpResponseObjectEmptyError),
+        (status = 200, description = "Got Parcel successfully", body = ParcelGetHttpResponse),
+        (status = 400, description = "Invalid Parcel ID format or Parcel ID is required", body = HttpResponseObjectEmptyError),
         (status = 401, description = "Unauthorized", body = HttpResponseObjectEmptyError),
         (status = 500, description = "Internal server error", body = HttpResponseObjectEmptyError)
     ),
@@ -119,7 +95,7 @@ pub async fn get_vehicles(
         ("Token" = [])
     )
 )]
-pub async fn get_vehicle_by_id(
+pub async fn get_parcel_by_id(
     id: web::Path<String>,
     req: HttpRequest,
     conf: web::Data<Arc<MyCondominiumConfig>>,
@@ -133,7 +109,7 @@ pub async fn get_vehicle_by_id(
         Err(_) => {
             return HttpResponse::BadRequest().json(HttpResponseObjectEmpty {
                 error: true,
-                message: "Invalid Vehicle ID format".to_string(),
+                message: "Invalid Maintenance Schedule ID format".to_string(),
             });
         }
     };
@@ -148,15 +124,15 @@ pub async fn get_vehicle_by_id(
         }
     };
 
-    match vehicle_model::VehicleModel::db_read_by_id_matching_community(role, conn, id) {
-        Ok(res) => HttpResponse::Ok().json(HttpResponseObject {
+    match parcel_model::ParcelModel::db_read_by_id_matching_resident(role, conn, id) {
+        Ok(user_req) => HttpResponse::Ok().json(HttpResponseObject {
             error: false,
-            message: "Got Vehicle successfully".to_string(),
-            object: Some(res),
+            message: "Got Parcel successfully".to_string(),
+            object: Some(user_req),
         }),
         Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
             error: true,
-            message: "Error getting vehicles".to_string(),
+            message: format!("Error getting Parcel: {}", e),
         }),
     }
 }

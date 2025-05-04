@@ -21,8 +21,12 @@ build:
   tags:
     - dind
     - cloud-br9
-  except:
-    - tags
+  rules:
+    - if: $SKIP_BUILD == "true"
+      when: never
+    - if: $CI_COMMIT_TAG
+      when: never
+    - when: always
   image: registry.git.al3xdev.com:443/alex/rust-cross/rust-cross:latest
   services:
     - docker:dind
@@ -38,12 +42,14 @@ build:
     DOCKER_TLS_CERTDIR: ""
   before_script:
     - if [ $(cat ./.pipeline_re_run_status) == "true" ]; then echo "Skipping because this is a re-run"; exit 0; fi
+    - if [ ${SKIP_BUILD} == "true" ]; then echo "Skipping because of SKIP_BUILD set to true"; exit 0; fi
     - rustup target add ${TARGET} || true
     - echo "$CI_JOB_TOKEN" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
     - cargo add pq-sys -F bundled
     - cargo add openssl-sys -F vendored
   script:
     - if [ $(cat ./.pipeline_re_run_status) == "true" ]; then echo "Skipping because this is a re-run"; exit 0; fi
+    - if [ ${SKIP_BUILD} == "true" ]; then echo "Skipping because of SKIP_BUILD set to true"; exit 0; fi
     - echo "$JOB_ID_VAR=$CI_JOB_ID" >> build.env
     - echo "RUST_APP_VERSION=$(sed -n '/^\[package\]/,/^\[/{/version/s/.*version *= *"\([^"]*\)".*/\1/p}' Cargo.toml)" >> build.env
     - echo "Building for ${NAME} (${TARGET})..."

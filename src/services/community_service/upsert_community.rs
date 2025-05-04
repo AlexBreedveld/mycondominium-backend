@@ -18,12 +18,13 @@ use super::*;
 pub async fn new_community(
     body: web::Json<community_model::CommunityModelNew>,
     req: HttpRequest,
+    conf: web::Data<Arc<MyCondominiumConfig>>,
 ) -> HttpResponse {
-    let conn = &mut establish_connection_pg();
+    let conn = &mut establish_connection_pg(&conf);
 
     let body = body.into_inner();
 
-    match authenticate_user(req.clone(), conn) {
+    match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => {
             if role.role != UserRoles::Root {
                 return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
@@ -93,8 +94,9 @@ pub async fn update_community(
     id: web::Path<String>,
     body: web::Json<community_model::CommunityModelNew>,
     req: HttpRequest,
+    conf: web::Data<Arc<MyCondominiumConfig>>,
 ) -> HttpResponse {
-    let conn = &mut establish_connection_pg();
+    let conn = &mut establish_connection_pg(&conf);
     let body = body.into_inner();
 
     let id = match Uuid::parse_str(&id) {
@@ -107,7 +109,7 @@ pub async fn update_community(
         }
     };
 
-    match authenticate_user(req.clone(), conn) {
+    match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => match role.role {
             UserRoles::Root => (),
             UserRoles::Admin => {
@@ -185,8 +187,12 @@ pub async fn update_community(
         ("Token" = [])
     )
 )]
-pub async fn delete_community(id: web::Path<String>, req: HttpRequest) -> HttpResponse {
-    let conn = &mut establish_connection_pg();
+pub async fn delete_community(
+    id: web::Path<String>,
+    req: HttpRequest,
+    conf: web::Data<Arc<MyCondominiumConfig>>,
+) -> HttpResponse {
+    let conn = &mut establish_connection_pg(&conf);
 
     let id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
@@ -198,7 +204,7 @@ pub async fn delete_community(id: web::Path<String>, req: HttpRequest) -> HttpRe
         }
     };
 
-    match authenticate_user(req.clone(), conn) {
+    match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => match role.role {
             UserRoles::Root => (),
             _ => {
