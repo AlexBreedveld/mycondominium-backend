@@ -139,6 +139,38 @@ impl ResidentModel {
         uuid_new
     }
 
+    pub fn db_get_user(
+        conn: &mut PgConnection,
+        id: uuid::Uuid,
+    ) -> diesel::QueryResult<ResidentModelResult> {
+        let resident = crate::models::resident_model::ResidentModel::db_read_by_id(conn, id)?;
+
+        let user = crate::models::user_model::UserModel::table()
+            .filter(users::entity_id.eq(resident.id))
+            .filter(users::entity_type.eq("resident"))
+            .first::<crate::models::user_model::UserModel>(conn)?;
+
+        let role = crate::models::user_role_model::UserRoleModel::table()
+            .filter(user_roles::user_id.eq(user.id))
+            .first::<crate::models::user_role_model::UserRoleModel>(conn)?;
+
+        let user_result = UserModelResult {
+            id: user.id,
+            entity_id: user.entity_id,
+            entity_type: user.entity_type,
+            admin_id: user.admin_id,
+            resident_id: user.resident_id,
+            created_at: user.created_at,
+            updated_at: user.updated_at,
+        };
+
+        Ok(ResidentModelResult {
+            resident,
+            user: user_result,
+            role,
+        })
+    }
+
     pub fn db_read_by_id_matching_community(
         user_role: UserRoleModel,
         conn: &mut PgConnection,

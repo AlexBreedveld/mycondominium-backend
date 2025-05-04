@@ -122,7 +122,6 @@ diesel::table! {
     parcels (id) {
         id -> Uuid,
         resident_id -> Uuid,
-        community_id -> Nullable<Uuid>,
         #[max_length = 50]
         parcel_type -> Varchar,
         description -> Nullable<Text>,
@@ -234,7 +233,6 @@ diesel::joinable!(incidents -> residents (resident_id));
 diesel::joinable!(invoices -> communities (community_id));
 diesel::joinable!(invoices -> residents (resident_id));
 diesel::joinable!(maintenance_schedules -> communities (community_id));
-diesel::joinable!(parcels -> communities (community_id));
 diesel::joinable!(parcels -> residents (resident_id));
 diesel::joinable!(reservations -> common_areas (common_area_id));
 diesel::joinable!(reservations -> residents (resident_id));

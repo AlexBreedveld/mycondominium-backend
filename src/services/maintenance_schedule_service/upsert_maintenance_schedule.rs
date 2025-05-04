@@ -136,7 +136,7 @@ pub async fn update_maintenance_schedule(
         Err(_) => {
             return HttpResponse::BadRequest().json(HttpResponseObjectEmpty {
                 error: true,
-                message: "Invalid Resident ID format".to_string(),
+                message: "Invalid Maintenance Schedule ID format".to_string(),
             });
         }
     };
@@ -238,7 +238,7 @@ pub async fn delete_maintenance_schedule(
         Err(_) => {
             return HttpResponse::BadRequest().json(HttpResponseObjectEmpty {
                 error: true,
-                message: "Invalid Resident ID format".to_string(),
+                message: "Invalid Maintenance Schedule ID format".to_string(),
             });
         }
     };

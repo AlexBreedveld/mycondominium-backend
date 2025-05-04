@@ -89,6 +89,30 @@ pub fn maintenance_schedule_route() -> actix_web::Scope {
         )
 }
 
+pub fn parcel_route() -> actix_web::Scope {
+    web::scope("/api/parcel")
+        .route(
+            "/list",
+            web::get().to(crate::services::parcel_service::get_parcel::get_parcels),
+        )
+        .route(
+            "/get/{id}",
+            web::get().to(crate::services::parcel_service::get_parcel::get_parcel_by_id),
+        )
+        .route(
+            "/new",
+            web::post().to(crate::services::parcel_service::upsert_parcel::new_parcel),
+        )
+        .route(
+            "/update/{id}",
+            web::put().to(crate::services::parcel_service::upsert_parcel::update_parcel),
+        )
+        .route(
+            "/delete/{id}",
+            web::delete().to(crate::services::parcel_service::upsert_parcel::delete_parcel),
+        )
+}
+
 pub fn resident_route() -> actix_web::Scope {
     web::scope("/api/resident")
         .route(

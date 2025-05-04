@@ -1,4 +1,4 @@
-# MyCondominium Backend
+# MyCondominium Backend 🦀
 
 ## Docs
 

@@ -3,6 +3,7 @@ pub mod api;
 pub mod auth_service;
 pub mod community_service;
 pub mod maintenance_schedule_service;
+pub mod parcel_service;
 mod prelude;
 pub mod resident_service;
 pub mod vehicle_service;
@@ -27,6 +28,7 @@ use utoipa::openapi::security::{ApiKey, ApiKeyValue};
         (path = "/api/community", api = community_service::CommunityApi),
         (path = "/api/vehicle", api = vehicle_service::VehicleApi),
         (path = "/api/maintenance_schedule", api = maintenance_schedule_service::MaintenanceScheduleApi),
+        (path = "/api/parcel", api = parcel_service::ParcelApi),
     )
 )]
 pub struct ApiDoc;
