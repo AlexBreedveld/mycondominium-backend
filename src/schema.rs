@@ -43,7 +43,7 @@ diesel::table! {
         #[max_length = 100]
         name -> Varchar,
         description -> Nullable<Text>,
-        community_id -> Nullable<Uuid>,
+        community_id -> Uuid,
         created_at -> Timestamp,
     }
 }

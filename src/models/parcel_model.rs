@@ -101,7 +101,7 @@ impl ParcelModel {
             UserRoles::Admin => {
                 query = query.filter(user_roles::community_id.eq(user_role.community_id));
             }
-            UserRoles::Resident => query = query.filter(users::id.eq(user_role.id)),
+            UserRoles::Resident => query = query.filter(users::id.eq(user_role.user_id)),
         }
 
         query
@@ -128,7 +128,7 @@ impl ParcelModel {
             UserRoles::Admin => {
                 query = query.filter(user_roles::community_id.eq(user_role.community_id));
             }
-            UserRoles::Resident => query = query.filter(users::id.eq(user_role.id)),
+            UserRoles::Resident => query = query.filter(users::id.eq(user_role.user_id)),
         }
 
         query

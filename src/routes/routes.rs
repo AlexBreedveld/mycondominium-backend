@@ -36,6 +36,34 @@ pub fn auth_route() -> actix_web::Scope {
         )
 }
 
+pub fn common_area_route() -> actix_web::Scope {
+    web::scope("/api/common_area")
+        .route(
+            "/list",
+            web::get().to(crate::services::common_area_service::get_common_area::get_common_areas),
+        )
+        .route(
+            "/get/{id}",
+            web::get()
+                .to(crate::services::common_area_service::get_common_area::get_common_area_by_id),
+        )
+        .route(
+            "/new",
+            web::post()
+                .to(crate::services::common_area_service::upsert_common_area::new_common_area),
+        )
+        .route(
+            "/update/{id}",
+            web::put()
+                .to(crate::services::common_area_service::upsert_common_area::update_common_area),
+        )
+        .route(
+            "/delete/{id}",
+            web::delete()
+                .to(crate::services::common_area_service::upsert_common_area::delete_common_area),
+        )
+}
+
 pub fn community_route() -> actix_web::Scope {
     web::scope("/api/community")
         .route(

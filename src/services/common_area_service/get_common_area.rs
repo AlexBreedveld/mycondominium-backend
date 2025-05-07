@@ -2,14 +2,14 @@ use super::*;
 
 #[utoipa::path(
     get,
-    tag = "Parcel",
+    tag = "CommonArea",
     path = "/list",
     params(
         ("page" = Option<i64>, Query, description = "Page number for pagination (default: 1)"),
         ("per_page" = Option<i64>, Query, description = "Number of items per page for pagination (default: 10)"),
     ),
     responses(
-        (status = 200, description = "Got Parcels successfully", body = ParcelListHttpResponse, headers(
+        (status = 200, description = "Got Common Areas successfully", body = CommonAreaListHttpResponse, headers(
             ("X-Total-Pages" = i64, description = "Total number of pages"),
             ("X-Remaining-Pages" = i64, description = "Remaining number of pages")
         )),
@@ -20,7 +20,7 @@ use super::*;
         ("Token" = [])
     )
 )]
-pub async fn get_parcels(
+pub async fn get_common_areas(
     query: web::Query<PaginationParams>,
     req: HttpRequest,
     conf: web::Data<Arc<MyCondominiumConfig>>,
@@ -41,17 +41,20 @@ pub async fn get_parcels(
         }
     };
 
-    let total_items = match parcel_model::ParcelModel::db_count_all_matching(role.clone(), conn) {
-        Ok(res) => res,
-        Err(e) => {
-            return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
-                error: true,
-                message: "Error getting Parcels".to_string(),
-            });
-        }
-    };
+    let total_items =
+        match common_area_model::CommonAreaModel::db_count_all_matching(role.clone(), conn) {
+            Ok(res) => res,
+            Err(e) => {
+                return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
+                    error: true,
+                    message: "Error getting Common Areas".to_string(),
+                });
+            }
+        };
 
-    match parcel_model::ParcelModel::db_read_all_matching_by_range(role, conn, per_page, offset) {
+    match common_area_model::CommonAreaModel::db_read_all_matching_by_range(
+        role, conn, per_page, offset,
+    ) {
         Ok(res) => {
             let total_pages = (total_items as f64 / per_page as f64).ceil() as i64;
             let remaining_pages = total_pages - page;
@@ -67,27 +70,27 @@ pub async fn get_parcels(
                 ))
                 .json(HttpResponseObject {
                     error: false,
-                    message: "Got Parcels successfully".to_string(),
+                    message: "Got Common Areas successfully".to_string(),
                     object: Some(res),
                 })
         }
         Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
             error: true,
-            message: format!("Error getting Parcels: {}", e),
+            message: format!("Error getting Common Areas: {}", e),
         }),
     }
 }
 
 #[utoipa::path(
     get,
-    tag = "Parcel",
+    tag = "CommonArea",
     path = "/get/{id}",
     params(
-        ("id" = Uuid, Path, description = "Parcel ID"),
+        ("id" = Uuid, Path, description = "Common Area ID"),
     ),
     responses(
-        (status = 200, description = "Got Parcel successfully", body = ParcelGetHttpResponse),
-        (status = 400, description = "Invalid Parcel ID format or Parcel ID is required", body = HttpResponseObjectEmptyError),
+        (status = 200, description = "Got CommonArea successfully", body = CommonAreaGetHttpResponse),
+        (status = 400, description = "Invalid CommonArea ID format or CommonArea ID is required", body = HttpResponseObjectEmptyError),
         (status = 401, description = "Unauthorized", body = HttpResponseObjectEmptyError),
         (status = 500, description = "Internal server error", body = HttpResponseObjectEmptyError)
     ),
@@ -95,7 +98,7 @@ pub async fn get_parcels(
         ("Token" = [])
     )
 )]
-pub async fn get_parcel_by_id(
+pub async fn get_common_area_by_id(
     id: web::Path<String>,
     req: HttpRequest,
     conf: web::Data<Arc<MyCondominiumConfig>>,
@@ -109,7 +112,7 @@ pub async fn get_parcel_by_id(
         Err(_) => {
             return HttpResponse::BadRequest().json(HttpResponseObjectEmpty {
                 error: true,
-                message: "Invalid Parcel ID format".to_string(),
+                message: "Invalid Common Area ID format".to_string(),
             });
         }
     };
@@ -124,15 +127,15 @@ pub async fn get_parcel_by_id(
         }
     };
 
-    match parcel_model::ParcelModel::db_read_by_id_matching_resident(role, conn, id) {
+    match common_area_model::CommonAreaModel::db_read_by_id_matching(role, conn, id) {
         Ok(user_req) => HttpResponse::Ok().json(HttpResponseObject {
             error: false,
-            message: "Got Parcel successfully".to_string(),
+            message: "Got Common Area successfully".to_string(),
             object: Some(user_req),
         }),
         Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
             error: true,
-            message: format!("Error getting Parcel: {}", e),
+            message: format!("Error getting Common Area: {}", e),
         }),
     }
 }
