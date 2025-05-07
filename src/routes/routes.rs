@@ -34,6 +34,10 @@ pub fn auth_route() -> actix_web::Scope {
             "/auth",
             web::get().to(crate::services::auth_service::auth::auth),
         )
+        .route(
+            "/get_user",
+            web::get().to(crate::services::auth_service::auth::auth_get_user),
+        )
 }
 
 pub fn common_area_route() -> actix_web::Scope {

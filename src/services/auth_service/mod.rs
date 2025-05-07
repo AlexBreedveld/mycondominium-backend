@@ -5,7 +5,7 @@ use super::prelude::*;
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(sign_in::sign_in, auth::auth),
+    paths(sign_in::sign_in, auth::auth, auth::auth_get_user),
     components(schemas(auth_model::AuthModel))
 )]
 pub struct AuthApi;
