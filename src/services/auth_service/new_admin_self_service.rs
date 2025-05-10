@@ -1,11 +1,15 @@
 use super::*;
+use crate::internal::rabbitmq::rabbitmq_client::RabbitMqClient;
+use crate::internal::smtp::smtp_client::SmtpEmailPayload;
+use crate::internal::smtp::smtp_templates::{SmtpTemplate, SmtpTemplateData};
 use crate::utilities::user_utils::check_email_exist;
+use chrono::Datelike;
 use std::time::Duration;
 use tokio::time::sleep;
 
 #[utoipa::path(
     post,
-    tag = "Admin",
+    tag = "Authentication",
     path = "/new_admin_self_service",
     request_body = auth_model::AuthAdminNewSelfServiceModel,
     responses (
@@ -133,6 +137,42 @@ pub async fn new_admin_self_service(
             });
         }
     };
+
+    let rmq = RabbitMqClient::new(&conf.rabbitmq, "mycondominium_smtp".to_string())
+        .await
+        .unwrap();
+
+    let url = conf.smtp.base_url.clone();
+
+    let parameters: Vec<SmtpTemplateData> = vec![
+        SmtpTemplateData {
+            key: "{{USER_NAME}}".to_string(),
+            value: new_obj_admin.first_name,
+        },
+        SmtpTemplateData {
+            key: "{{APP_LINK}}".to_string(),
+            value: url,
+        },
+        SmtpTemplateData {
+            key: "{{CURRENT_YEAR}}".to_string(),
+            value: chrono::Utc::now().year().to_string(),
+        },
+    ];
+
+    let template_data = crate::internal::smtp::smtp_templates::smtp_get_template(
+        SmtpTemplate::NewAccount,
+        parameters,
+    );
+
+    let email = SmtpEmailPayload {
+        to: new_obj_admin.email,
+        subject: "Bem-Vindo ao MyCondominium".to_string(),
+        body: template_data,
+    };
+
+    let payload = serde_json::to_vec(&email).unwrap();
+
+    rmq.publish(&payload).await.unwrap();
 
     HttpResponse::Ok().json(HttpResponseObjectEmptyEntity {
         error: false,

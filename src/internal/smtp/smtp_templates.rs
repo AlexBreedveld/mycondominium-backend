@@ -1,5 +1,6 @@
 pub enum SmtpTemplate {
     ResidentInvite,
+    NewAccount,
 }
 
 pub struct SmtpTemplateData {
@@ -13,6 +14,9 @@ pub fn smtp_get_template(template_type: SmtpTemplate, data: Vec<SmtpTemplateData
     match template_type {
         SmtpTemplate::ResidentInvite => {
             template_str = include_str!("../../../res/mail/resident_invite.html").to_string();
+        }
+        SmtpTemplate::NewAccount => {
+            template_str = include_str!("../../../res/mail/new_account_created.html").to_string();
         }
     }
 

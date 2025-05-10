@@ -1,7 +1,5 @@
-use crate::internal::roles::UserRoles;
-use crate::models::admin_model::AdminModelNew;
+use crate::models::admin_model::AdminModelNewSelfService;
 use crate::models::community_model::CommunityModelNew;
-use crate::models::user_role_model::UserRoleModel;
 use crate::services::{Deserialize, Serialize, ToSchema};
 use validator_derive::Validate;
 
@@ -21,5 +19,5 @@ pub struct TokenClaims {
 #[derive(Serialize, Deserialize, Clone, Debug, Validate, ToSchema)]
 pub struct AuthAdminNewSelfServiceModel {
     pub community: CommunityModelNew,
-    pub admin: AdminModelNew,
+    pub admin: AdminModelNewSelfService,
 }

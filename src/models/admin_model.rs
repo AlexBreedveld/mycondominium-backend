@@ -41,6 +41,15 @@ pub struct AdminModelNew {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Validate, ToSchema)]
+pub struct AdminModelNewSelfService {
+    pub first_name: String,
+    pub last_name: String,
+    pub phone: Option<String>,
+    pub email: String,
+    pub password: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Validate, ToSchema)]
 pub struct AdminModelResult {
     pub admin: AdminModel,
     pub user: UserModelResult,
