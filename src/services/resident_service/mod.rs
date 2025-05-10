@@ -27,6 +27,8 @@ type ResidentInviteGetHttpResponse = HttpResponseObject<resident_model::Resident
     components(schemas(
         resident_model::ResidentModel,
         resident_model::ResidentModelNew,
+        resident_model::ResidentInviteModel,
+        resident_model::ResidentInviteModelNew,
         resident_model::ResidentModelNewInvite,
         resident_model::ResidentModelEdit
     ))
