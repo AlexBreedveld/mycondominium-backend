@@ -148,7 +148,7 @@ async fn process_email(
         .from(from_mailbox)
         .to(to_mailbox)
         .subject(&email.subject)
-        .header(header::ContentType::TEXT_PLAIN)
+        .header(header::ContentType::TEXT_HTML)
         .singlepart(SinglePart::plain(email.body.clone()))?;
 
     loop {

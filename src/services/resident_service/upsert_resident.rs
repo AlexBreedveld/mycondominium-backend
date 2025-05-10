@@ -85,7 +85,7 @@ pub async fn new_resident(
     }
 
     let new_obj = resident_model::ResidentModel {
-        id: Uuid::new_v4(),
+        id: resident_model::ResidentModel::new_id_user(conn),
         first_name: body.first_name,
         last_name: body.last_name,
         unit_number: body.unit_number,
@@ -160,19 +160,6 @@ pub async fn new_resident(
             });
         }
     };
-
-    let rmq = RabbitMqClient::new(&conf.rabbitmq, "mycondominium_smtp".to_string())
-        .await
-        .unwrap();
-    let email = SmtpEmailPayload {
-        to: "alex@al3xdev.com".to_string(),
-        subject: "Test - New Resident".to_string(),
-        body: "A New Resident has been added.".to_string(),
-    };
-
-    let payload = serde_json::to_vec(&email).unwrap();
-
-    rmq.publish(&payload).await.unwrap();
 
     HttpResponse::Ok().json(HttpResponseObjectEmptyEntity {
         error: false,

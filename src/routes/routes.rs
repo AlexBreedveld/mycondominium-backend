@@ -175,6 +175,30 @@ pub fn resident_route() -> actix_web::Scope {
             "/invite/new",
             web::post().to(crate::services::resident_service::invite_resident::new_resident_invite),
         )
+        .route(
+            "/invite/list",
+            web::get().to(crate::services::resident_service::invite_resident::get_resident_invites),
+        )
+        .route(
+            "/invite/get/{id}",
+            web::get()
+                .to(crate::services::resident_service::invite_resident::get_resident_invite_by_id),
+        )
+        .route(
+            "/invite/count",
+            web::get()
+                .to(crate::services::resident_service::invite_resident::count_resident_invite),
+        )
+        .route(
+            "/invite/delete/{id}",
+            web::delete()
+                .to(crate::services::resident_service::invite_resident::delete_resident_invite),
+        )
+        .route(
+            "/invite/signup",
+            web::post()
+                .to(crate::services::resident_service::invite_resident::new_resident_by_invite),
+        )
 }
 
 pub fn vehicle_route() -> actix_web::Scope {

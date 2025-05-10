@@ -52,6 +52,20 @@ pub struct ResidentModelNew {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Validate, ToSchema)]
+pub struct ResidentModelNewInvite {
+    pub key: String,
+    pub first_name: String,
+    pub last_name: String,
+    #[validate(length(max = 20, message = "Unit number is too long"))]
+    pub unit_number: Option<String>,
+    pub address: Option<String>,
+    pub phone: Option<String>,
+    pub date_of_birth: Option<NaiveDate>,
+    #[validate(length(min = 8, message = "Password is too short"))]
+    pub password: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Validate, ToSchema)]
 pub struct ResidentModelEdit {
     pub first_name: String,
     pub last_name: String,
@@ -288,5 +302,106 @@ impl ResidentModel {
             .collect();
 
         Ok(results)
+    }
+}
+
+impl ResidentInviteModel {
+    pub fn db_count_all_matching_community(
+        user_role: UserRoleModel,
+        conn: &mut PgConnection,
+    ) -> diesel::QueryResult<i64> {
+        use crate::schema::maintenance_schedules;
+        use diesel::prelude::*;
+
+        // Base query
+        let mut query = ResidentInviteModel::table().into_boxed(); // Needed for conditional filters
+
+        // Apply additional filter if role is Admin (not Root)
+        match user_role.role {
+            UserRoles::Root => {}
+            UserRoles::Admin => {
+                if user_role.community_id.is_none() {
+                    return Err(diesel::result::Error::NotFound);
+                }
+
+                // Safely call unwrap()
+                query = query
+                    .filter(resident_invites::community_id.eq(user_role.community_id.unwrap()));
+            }
+            UserRoles::Resident => return Err(diesel::result::Error::NotFound),
+        }
+
+        // Count data
+        query.count().get_result::<i64>(conn)
+    }
+
+    pub fn db_read_all_matching_community_by_range(
+        user_role: UserRoleModel,
+        conn: &mut PgConnection,
+        per_page: i64,
+        offset: i64,
+    ) -> diesel::QueryResult<Vec<ResidentInviteModel>> {
+        use crate::schema::{residents, user_roles, users};
+        use diesel::prelude::*;
+
+        // Base query
+        let mut query = ResidentInviteModel::table().into_boxed(); // Needed for conditional filters
+
+        // Apply additional filter if role is Admin (not Root)
+        match user_role.role {
+            UserRoles::Root => { /* No additional filter required for Root */ }
+            UserRoles::Admin => {
+                if user_role.community_id.is_none() {
+                    return Err(diesel::result::Error::NotFound);
+                }
+
+                // Safely call unwrap()
+                query = query
+                    .filter(resident_invites::community_id.eq(user_role.community_id.unwrap()));
+            }
+            _ => return Err(diesel::result::Error::NotFound), // Early return for unauthorized roles
+        }
+
+        // Fetch data with limit/offset (pagination)
+        let data_result: Vec<ResidentInviteModel> = query
+            .limit(per_page)
+            .offset(offset)
+            .load::<ResidentInviteModel>(conn)?;
+
+        // Map query result into desired `ResidentModelResult`
+        let results = data_result
+            .into_iter()
+            .map(|mut invite| {
+                invite.key = "".to_string();
+                invite
+            })
+            .collect();
+
+        Ok(results)
+    }
+
+    pub fn db_read_by_id_matching_community(
+        user_role: UserRoleModel,
+        conn: &mut PgConnection,
+        id: uuid::Uuid,
+    ) -> diesel::QueryResult<ResidentInviteModel> {
+        let resident_invite =
+            crate::models::resident_model::ResidentInviteModel::db_read_by_id(conn, id)?;
+
+        match user_role.role {
+            UserRoles::Root => { /* No additional filter required for Root */ }
+            UserRoles::Admin => {
+                if user_role.community_id.is_none() {
+                    return Err(diesel::result::Error::NotFound);
+                }
+
+                if user_role.community_id.unwrap() != resident_invite.community_id {
+                    return Err(diesel::result::Error::NotFound);
+                }
+            }
+            _ => return Err(diesel::result::Error::NotFound), // Early return for unauthorized roles
+        }
+
+        Ok(resident_invite)
     }
 }
