@@ -570,6 +570,17 @@ pub async fn new_resident_by_invite(
         updated_at: chrono::Utc::now().naive_utc(),
     };
 
+    match resident_model::ResidentInviteModel::db_delete_by_id(conn, invite.id) {
+        Ok(_) => (),
+        Err(e) => {
+            log::error!("Error deleting resident invite: {}", e);
+            return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: "Error creating resident".to_string(),
+            });
+        }
+    }
+
     match new_obj_user_role.db_insert(conn) {
         Ok(_) => (),
         Err(e) => {
