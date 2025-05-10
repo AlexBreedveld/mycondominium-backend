@@ -1,6 +1,8 @@
 use super::*;
 use crate::utilities::auth_utils::{check_password, generate_jwt_token, parse_user_agent};
 use std::io::ErrorKind;
+use std::time::Duration;
+use tokio::time::sleep;
 
 #[utoipa::path(
     post,
@@ -22,6 +24,8 @@ pub async fn sign_in(
     let email = body.email.trim().to_string();
     let password = body.password.trim().to_string();
     let mut found = false;
+
+    sleep(Duration::from_secs(3)).await;
 
     let mut entity_id = match crate::schema::residents::table
         .filter(crate::schema::residents::email.eq(email.clone()))
