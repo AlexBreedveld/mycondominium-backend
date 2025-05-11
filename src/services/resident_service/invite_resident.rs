@@ -4,7 +4,7 @@ use crate::internal::smtp::smtp_client::SmtpEmailPayload;
 use crate::internal::smtp::smtp_templates::{SmtpTemplate, SmtpTemplateData};
 use crate::models::resident_model::ResidentInviteModel;
 use crate::utilities::user_utils::check_email_exist;
-use base64::Engine;
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use chrono::Datelike;
 use std::time::Duration;
 use tokio::time::sleep;
@@ -114,7 +114,7 @@ pub async fn new_resident_invite(
         .await
         .unwrap();
 
-    let link_b64 = base64::engine::general_purpose::STANDARD.encode(new_obj.key.as_bytes());
+    let link_b64 = URL_SAFE_NO_PAD.encode(new_obj.key.as_bytes());
 
     let parameters: Vec<SmtpTemplateData> = vec![
         SmtpTemplateData {
