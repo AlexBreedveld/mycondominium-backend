@@ -123,7 +123,7 @@ pub async fn new_resident_invite(
         },
         SmtpTemplateData {
             key: "{{INVITE_LINK}}".to_string(),
-            value: format!("https://mycondominium://onboarding/register/{}", link_b64),
+            value: format!("https://3000--main--mycondominium-backend-runner-dev--alex.coder.al3xdev.net/redirect/onboarding/register/{}", link_b64),
         },
         SmtpTemplateData {
             key: "{{CURRENT_YEAR}}".to_string(),
