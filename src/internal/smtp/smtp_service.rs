@@ -2,6 +2,7 @@ use crate::internal::rabbitmq::rabbitmq_client::RabbitMqClient;
 use crate::internal::smtp::smtp_client::SmtpEmailPayload;
 use crate::services::ConfigSmtp;
 use futures_util::StreamExt;
+use lettre::message::header::ContentTransferEncoding;
 use lettre::{
     AsyncSmtpTransport, AsyncTransport, Tokio1Executor,
     message::{Mailbox, Message, SinglePart, header},
@@ -148,7 +149,7 @@ async fn process_email(
         .to(to_mailbox)
         .subject(&email.subject)
         .header(header::ContentType::TEXT_HTML)
-        .singlepart(SinglePart::plain(email.body.clone()))?;
+        .singlepart(SinglePart::html(email.body.clone()))?;
 
     loop {
         match mailer.send(email_builder.clone()).await {
