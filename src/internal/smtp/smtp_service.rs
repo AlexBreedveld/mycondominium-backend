@@ -143,16 +143,19 @@ async fn process_email(
         .parse::<Mailbox>()
         .map_err(|e| EmailError::Custom(format!("Invalid 'to' address: {}", e)))?;
 
-    let email_builder = Message::builder()
+    let html_part = SinglePart::builder()
+        .header(header::ContentType::parse("text/html; charset=utf-8").unwrap())
+        .header(header::ContentTransferEncoding::Base64)
+        .body(email.body.clone());
+
+    let email_message = Message::builder()
         .from(from_mailbox)
         .to(to_mailbox)
         .subject(&email.subject)
-        .header(header::ContentType::TEXT_HTML)
-        .header(header::ContentTransferEncoding::Base64)
-        .singlepart(SinglePart::html(email.body.clone()))?;
+        .singlepart(html_part)?;
 
     loop {
-        match mailer.send(email_builder.clone()).await {
+        match mailer.send(email_message.clone()).await {
             Ok(_) => return Ok(()),
             Err(e) => {
                 retry_count += 1;
