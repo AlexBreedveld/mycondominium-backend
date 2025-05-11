@@ -18,10 +18,8 @@ pub fn check_email_exist(conn: &mut PgConnection, email: String) -> Result<(), s
             }
         }
         Err(e) => {
-            return Err(std::io::Error::new(
-                ErrorKind::Other,
-                "Error checking if email exists",
-            ));
+            log::error!("Error checking if email exists: {}", e);
+            return Err(std::io::Error::other("Error checking if email exists"));
         }
     };
 
@@ -39,10 +37,8 @@ pub fn check_email_exist(conn: &mut PgConnection, email: String) -> Result<(), s
             }
         }
         Err(e) => {
-            return Err(std::io::Error::new(
-                ErrorKind::Other,
-                "Error checking if email exists",
-            ));
+            log::error!("Error checking if email exists: {}", e);
+            return Err(std::io::Error::other("Error checking if email exists"));
         }
     };
 
@@ -60,10 +56,8 @@ pub fn check_email_exist(conn: &mut PgConnection, email: String) -> Result<(), s
             }
         }
         Err(e) => {
-            return Err(std::io::Error::new(
-                ErrorKind::Other,
-                "Error checking if email exists",
-            ));
+            log::error!("Error checking if email exists: {}", e);
+            return Err(std::io::Error::other("Error checking if email exists"));
         }
     };
 
@@ -93,10 +87,8 @@ pub fn user_check_email_valid(
             }
         }
         Err(e) => {
-            return Err(std::io::Error::new(
-                ErrorKind::Other,
-                "Error checking if email exists",
-            ));
+            log::error!("Error checking if email exists: {}", e);
+            return Err(std::io::Error::other("Error checking if email exists"));
         }
     };
 
@@ -114,10 +106,8 @@ pub fn user_check_email_valid(
             }
         }
         Err(e) => {
-            return Err(std::io::Error::new(
-                ErrorKind::Other,
-                "Error checking if email exists",
-            ));
+            log::error!("Error checking if email exists: {}", e);
+            return Err(std::io::Error::other("Error checking if email exists"));
         }
     };
 

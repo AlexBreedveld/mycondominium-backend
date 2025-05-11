@@ -25,7 +25,7 @@ pub async fn new_community(
     let body = body.into_inner();
 
     match authenticate_user(req.clone(), conn, conf) {
-        Ok((role, claims, token)) => {
+        Ok((role, _claims, _token)) => {
             if role.role != UserRoles::Root {
                 return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                     error: true,
@@ -110,7 +110,7 @@ pub async fn update_community(
     };
 
     match authenticate_user(req.clone(), conn, conf) {
-        Ok((role, claims, token)) => match role.role {
+        Ok((role, _claims, _token)) => match role.role {
             UserRoles::Root => (),
             UserRoles::Admin => {
                 if role.community_id != Some(id) {
@@ -142,6 +142,7 @@ pub async fn update_community(
     let curr_obj = match community_model::CommunityModel::db_read_by_id(conn, id) {
         Ok(ent_req) => ent_req,
         Err(e) => {
+            log::error!("Error getting Community: {}", e);
             return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
                 error: true,
                 message: format!("Error getting Community: {}", e),
@@ -163,10 +164,13 @@ pub async fn update_community(
             error: false,
             message: "Community updated successfully".to_string(),
         }),
-        Err(e) => HttpResponse::Ok().json(HttpResponseObjectEmpty {
-            error: true,
-            message: format!("Error updating Community: {}", e),
-        }),
+        Err(e) => {
+            log::error!("Error updating Community: {}", e);
+            HttpResponse::Ok().json(HttpResponseObjectEmpty {
+                error: true,
+                message: format!("Error updating Community: {}", e),
+            })
+        }
     }
 }
 
@@ -205,7 +209,7 @@ pub async fn delete_community(
     };
 
     match authenticate_user(req.clone(), conn, conf) {
-        Ok((role, claims, token)) => match role.role {
+        Ok((role, _claims, _token)) => match role.role {
             UserRoles::Root => (),
             _ => {
                 return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
@@ -227,9 +231,12 @@ pub async fn delete_community(
             error: false,
             message: "Community deleted successfully".to_string(),
         }),
-        Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
-            error: true,
-            message: format!("Error deleting Community: {}", e),
-        }),
+        Err(e) => {
+            log::error!("Error deleting Community: {}", e);
+            HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: format!("Error deleting Community: {}", e),
+            })
+        }
     }
 }

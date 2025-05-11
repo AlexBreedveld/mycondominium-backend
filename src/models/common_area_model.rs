@@ -1,7 +1,5 @@
 use super::prelude::*;
-use crate::models::parcel_model::ParcelModel;
-use crate::models::user_role_model::UserRoleModel;
-use crate::models::{resident_model, user_model};
+use super::*;
 use crate::services::{UserRoles, UserTypes};
 
 #[derive(
@@ -37,7 +35,7 @@ pub struct CommonAreaModelNew {
 
 impl CommonAreaModel {
     pub fn db_read_by_id_matching(
-        user_role: UserRoleModel,
+        user_role: user_role_model::UserRoleModel,
         conn: &mut PgConnection,
         id: uuid::Uuid,
     ) -> diesel::QueryResult<CommonAreaModel> {
@@ -61,10 +59,10 @@ impl CommonAreaModel {
     }
 
     pub fn db_count_all_matching(
-        user_role: UserRoleModel,
+        user_role: user_role_model::UserRoleModel,
         conn: &mut PgConnection,
     ) -> diesel::QueryResult<i64> {
-        let mut query = UserRoleModel::table()
+        let mut query = user_role_model::UserRoleModel::table()
             .inner_join(users::table.on(user_roles::user_id.eq(users::id)))
             .inner_join(residents::table.on(users::entity_id.eq(residents::id)))
             .inner_join(parcels::table.on(users::entity_id.eq(residents::id)))
@@ -89,7 +87,7 @@ impl CommonAreaModel {
     }
 
     pub fn db_read_all_matching_by_range(
-        user_role: UserRoleModel,
+        user_role: user_role_model::UserRoleModel,
         conn: &mut PgConnection,
         per_page: i64,
         offset: i64,

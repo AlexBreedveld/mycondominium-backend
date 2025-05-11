@@ -31,7 +31,7 @@ pub async fn get_maintenance_schedules(
 
     let conn = &mut establish_connection_pg(&conf);
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf) {
+    let (role, _claims, _token) = match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => (role, claims, token),
         Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
@@ -46,6 +46,7 @@ pub async fn get_maintenance_schedules(
             match maintenance_schedule_model::MaintenanceScheduleModel::db_count_all(conn) {
                 Ok(count) => count,
                 Err(e) => {
+                    log::error!("Error getting total items: {}", e);
                     return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
                         error: true,
                         message: "Error getting total items".to_string(),
@@ -61,6 +62,7 @@ pub async fn get_maintenance_schedules(
             {
                 Ok(count) => count,
                 Err(e) => {
+                    log::error!("Error getting total items: {}", e);
                     return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
                         error: true,
                         message: format!("Error getting total items: {}", e),
@@ -98,10 +100,13 @@ pub async fn get_maintenance_schedules(
                     object: Some(res),
                 })
         }
-        Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
-            error: true,
-            message: format!("Error getting Maintenance Schedules: {}", e),
-        }),
+        Err(e) => {
+            log::error!("Error getting Maintenance Schedules: {}", e);
+            HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+                error: true,
+                message: format!("Error getting Maintenance Schedules: {}", e),
+            })
+        },
     }
 }
 
@@ -128,7 +133,7 @@ pub async fn count_maintenance_schedule(
 ) -> HttpResponse {
     let conn = &mut establish_connection_pg(&conf);
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf) {
+    let (role, _claims, _token) = match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => (role, claims, token),
         Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
@@ -148,10 +153,13 @@ pub async fn count_maintenance_schedule(
             message: "Got Maintenance Schedules successfully".to_string(),
             object: Some(res),
         }),
-        Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
-            error: true,
-            message: format!("Error getting Maintenance Schedules: {}", e),
-        }),
+        Err(e) => {
+            log::error!("Error getting Maintenance Schedules: {}", e);
+            HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+                error: true,
+                message: format!("Error getting Maintenance Schedules: {}", e),
+            })
+        }
     }
 }
 
@@ -192,7 +200,7 @@ pub async fn get_maintenance_schedule_by_id(
     };
 
     let role = match authenticate_user(req.clone(), conn, conf) {
-        Ok((role, claims, token)) => {
+        Ok((role, _claims, _token)) => {
             if role.role == UserRoles::Root
                 || role.role == UserRoles::Admin
                 || role.role == UserRoles::Resident
@@ -221,9 +229,12 @@ pub async fn get_maintenance_schedule_by_id(
             message: "Got Maintenance Schedule successfully".to_string(),
             object: Some(user_req),
         }),
-        Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
-            error: true,
-            message: format!("Error getting Maintenance Schedule: {}", e),
-        }),
+        Err(e) => {
+            log::error!("Error getting Maintenance Schedule: {}", e);
+            HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+                error: true,
+                message: format!("Error getting Maintenance Schedule: {}", e),
+            })
+        }
     }
 }

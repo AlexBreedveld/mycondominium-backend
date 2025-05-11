@@ -1,10 +1,4 @@
 use super::prelude::*;
-use crate::models::admin_model::{AdminModel, AdminModelResult};
-use crate::models::lib::DatabaseTrait;
-use crate::models::lib::DatabaseTraitVec;
-use crate::models::user_model::{UserModel, UserModelResult};
-use crate::models::user_role_model::UserRoleModel;
-use crate::services::{UserRoles, UserTypes};
 
 #[derive(
     Queryable,
@@ -116,7 +110,7 @@ pub struct ResidentModelResult {
 
 impl ResidentModel {
     pub fn new_id_user(conn: &mut PgConnection) -> uuid::Uuid {
-        let mut uuid_new = uuid::Uuid::new_v4();
+        let uuid_new = uuid::Uuid::new_v4();
         let mut exists = true;
         let mut tries = 0;
 
@@ -127,7 +121,7 @@ impl ResidentModel {
                 .get_result::<i64>(conn)
             {
                 Ok(count) => count != 0,
-                Err(e) => {
+                Err(_) => {
                     tries += 1;
                     true
                 }
@@ -139,7 +133,7 @@ impl ResidentModel {
                 .get_result::<i64>(conn)
             {
                 Ok(count) => count != 0,
-                Err(e) => {
+                Err(_) => {
                     tries += 1;
                     true
                 }
@@ -230,9 +224,6 @@ impl ResidentModel {
         user_role: UserRoleModel,
         conn: &mut PgConnection,
     ) -> diesel::QueryResult<i64> {
-        use crate::schema::maintenance_schedules;
-        use diesel::prelude::*;
-
         // Base query
         let mut query = UserRoleModel::table()
             .filter(user_roles::role.eq(UserRoles::Resident))
@@ -257,9 +248,6 @@ impl ResidentModel {
         per_page: i64,
         offset: i64,
     ) -> diesel::QueryResult<Vec<ResidentModelResult>> {
-        use crate::schema::{residents, user_roles, users};
-        use diesel::prelude::*;
-
         // Base query
         let mut query = user_roles::table
             .inner_join(users::table.on(user_roles::user_id.eq(users::id)))
@@ -310,9 +298,6 @@ impl ResidentInviteModel {
         user_role: UserRoleModel,
         conn: &mut PgConnection,
     ) -> diesel::QueryResult<i64> {
-        use crate::schema::maintenance_schedules;
-        use diesel::prelude::*;
-
         // Base query
         let mut query = ResidentInviteModel::table().into_boxed(); // Needed for conditional filters
 
@@ -341,9 +326,6 @@ impl ResidentInviteModel {
         per_page: i64,
         offset: i64,
     ) -> diesel::QueryResult<Vec<ResidentInviteModel>> {
-        use crate::schema::{residents, user_roles, users};
-        use diesel::prelude::*;
-
         // Base query
         let mut query = ResidentInviteModel::table().into_boxed(); // Needed for conditional filters
 

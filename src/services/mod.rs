@@ -5,11 +5,11 @@ pub mod common_area_service;
 pub mod community_service;
 pub mod maintenance_schedule_service;
 pub mod parcel_service;
-mod prelude;
+pub mod prelude;
 pub mod resident_service;
 pub mod vehicle_service;
 
-pub use crate::services::prelude::*;
+pub use prelude::*;
 use utoipa::openapi::security::{ApiKey, ApiKeyValue};
 
 #[derive(OpenApi)]

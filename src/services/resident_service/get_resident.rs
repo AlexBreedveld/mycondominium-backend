@@ -31,7 +31,7 @@ pub async fn get_residents(
 
     let conn = &mut establish_connection_pg(&conf);
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf) {
+    let (role, _claims, _token) = match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => {
             if role.role == UserRoles::Root || role.role == UserRoles::Admin {
                 (role, claims, token)
@@ -54,6 +54,7 @@ pub async fn get_residents(
         UserRoles::Root => match resident_model::ResidentModel::db_count_all(conn) {
             Ok(count) => count,
             Err(e) => {
+                log::error!("Error getting total items: {}", e);
                 return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
                     error: true,
                     message: "Error getting total items".to_string(),
@@ -69,6 +70,7 @@ pub async fn get_residents(
             {
                 Ok(count) => count,
                 Err(e) => {
+                    log::error!("Error getting total items: {}", e);
                     return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
                         error: true,
                         message: format!("Error getting total items: {}", e),
@@ -106,10 +108,13 @@ pub async fn get_residents(
                     object: Some(res),
                 })
         }
-        Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
-            error: true,
-            message: format!("Error getting residents: {}", e),
-        }),
+        Err(e) => {
+            log::error!("Error getting residents: {}", e);
+            HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+                error: true,
+                message: format!("Error getting residents: {}", e),
+            })
+        }
     }
 }
 
@@ -132,7 +137,7 @@ pub async fn count_resident(
 ) -> HttpResponse {
     let conn = &mut establish_connection_pg(&conf);
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf) {
+    let (role, _claims, _token) = match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => match role.role {
             UserRoles::Root => (role, claims, token),
             UserRoles::Admin => (role, claims, token),
@@ -201,7 +206,7 @@ pub async fn get_resident_by_id(
     };
 
     let role = match authenticate_user(req.clone(), conn, conf) {
-        Ok((role, claims, token)) => {
+        Ok((role, _claims, _token)) => {
             if role.role == UserRoles::Root || role.role == UserRoles::Admin {
                 role
             } else {
@@ -210,7 +215,6 @@ pub async fn get_resident_by_id(
                     message: "Unauthorized".to_string(),
                 });
             }
-            //TODO: Allow resident to get its own info.
         }
         Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {

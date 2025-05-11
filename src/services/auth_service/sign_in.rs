@@ -1,6 +1,5 @@
 use super::*;
 use crate::utilities::auth_utils::{check_password, generate_jwt_token, parse_user_agent};
-use std::io::ErrorKind;
 use std::time::Duration;
 use tokio::time::sleep;
 

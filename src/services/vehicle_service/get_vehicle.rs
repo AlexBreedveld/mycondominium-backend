@@ -32,7 +32,7 @@ pub async fn get_vehicles(
 
     let conn = &mut establish_connection_pg(&conf);
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf) {
+    let (role, _claims, _token) = match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => (role, claims, token),
         Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
@@ -66,6 +66,7 @@ pub async fn get_vehicles(
     {
         Ok(count) => count,
         Err(e) => {
+            log::error!("Error getting total items: {}", e);
             return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
                 error: true,
                 message: format!("Error getting total items: {}", e),
@@ -95,10 +96,13 @@ pub async fn get_vehicles(
                     object: Some(res),
                 })
         }
-        Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
-            error: true,
-            message: format!("Error getting vehicles: {}", e),
-        }),
+        Err(e) => {
+            log::error!("Error getting vehicles: {}", e);
+            HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+                error: true,
+                message: format!("Error getting vehicles: {}", e),
+            })
+        }
     }
 }
 
@@ -138,7 +142,7 @@ pub async fn get_vehicle_by_id(
         }
     };
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf) {
+    let (role, _claims, _token) = match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => (role, claims, token),
         Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
@@ -154,9 +158,12 @@ pub async fn get_vehicle_by_id(
             message: "Got Vehicle successfully".to_string(),
             object: Some(res),
         }),
-        Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
-            error: true,
-            message: "Error getting vehicles".to_string(),
-        }),
+        Err(e) => {
+            log::error!("Error getting vehicles: {}", e);
+            HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+                error: true,
+                message: "Error getting vehicles".to_string(),
+            })
+        }
     }
 }

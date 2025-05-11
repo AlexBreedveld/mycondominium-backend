@@ -1,5 +1,4 @@
 use super::prelude::*;
-use crate::internal::user_types::UserTypes;
 
 #[derive(
     Queryable,

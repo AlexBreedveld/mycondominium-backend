@@ -1,10 +1,5 @@
-use crate::models::admin_model::{AdminModel, AdminModelNewSelfService};
-use crate::models::community_model::CommunityModelNew;
-use crate::models::resident_model::ResidentModel;
-use crate::models::user_model::UserModelResult;
-use crate::models::user_role_model::UserRoleModel;
-use crate::services::{Deserialize, Serialize, ToSchema};
-use validator_derive::Validate;
+use super::prelude::*;
+use super::*;
 
 #[derive(Serialize, Deserialize, Clone, Debug, Validate, ToSchema)]
 pub struct AuthModel {
@@ -14,21 +9,21 @@ pub struct AuthModel {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TokenClaims {
-    pub token_id: uuid::Uuid,
-    pub user_id: uuid::Uuid,
+    pub token_id: Uuid,
+    pub user_id: Uuid,
     pub exp: usize,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Validate, ToSchema)]
 pub struct AuthAdminNewSelfServiceModel {
-    pub community: CommunityModelNew,
-    pub admin: AdminModelNewSelfService,
+    pub community: community_model::CommunityModelNew,
+    pub admin: admin_model::AdminModelNewSelfService,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Validate, ToSchema)]
 pub struct AuthUserModelResult {
-    pub admin: Option<AdminModel>,
-    pub resident: Option<ResidentModel>,
+    pub admin: Option<admin_model::AdminModel>,
+    pub resident: Option<resident_model::ResidentModel>,
     pub user: UserModelResult,
     pub role: UserRoleModel,
 }

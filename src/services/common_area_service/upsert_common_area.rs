@@ -24,7 +24,7 @@ pub async fn new_common_area(
 
     let body = body.into_inner();
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf.clone()) {
+    let (role, _claims, _token) = match authenticate_user(req.clone(), conn, conf.clone()) {
         Ok((role, claims, token)) => {
             if role.role == UserRoles::Root || role.role == UserRoles::Admin {
                 (role, claims, token)
@@ -118,7 +118,7 @@ pub async fn update_common_area(
     let conn = &mut establish_connection_pg(&conf);
     let body = body.into_inner();
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf.clone()) {
+    let (role, _claims, _token) = match authenticate_user(req.clone(), conn, conf.clone()) {
         Ok((role, claims, token)) => (role, claims, token),
         Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
@@ -141,6 +141,7 @@ pub async fn update_common_area(
     let curr_obj = match common_area_model::CommonAreaModel::db_read_by_id(conn, id) {
         Ok(res) => res,
         Err(e) => {
+            log::error!("Error reading Common Area: {}", e);
             return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
                 error: true,
                 message: "Error updating Common Area".to_string(),
@@ -170,7 +171,7 @@ pub async fn update_common_area(
         return HttpResponse::BadRequest().json(validation_errors);
     }
 
-    let mut new_obj = common_area_model::CommonAreaModel {
+    let new_obj = common_area_model::CommonAreaModel {
         id: curr_obj.id,
         name: body.name,
         description: body.description,
@@ -214,7 +215,7 @@ pub async fn delete_common_area(
 ) -> HttpResponse {
     let conn = &mut establish_connection_pg(&conf);
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf.clone()) {
+    let (role, _claims, _token) = match authenticate_user(req.clone(), conn, conf.clone()) {
         Ok((role, claims, token)) => {
             if role.role == UserRoles::Root || role.role == UserRoles::Admin {
                 (role, claims, token)
@@ -246,6 +247,7 @@ pub async fn delete_common_area(
     let curr_obj = match common_area_model::CommonAreaModel::db_read_by_id(conn, id) {
         Ok(user_req) => user_req,
         Err(e) => {
+            log::error!("Error reading Common Area: {}", e);
             return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
                 error: true,
                 message: "Error deleting Common Area".to_string(),

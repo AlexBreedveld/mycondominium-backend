@@ -31,7 +31,7 @@ pub async fn get_common_areas(
 
     let conn = &mut establish_connection_pg(&conf);
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf) {
+    let (role, _claims, _token) = match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => (role, claims, token),
         Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
@@ -45,6 +45,7 @@ pub async fn get_common_areas(
         match common_area_model::CommonAreaModel::db_count_all_matching(role.clone(), conn) {
             Ok(res) => res,
             Err(e) => {
+                log::error!("Error getting Common Areas: {}", e);
                 return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
                     error: true,
                     message: "Error getting Common Areas".to_string(),
@@ -74,10 +75,13 @@ pub async fn get_common_areas(
                     object: Some(res),
                 })
         }
-        Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
-            error: true,
-            message: format!("Error getting Common Areas: {}", e),
-        }),
+        Err(e) => {
+            log::error!("Error getting Common Areas: {}", e);
+            HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+                error: true,
+                message: format!("Error getting Common Areas: {}", e),
+            })
+        }
     }
 }
 
@@ -117,7 +121,7 @@ pub async fn get_common_area_by_id(
         }
     };
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf) {
+    let (role, _claims, _token) = match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => (role, claims, token),
         Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
@@ -133,9 +137,12 @@ pub async fn get_common_area_by_id(
             message: "Got Common Area successfully".to_string(),
             object: Some(user_req),
         }),
-        Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
-            error: true,
-            message: format!("Error getting Common Area: {}", e),
-        }),
+        Err(e) => {
+            log::error!("Error getting Common Areas: {}", e);
+            HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+                error: true,
+                message: format!("Error getting Common Area: {}", e),
+            })
+        }
     }
 }

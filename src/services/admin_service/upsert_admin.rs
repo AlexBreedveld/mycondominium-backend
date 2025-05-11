@@ -1,9 +1,7 @@
 use super::*;
 use crate::internal::roles::UserRoles;
-use crate::models::admin_model::AdminModel;
 use crate::utilities::auth_utils::hash_password;
 use crate::utilities::user_utils::{check_email_exist, user_check_email_valid};
-use std::io::ErrorKind;
 
 #[utoipa::path(
     post,
@@ -42,7 +40,7 @@ pub async fn new_admin(
         };
         if total_root_admins != 0 {
             match authenticate_user(req.clone(), conn, conf) {
-                Ok((role, claims, token)) => {
+                Ok((role, _claims, _token)) => {
                     if role.role != UserRoles::Root {
                         return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                             error: true,
@@ -60,7 +58,7 @@ pub async fn new_admin(
         }
     } else if body.role == UserRoles::Admin {
         match authenticate_user(req.clone(), conn, conf) {
-            Ok((role, claims, token)) => {
+            Ok((role, _claims, _token)) => {
                 if role.role != UserRoles::Root {
                     if body.community_id.is_none() || role.community_id.is_none() {
                         return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
@@ -217,7 +215,7 @@ pub async fn update_admin(
     let body = body.into_inner();
 
     match authenticate_user(req.clone(), conn, conf) {
-        Ok((role, claims, token)) => {
+        Ok((role, _claims, _token)) => {
             if body.role == UserRoles::Admin {
                 if role.role != UserRoles::Root {
                     if body.community_id.is_none() || role.community_id.is_none() {
@@ -282,7 +280,7 @@ pub async fn update_admin(
 
     match user_check_email_valid(conn, body.email.clone(), curr_obj.email) {
         Ok(()) => (),
-        Err(e) => {
+        Err(_) => {
             return HttpResponse::BadRequest().json(HttpResponseObjectEmpty {
                 error: true,
                 message: "Email already in use".to_string(),
@@ -348,7 +346,7 @@ pub async fn delete_admin(
 
     let adm = match admin_model::AdminModel::db_read_by_id(conn, id) {
         Ok(adm) => adm,
-        Err(e) => {
+        Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                 error: true,
                 message: "Unauthorized".to_string(),
@@ -361,7 +359,7 @@ pub async fn delete_admin(
         .first::<user_model::UserModel>(conn)
     {
         Ok(adm_user) => adm_user,
-        Err(e) => {
+        Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                 error: true,
                 message: "Unauthorized".to_string(),
@@ -374,7 +372,7 @@ pub async fn delete_admin(
         .first::<user_role_model::UserRoleModel>(conn)
     {
         Ok(adm_user_role) => adm_user_role,
-        Err(e) => {
+        Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                 error: true,
                 message: "Unauthorized".to_string(),
@@ -383,7 +381,7 @@ pub async fn delete_admin(
     };
 
     match authenticate_user(req.clone(), conn, conf) {
-        Ok((role, claims, token)) => {
+        Ok((role, _claims, _token)) => {
             if role.role != UserRoles::Root {
                 if adm_user_role.community_id.is_none() || role.community_id.is_none() {
                     return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {

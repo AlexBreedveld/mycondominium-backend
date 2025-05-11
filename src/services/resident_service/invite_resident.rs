@@ -32,7 +32,7 @@ pub async fn new_resident_invite(
 
     let body = body.into_inner();
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf.clone()) {
+    let (role, _claims, _token) = match authenticate_user(req.clone(), conn, conf.clone()) {
         Ok((role, claims, token)) => {
             if role.role == UserRoles::Root || role.role == UserRoles::Admin {
                 (role, claims, token)
@@ -184,7 +184,7 @@ pub async fn get_resident_invites(
 
     let conn = &mut establish_connection_pg(&conf);
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf) {
+    let (role, _claims, _token) = match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => {
             if role.role == UserRoles::Root || role.role == UserRoles::Admin {
                 (role, claims, token)
@@ -238,10 +238,13 @@ pub async fn get_resident_invites(
                     object: Some(res),
                 })
         }
-        Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
-            error: true,
-            message: format!("Error getting resident invites: {}", e),
-        }),
+        Err(e) => {
+            log::error!("Error getting resident invites: {}", e);
+            HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+                error: true,
+                message: format!("Error getting resident invites: {}", e),
+            })
+        }
     }
 }
 
@@ -264,7 +267,7 @@ pub async fn count_resident_invite(
 ) -> HttpResponse {
     let conn = &mut establish_connection_pg(&conf);
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf) {
+    let (role, _claims, _token) = match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => match role.role {
             UserRoles::Root => (role, claims, token),
             UserRoles::Admin => (role, claims, token),
@@ -289,10 +292,13 @@ pub async fn count_resident_invite(
             message: "Got Resident invites successfully".to_string(),
             object: Some(res),
         }),
-        Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
-            error: true,
-            message: format!("Error counting Resident invites: {}", e),
-        }),
+        Err(e) => {
+            log::error!("Error counting Resident invites: {}", e);
+            HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+                error: true,
+                message: format!("Error counting Resident invites: {}", e),
+            })
+        }
     }
 }
 
@@ -333,7 +339,7 @@ pub async fn get_resident_invite_by_id(
     };
 
     let role = match authenticate_user(req.clone(), conn, conf) {
-        Ok((role, claims, token)) => {
+        Ok((role, _claims, _token)) => {
             if role.role == UserRoles::Root || role.role == UserRoles::Admin {
                 role
             } else {
@@ -366,10 +372,13 @@ pub async fn get_resident_invite_by_id(
                 object: Some(invite),
             })
         }
-        Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
-            error: true,
-            message: format!("Error getting resident invite: {}", e),
-        }),
+        Err(e) => {
+            log::error!("Error getting resident invite: {}", e);
+            HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+                error: true,
+                message: format!("Error getting resident invite: {}", e),
+            })
+        }
     }
 }
 
@@ -409,7 +418,7 @@ pub async fn delete_resident_invite(
 
     let invite = match resident_model::ResidentInviteModel::db_read_by_id(conn, id) {
         Ok(res) => res,
-        Err(e) => {
+        Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                 error: true,
                 message: "Unauthorized".to_string(),
@@ -417,7 +426,7 @@ pub async fn delete_resident_invite(
         }
     };
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf) {
+    let (role, _claims, _token) = match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => (role, claims, token),
         Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
@@ -457,10 +466,13 @@ pub async fn delete_resident_invite(
             error: false,
             message: "Resident Invite deleted successfully".to_string(),
         }),
-        Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
-            error: true,
-            message: format!("Error deleting resident invite: {}", e),
-        }),
+        Err(e) => {
+            log::error!("Error deleting resident invite: {}", e);
+            HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: format!("Error deleting resident invite: {}", e),
+            })
+        }
     }
 }
 
@@ -478,7 +490,6 @@ pub async fn delete_resident_invite(
 )]
 pub async fn new_resident_by_invite(
     body: web::Json<resident_model::ResidentModelNewInvite>,
-    req: HttpRequest,
     conf: web::Data<Arc<MyCondominiumConfig>>,
 ) -> HttpResponse {
     let conn = &mut establish_connection_pg(&conf);
@@ -489,7 +500,7 @@ pub async fn new_resident_by_invite(
         return HttpResponse::BadRequest().json(validation_errors);
     }
 
-    sleep(Duration::from_secs(5));
+    sleep(Duration::from_secs(5)).await;
 
     let invite = match resident_model::ResidentInviteModel::table()
         .filter(resident_invites::key.eq(&body.key))

@@ -21,7 +21,6 @@ use tokio::time::sleep;
 )]
 pub async fn new_admin_self_service(
     body: web::Json<auth_model::AuthAdminNewSelfServiceModel>,
-    req: HttpRequest,
     conf: web::Data<Arc<MyCondominiumConfig>>,
 ) -> HttpResponse {
     sleep(Duration::from_secs(10)).await;

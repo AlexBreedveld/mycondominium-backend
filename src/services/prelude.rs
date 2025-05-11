@@ -6,6 +6,7 @@ pub use crate::models::prelude::*;
 pub use crate::models::*;
 pub use crate::types::*;
 pub use crate::utilities::auth_utils::*;
+pub use crate::utilities::user_utils::{check_email_exist, user_check_email_valid};
 pub use actix_web::http::header;
 pub use actix_web::{HttpRequest, HttpResponse, web};
 pub use db_ops_derive::DbOps;

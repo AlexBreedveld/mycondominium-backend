@@ -2,7 +2,6 @@ use crate::internal::rabbitmq::rabbitmq_client::RabbitMqClient;
 use crate::internal::smtp::smtp_client::SmtpEmailPayload;
 use crate::services::ConfigSmtp;
 use futures_util::StreamExt;
-use lettre::transport::smtp::client::{Tls, TlsParameters};
 use lettre::{
     AsyncSmtpTransport, AsyncTransport, Tokio1Executor,
     message::{Mailbox, Message, SinglePart, header},

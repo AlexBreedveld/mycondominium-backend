@@ -1,6 +1,4 @@
 use super::prelude::*;
-use crate::schema::auth_tokens::dsl::auth_tokens;
-use diesel::{QueryResult, RunQueryDsl};
 use user_agent_parser::UserAgentParser;
 
 #[derive(

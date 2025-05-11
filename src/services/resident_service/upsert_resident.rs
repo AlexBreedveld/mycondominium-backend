@@ -1,7 +1,4 @@
 use super::*;
-use crate::internal::rabbitmq::rabbitmq_client::RabbitMqClient;
-use crate::internal::smtp::smtp_client::SmtpEmailPayload;
-use crate::utilities::user_utils::{check_email_exist, user_check_email_valid};
 
 #[utoipa::path(
     post,
@@ -27,7 +24,7 @@ pub async fn new_resident(
 
     let body = body.into_inner();
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf.clone()) {
+    let (role, _claims, _token) = match authenticate_user(req.clone(), conn, conf.clone()) {
         Ok((role, claims, token)) => {
             if role.role == UserRoles::Root || role.role == UserRoles::Admin {
                 (role, claims, token)
@@ -196,7 +193,7 @@ pub async fn update_resident(
     let body = body.into_inner();
 
     match authenticate_user(req.clone(), conn, conf) {
-        Ok((role, claims, token)) => match role.role {
+        Ok((role, _claims, _token)) => match role.role {
             UserRoles::Root => {}
             UserRoles::Admin => {
                 if body.community_id.unwrap() != role.community_id.unwrap() {
@@ -238,6 +235,7 @@ pub async fn update_resident(
     let curr_obj = match resident_model::ResidentModel::db_read_by_id(conn, id) {
         Ok(user_req) => user_req,
         Err(e) => {
+            log::error!("Error getting resident: {}", e);
             return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
                 error: true,
                 message: format!("Error getting resident: {}", e),
@@ -262,6 +260,7 @@ pub async fn update_resident(
     match user_check_email_valid(conn, body.email.clone(), curr_obj.email) {
         Ok(()) => (),
         Err(e) => {
+            log::error!("Error creating resident: {}", e);
             return HttpResponse::BadRequest().json(HttpResponseObjectEmpty {
                 error: true,
                 message: "Email already in use".to_string(),
@@ -288,10 +287,13 @@ pub async fn update_resident(
             error: false,
             message: "Resident updated successfully".to_string(),
         }),
-        Err(e) => HttpResponse::Ok().json(HttpResponseObjectEmpty {
-            error: true,
-            message: format!("Error creating resident: {}", e),
-        }),
+        Err(e) => {
+            log::error!("Error creating resident: {}", e);
+            HttpResponse::Ok().json(HttpResponseObjectEmpty {
+                error: true,
+                message: format!("Error creating resident: {}", e),
+            })
+        }
     }
 }
 
@@ -332,6 +334,7 @@ pub async fn delete_resident(
     let resident = match resident_model::ResidentModel::db_read_by_id(conn, id) {
         Ok(res) => res,
         Err(e) => {
+            log::error!("Error getting resident: {}", e);
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                 error: true,
                 message: "Unauthorized".to_string(),
@@ -345,6 +348,7 @@ pub async fn delete_resident(
     {
         Ok(res_user) => res_user,
         Err(e) => {
+            log::error!("Error getting resident: {}", e);
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                 error: true,
                 message: "Unauthorized".to_string(),
@@ -358,6 +362,7 @@ pub async fn delete_resident(
     {
         Ok(adm_user_role) => adm_user_role,
         Err(e) => {
+            log::error!("Error getting resident: {}", e);
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                 error: true,
                 message: "Unauthorized".to_string(),
@@ -366,7 +371,7 @@ pub async fn delete_resident(
     };
 
     match authenticate_user(req.clone(), conn, conf) {
-        Ok((role, claims, token)) => {
+        Ok((role, _claims, _token)) => {
             if role.role != UserRoles::Root {
                 if res_user_role.community_id.is_none() || role.community_id.is_none() {
                     return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
@@ -398,9 +403,12 @@ pub async fn delete_resident(
             error: false,
             message: "Resident deleted successfully".to_string(),
         }),
-        Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
-            error: true,
-            message: format!("Error deleting resident: {}", e),
-        }),
+        Err(e) => {
+            log::error!("Error deleting resident: {}", e);
+            HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: format!("Error deleting resident: {}", e),
+            })
+        }
     }
 }

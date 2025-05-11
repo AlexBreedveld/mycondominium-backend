@@ -1,7 +1,7 @@
 use super::*;
 use crate::establish_connection_pg;
 use crate::models::user_model::UserModelResult;
-use crate::services::{HttpResponseObject, HttpResponseObjectEmpty, HttpResponseObjectEmptyError};
+use crate::services::{HttpResponseObject, HttpResponseObjectEmptyError};
 use actix_web::{HttpRequest, HttpResponse, web};
 
 #[utoipa::path(
@@ -22,10 +22,11 @@ pub async fn auth(req: HttpRequest, conf: web::Data<Arc<MyCondominiumConfig>>) -
     let conn = &mut establish_connection_pg(&conf);
 
     match authenticate_user(req, conn, conf) {
-        Ok((role, claims, token)) => {
+        Ok((role, _claims, _token)) => {
             let user = match user_model::UserModel::db_read_by_id(conn, role.user_id) {
                 Ok(user) => user,
                 Err(e) => {
+                    log::error!("Error getting user: {}", e);
                     return HttpResponse::InternalServerError().json(
                         HttpResponseObjectEmptyError {
                             error: true,
@@ -39,6 +40,7 @@ pub async fn auth(req: HttpRequest, conf: web::Data<Arc<MyCondominiumConfig>>) -
                 let admin = match admin_model::AdminModel::db_read_by_id(conn, user.entity_id) {
                     Ok(admin) => admin,
                     Err(e) => {
+                        log::error!("Error getting user: {}", e);
                         return HttpResponse::InternalServerError().json(
                             HttpResponseObjectEmptyError {
                                 error: true,
@@ -71,6 +73,7 @@ pub async fn auth(req: HttpRequest, conf: web::Data<Arc<MyCondominiumConfig>>) -
                     match resident_model::ResidentModel::db_read_by_id(conn, user.entity_id) {
                         Ok(resident) => resident,
                         Err(e) => {
+                            log::error!("Error getting user: {}", e);
                             return HttpResponse::InternalServerError().json(
                                 HttpResponseObjectEmptyError {
                                     error: true,
@@ -105,7 +108,7 @@ pub async fn auth(req: HttpRequest, conf: web::Data<Arc<MyCondominiumConfig>>) -
                 });
             }
         }
-        Err(e) => HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
+        Err(_) => HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
             error: true,
             message: "Unauthorized".to_string(),
         }),
@@ -128,9 +131,9 @@ pub async fn auth(req: HttpRequest, conf: web::Data<Arc<MyCondominiumConfig>>) -
 pub async fn sign_out(req: HttpRequest, conf: web::Data<Arc<MyCondominiumConfig>>) -> HttpResponse {
     let conn = &mut establish_connection_pg(&conf);
 
-    let (role, claims, token) = match authenticate_user(req, conn, conf) {
+    let (_role, _claims, token) = match authenticate_user(req, conn, conf) {
         Ok((role, claims, token)) => (role, claims, token),
-        Err(e) => {
+        Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                 error: true,
                 message: "Unauthorized".to_string(),
@@ -144,9 +147,12 @@ pub async fn sign_out(req: HttpRequest, conf: web::Data<Arc<MyCondominiumConfig>
             message: "Successfully signed out".to_string(),
             object: Some(String::from("Signed out successfully")),
         }),
-        Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
-            error: true,
-            message: "Error signing out".to_string(),
-        }),
+        Err(e) => {
+            log::error!("Error signing user out: {}", e);
+            HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: "Error signing out".to_string(),
+            })
+        }
     }
 }

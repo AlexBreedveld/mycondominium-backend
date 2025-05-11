@@ -24,7 +24,7 @@ pub async fn new_parcel(
 
     let body = body.into_inner();
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf.clone()) {
+    let (role, _claims, _token) = match authenticate_user(req.clone(), conn, conf.clone()) {
         Ok((role, claims, token)) => {
             if role.role == UserRoles::Root || role.role == UserRoles::Admin {
                 (role, claims, token)
@@ -79,6 +79,7 @@ pub async fn new_parcel(
     match new_obj.db_insert(conn) {
         Ok(_) => (),
         Err(e) => {
+            log::error!("Error creating Parcel: {}", e);
             return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
                 error: true,
                 message: format!("Error creating Parcel: {}", e),
@@ -120,7 +121,7 @@ pub async fn update_parcel(
     let conn = &mut establish_connection_pg(&conf);
     let body = body.into_inner();
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf.clone()) {
+    let (role, _claims, _token) = match authenticate_user(req.clone(), conn, conf.clone()) {
         Ok((role, claims, token)) => (role, claims, token),
         Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
@@ -143,6 +144,7 @@ pub async fn update_parcel(
     let curr_obj = match parcel_model::ParcelModel::db_read_by_id(conn, id) {
         Ok(res) => res,
         Err(e) => {
+            log::error!("Error updating Parcel: {}", e);
             return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
                 error: true,
                 message: "Error updating Parcel".to_string(),
@@ -211,10 +213,13 @@ pub async fn update_parcel(
             error: false,
             message: "Parcel updated successfully".to_string(),
         }),
-        Err(e) => HttpResponse::Ok().json(HttpResponseObjectEmpty {
-            error: true,
-            message: format!("Error updating Parcel: {}", e),
-        }),
+        Err(e) => {
+            log::error!("Error updating Parcel: {}", e);
+            HttpResponse::Ok().json(HttpResponseObjectEmpty {
+                error: true,
+                message: format!("Error updating Parcel: {}", e),
+            })
+        }
     }
 }
 
@@ -242,7 +247,7 @@ pub async fn delete_parcel(
 ) -> HttpResponse {
     let conn = &mut establish_connection_pg(&conf);
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf.clone()) {
+    let (role, _claims, _token) = match authenticate_user(req.clone(), conn, conf.clone()) {
         Ok((role, claims, token)) => {
             if role.role == UserRoles::Root || role.role == UserRoles::Admin {
                 (role, claims, token)
@@ -274,6 +279,7 @@ pub async fn delete_parcel(
     let curr_obj = match parcel_model::ParcelModel::db_read_by_id(conn, id) {
         Ok(user_req) => user_req,
         Err(e) => {
+            log::error!("Error deleting Parcel: {}", e);
             return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
                 error: true,
                 message: "Error deleting Parcel".to_string(),
@@ -305,9 +311,12 @@ pub async fn delete_parcel(
             error: false,
             message: "Parcel deleted successfully".to_string(),
         }),
-        Err(e) => HttpResponse::Ok().json(HttpResponseObjectEmpty {
-            error: true,
-            message: format!("Error deleting Parcel: {}", e),
-        }),
+        Err(e) => {
+            log::error!("Error deleting Parcel: {}", e);
+            HttpResponse::Ok().json(HttpResponseObjectEmpty {
+                error: true,
+                message: format!("Error deleting Parcel: {}", e),
+            })
+        }
     }
 }

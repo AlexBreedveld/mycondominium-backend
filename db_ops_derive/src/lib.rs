@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
-use quote::{format_ident, quote};
-use syn::{DeriveInput, Meta, Path, parse_macro_input};
+use quote::quote;
+use syn::{DeriveInput, Meta, parse_macro_input};
 
 #[proc_macro_derive(DbOps, attributes(diesel))]
 pub fn derive_db_ops(input: TokenStream) -> TokenStream {
@@ -27,13 +27,6 @@ pub fn derive_db_ops(input: TokenStream) -> TokenStream {
             })
         })
         .expect("Couldn't find #[diesel(table_name = crate::schema::table)] attribute.");
-
-    // Extract table identifier (last segment of path)
-    let table_ident = &table_path
-        .segments
-        .last()
-        .expect("Valid table path required")
-        .ident;
 
     // Prepare expanded code block
     let expanded = quote! {
