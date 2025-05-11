@@ -12,7 +12,7 @@ use tokio::time::sleep;
     responses (
         (status = 200, description = "Signed in successfully", body = HttpResponseObject<String>),
         (status = 401, description = "Unauthorized", body = HttpResponseObjectEmptyError),
-        (status = 500, description = "Error signing in admin", body = HttpResponseObjectEmptyError),
+        (status = 500, description = "Error signing in", body = HttpResponseObjectEmptyError),
     ),
 )]
 pub async fn sign_in(

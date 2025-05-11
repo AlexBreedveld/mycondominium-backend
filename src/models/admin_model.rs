@@ -1,5 +1,6 @@
 use super::prelude::*;
 use crate::internal::roles::UserRoles;
+use crate::models::resident_model::ResidentModel;
 use crate::models::user_model::{UserModel, UserModelResult};
 use crate::models::user_role_model::UserRoleModel;
 use db_ops_derive::DbOps;

@@ -9,9 +9,13 @@ use super::prelude::*;
     paths(
         sign_in::sign_in,
         auth::auth,
-        auth::auth_get_user,
+        auth::sign_out,
         new_admin_self_service::new_admin_self_service
     ),
-    components(schemas(auth_model::AuthModel, auth_model::AuthAdminNewSelfServiceModel))
+    components(schemas(
+        auth_model::AuthModel,
+        auth_model::AuthAdminNewSelfServiceModel,
+        auth_model::AuthUserModelResult
+    ))
 )]
 pub struct AuthApi;

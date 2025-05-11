@@ -35,8 +35,8 @@ pub fn auth_route() -> actix_web::Scope {
             web::get().to(crate::services::auth_service::auth::auth),
         )
         .route(
-            "/get_user",
-            web::get().to(crate::services::auth_service::auth::auth_get_user),
+            "/signout",
+            web::get().to(crate::services::auth_service::auth::sign_out),
         )
         .route(
             "/new_admin_self_service",
