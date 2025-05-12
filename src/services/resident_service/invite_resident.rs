@@ -383,6 +383,59 @@ pub async fn get_resident_invite_by_id(
 }
 
 #[utoipa::path(
+    get,
+    tag = "Resident",
+    path = "/invite/view/{key}",
+    params(
+        ("key" = Uuid, Path, description = "Resident Invite key"),
+    ),
+    responses(
+        (status = 200, description = "Got resident invite successfully", body = ResidentInviteGetHttpResponse),
+        (status = 500, description = "Internal server error", body = HttpResponseObjectEmptyError)
+    ),
+    security(
+        ("Token" = [])
+    )
+)]
+pub async fn get_resident_invite_by_key(
+    key: web::Path<String>,
+    conf: web::Data<Arc<MyCondominiumConfig>>,
+) -> HttpResponse {
+    let key = key.into_inner();
+
+    sleep(Duration::from_secs(3)).await;
+
+    let conn = &mut establish_connection_pg(&conf);
+
+    match resident_model::ResidentInviteModel::table()
+        .filter(resident_invites::key.eq(&key))
+        .first::<resident_model::ResidentInviteModel>(conn)
+    {
+        Ok(user_req) => {
+            let invite = ResidentInviteModel {
+                id: user_req.id,
+                email: user_req.email,
+                community_id: user_req.community_id,
+                key: "".to_string(),
+                created_at: user_req.created_at,
+            };
+            HttpResponse::Ok().json(HttpResponseObject {
+                error: false,
+                message: "Got resident invite successfully".to_string(),
+                object: Some(invite),
+            })
+        }
+        Err(e) => {
+            log::error!("Error getting resident invite: {}", e);
+            HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+                error: true,
+                message: "Error getting resident invite".to_string(),
+            })
+        }
+    }
+}
+
+#[utoipa::path(
     delete,
     tag = "Resident",
     path = "/invite/delete/{id}",

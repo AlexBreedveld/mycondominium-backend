@@ -190,6 +190,11 @@ pub fn resident_route() -> actix_web::Scope {
                 .to(crate::services::resident_service::invite_resident::get_resident_invite_by_id),
         )
         .route(
+            "/invite/view/{key}",
+            web::get()
+                .to(crate::services::resident_service::invite_resident::get_resident_invite_by_key),
+        )
+        .route(
             "/invite/count",
             web::get()
                 .to(crate::services::resident_service::invite_resident::count_resident_invite),

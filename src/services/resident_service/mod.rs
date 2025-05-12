@@ -21,6 +21,7 @@ type ResidentInviteGetHttpResponse = HttpResponseObject<resident_model::Resident
         invite_resident::get_resident_invites,
         invite_resident::count_resident_invite,
         invite_resident::get_resident_invite_by_id,
+        invite_resident::get_resident_invite_by_key,
         invite_resident::delete_resident_invite,
         invite_resident::new_resident_by_invite,
     ),
