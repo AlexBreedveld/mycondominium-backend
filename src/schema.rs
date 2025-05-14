@@ -137,8 +137,8 @@ diesel::table! {
         resident_id -> Uuid,
         common_area_id -> Uuid,
         reservation_date -> Timestamp,
-        start_time -> Time,
-        end_time -> Time,
+        start_time -> Timestamp,
+        end_time -> Timestamp,
         #[max_length = 20]
         status -> Varchar,
         created_at -> Timestamp,

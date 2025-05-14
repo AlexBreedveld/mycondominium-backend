@@ -7,8 +7,8 @@ pub struct ReservationModel {
     pub resident_id: Uuid,
     pub common_area_id: Uuid,
     pub reservation_date: NaiveDateTime,
-    pub start_time: NaiveTime,
-    pub end_time: NaiveTime,
+    pub start_time: NaiveDateTime,
+    pub end_time: NaiveDateTime,
     #[validate(length(max = 20, message = "Status is too long"))]
     pub status: String,
     pub created_at: NaiveDateTime,

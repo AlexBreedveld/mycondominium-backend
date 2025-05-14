@@ -38,7 +38,7 @@ pub async fn new_admin(
                 });
             }
         };
-        if total_root_admins != 0 {
+        if total_root_admins > 0 {
             match authenticate_user(req.clone(), conn, conf) {
                 Ok((role, _claims, _token)) => {
                     if role.role != UserRoles::Root {

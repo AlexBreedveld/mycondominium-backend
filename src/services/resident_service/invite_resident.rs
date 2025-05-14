@@ -392,9 +392,6 @@ pub async fn get_resident_invite_by_id(
     responses(
         (status = 200, description = "Got resident invite successfully", body = ResidentInviteGetHttpResponse),
         (status = 500, description = "Internal server error", body = HttpResponseObjectEmptyError)
-    ),
-    security(
-        ("Token" = [])
     )
 )]
 pub async fn get_resident_invite_by_key(
