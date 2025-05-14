@@ -39,7 +39,7 @@ tests:
     - when: always
   before_script:
     - apt update && apt install -y jq postgresql sudo
-    - sudo -u postgres /usr/lib/postgresql/15/bin/postgres -D /var/lib/postgresql/15/main -c config_file=/etc/postgresql/15/main/postgresql.conf
+    - sudo -u postgres /usr/lib/postgresql/15/bin/postgres -D /var/lib/postgresql/15/main -c config_file=/etc/postgresql/15/main/postgresql.conf &
   script:
     - sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'toor';" || true
     - sudo -u postgres dropdb ${DEV_DB_NAME} || true
