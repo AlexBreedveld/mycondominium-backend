@@ -152,6 +152,67 @@ pub async fn password_reset(
             }
         };
 
+        let rmq = RabbitMqClient::new(&conf.rabbitmq, "mycondominium_smtp".to_string())
+            .await
+            .unwrap();
+
+        let (first_name, email) = match user.clone().entity_type {
+            UserTypes::Admin => {
+                match admin_model::AdminModel::db_read_by_id(conn, user.entity_id) {
+                    Ok(adm) => (adm.first_name, adm.email),
+                    Err(e) => {
+                        log::error!("Error reading admin: {}", e);
+                        return HttpResponse::InternalServerError().json(
+                            HttpResponseObjectEmptyError {
+                                error: true,
+                                message: "Error getting user".to_string(),
+                            },
+                        );
+                    }
+                }
+            }
+            UserTypes::Resident => {
+                match resident_model::ResidentModel::db_read_by_id(conn, user.entity_id) {
+                    Ok(usr) => (usr.first_name, usr.email),
+                    Err(e) => {
+                        log::error!("Error reading resident: {}", e);
+                        return HttpResponse::InternalServerError().json(
+                            HttpResponseObjectEmptyError {
+                                error: true,
+                                message: "Error getting user".to_string(),
+                            },
+                        );
+                    }
+                }
+            }
+        };
+
+        let parameters: Vec<SmtpTemplateData> = vec![
+            SmtpTemplateData {
+                key: "{{USER_NAME}}".to_string(),
+                value: first_name,
+            },
+            SmtpTemplateData {
+                key: "{{CURRENT_YEAR}}".to_string(),
+                value: chrono::Utc::now().year().to_string(),
+            },
+        ];
+
+        let template_data = crate::internal::smtp::smtp_templates::smtp_get_template(
+            SmtpTemplate::PasswordResetWarning,
+            parameters,
+        );
+
+        let email = SmtpEmailPayload {
+            to: email,
+            subject: "Senha Redefinida - MyCondominium".to_string(),
+            body: template_data,
+        };
+
+        let payload = serde_json::to_vec(&email).unwrap();
+
+        rmq.publish(&payload).await.unwrap();
+
         HttpResponse::Ok().json(HttpResponseObjectEmpty {
             error: false,
             message: "Your password has been changed successfully".to_string(),

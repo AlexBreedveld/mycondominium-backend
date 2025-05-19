@@ -60,7 +60,7 @@ async fn delete_expired_password_resets(conf: Arc<MyCondominiumConfig>) {
 async fn update_reservation_status(conf: Arc<MyCondominiumConfig>) {
     use crate::models::reservation_model::*;
     use crate::schema::reservations::dsl::*;
-    use chrono::{Timelike, Utc};
+    use chrono::Utc;
     use diesel::prelude::*;
 
     log::info!("Starting update reservation status service");

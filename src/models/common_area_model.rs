@@ -1,7 +1,5 @@
 use super::prelude::*;
-use super::*;
-use crate::models::reservation_model::ReservationModel;
-use crate::services::{UserRoles, UserTypes};
+use crate::services::UserRoles;
 
 #[derive(
     Queryable,
@@ -36,9 +34,9 @@ pub struct CommonAreaModelNew {
 
 impl CommonAreaModel {
     pub fn db_read_by_id_matching(
-        user_role: user_role_model::UserRoleModel,
+        user_role: UserRoleModel,
         conn: &mut PgConnection,
-        id: uuid::Uuid,
+        id: Uuid,
     ) -> diesel::QueryResult<CommonAreaModel> {
         let common_area = CommonAreaModel::db_read_by_id(conn, id)?;
 
@@ -60,7 +58,7 @@ impl CommonAreaModel {
     }
 
     pub fn db_count_all_matching(
-        user_role: user_role_model::UserRoleModel,
+        user_role: UserRoleModel,
         conn: &mut PgConnection,
     ) -> diesel::QueryResult<i64> {
         let mut query = CommonAreaModel::table().into_boxed();
@@ -77,7 +75,7 @@ impl CommonAreaModel {
     }
 
     pub fn db_read_all_matching_by_range(
-        user_role: user_role_model::UserRoleModel,
+        user_role: UserRoleModel,
         conn: &mut PgConnection,
         per_page: i64,
         offset: i64,

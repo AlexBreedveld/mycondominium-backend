@@ -1,7 +1,5 @@
 use super::prelude::*;
-use crate::models::common_area_model::CommonAreaModel;
-use crate::models::parcel_model::ParcelModel;
-use crate::models::{common_area_model, community_model, user_role_model};
+use crate::models::{common_area_model, user_role_model};
 use std::io::ErrorKind;
 
 #[derive(
@@ -88,9 +86,9 @@ impl ReservationModel {
             .filter(common_area_id.eq(self.common_area_id))
             .filter(id.ne(self.id))
             .filter(
-                (start_time
+                start_time
                     .le(self.end_time)
-                    .and(end_time.ge(self.start_time))),
+                    .and(end_time.ge(self.start_time)),
             )
             .first::<ReservationModel>(conn)
             .optional();
@@ -207,9 +205,9 @@ impl ReservationModelNew {
         let overlapping_reservations = reservations
             .filter(common_area_id.eq(self.common_area_id))
             .filter(
-                (start_time
+                start_time
                     .le(self.end_time)
-                    .and(end_time.ge(self.start_time))),
+                    .and(end_time.ge(self.start_time)),
             )
             .first::<ReservationModel>(conn)
             .optional();
