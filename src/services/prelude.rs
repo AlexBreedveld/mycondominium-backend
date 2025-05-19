@@ -1,6 +1,9 @@
 pub use crate::establish_connection_pg;
 pub use crate::internal::config::model::*;
+pub use crate::internal::rabbitmq::rabbitmq_client::RabbitMqClient;
 pub use crate::internal::roles::UserRoles;
+pub use crate::internal::smtp::smtp_client::SmtpEmailPayload;
+pub use crate::internal::smtp::smtp_templates::{SmtpTemplate, SmtpTemplateData};
 pub use crate::internal::user_types::UserTypes;
 pub use crate::models::prelude::*;
 pub use crate::models::*;

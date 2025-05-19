@@ -1,6 +1,7 @@
 pub enum SmtpTemplate {
     ResidentInvite,
     NewAccount,
+    PasswordReset,
 }
 
 pub struct SmtpTemplateData {
@@ -15,6 +16,9 @@ pub fn smtp_get_template(template_type: SmtpTemplate, data: Vec<SmtpTemplateData
         }
         SmtpTemplate::NewAccount => {
             include_str!("../../../res/mail/new_account_created.html").to_string()
+        }
+        SmtpTemplate::PasswordReset => {
+            include_str!("../../../res/mail/password_reset.html").to_string()
         }
     };
 

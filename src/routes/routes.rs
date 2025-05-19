@@ -43,6 +43,14 @@ pub fn auth_route() -> actix_web::Scope {
             web::post()
                 .to(crate::services::auth_service::new_admin_self_service::new_admin_self_service),
         )
+        .route(
+            "/request_password_reset",
+            web::post().to(crate::services::auth_service::password_reset::request_password_reset),
+        )
+        .route(
+            "/password_reset",
+            web::post().to(crate::services::auth_service::password_reset::password_reset),
+        )
 }
 
 pub fn common_area_route() -> actix_web::Scope {
