@@ -77,10 +77,20 @@ pub async fn request_password_reset(
 
         rmq.publish(&payload).await.unwrap();
 
-        HttpResponse::Ok().json(HttpResponseObjectEmpty {
-            error: false,
-            message: "If an account with the provided email exists, it will be sent".to_string(),
-        })
+        match password_reset.db_insert(conn) {
+            Ok(_) => HttpResponse::Ok().json(HttpResponseObjectEmpty {
+                error: false,
+                message: "If an account with the provided email exists, it will be sent"
+                    .to_string(),
+            }),
+            Err(e) => {
+                log::error!("Error inserting password reset: {}", e);
+                HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
+                    error: true,
+                    message: "Error requesting password reset".to_string(),
+                })
+            }
+        }
     } else {
         HttpResponse::Ok().json(HttpResponseObjectEmpty {
             error: false,
@@ -127,7 +137,7 @@ pub async fn password_reset(
             }
         };
 
-        let mut user = match UserModel::db_read_by_id(conn, pw_reset.unwrap().user_id) {
+        let mut user = match UserModel::db_read_by_id(conn, pw_reset.clone().unwrap().user_id) {
             Ok(usr) => usr,
             Err(e) => {
                 log::error!("Error reading user: {}", e);
@@ -213,10 +223,19 @@ pub async fn password_reset(
 
         rmq.publish(&payload).await.unwrap();
 
-        HttpResponse::Ok().json(HttpResponseObjectEmpty {
-            error: false,
-            message: "Your password has been changed successfully".to_string(),
-        })
+        match auth_model::PasswordResetModel::db_delete_by_id(conn, pw_reset.unwrap().id) {
+            Ok(_) => HttpResponse::Ok().json(HttpResponseObjectEmpty {
+                error: false,
+                message: "Your password has been changed successfully".to_string(),
+            }),
+            Err(e) => {
+                log::error!("Error deleting password reset: {}", e);
+                HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
+                    error: true,
+                    message: "Error resetting password".to_string(),
+                })
+            }
+        }
     } else {
         HttpResponse::BadRequest().json(HttpResponseObjectEmptyError {
             error: true,
