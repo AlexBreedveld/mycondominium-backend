@@ -76,6 +76,7 @@ impl UserModel {
                 .optional()
             {
                 Ok(Some(ent)) => {
+                    found = true;
                     user_type = UserTypes::Admin;
                     Some(ent.id)
                 }
