@@ -1,5 +1,6 @@
 use super::prelude::*;
 use super::*;
+use crate::models::reservation_model::ReservationModel;
 use crate::services::{UserRoles, UserTypes};
 
 #[derive(
@@ -62,28 +63,17 @@ impl CommonAreaModel {
         user_role: user_role_model::UserRoleModel,
         conn: &mut PgConnection,
     ) -> diesel::QueryResult<i64> {
-        let mut query = user_role_model::UserRoleModel::table()
-            .inner_join(users::table.on(user_roles::user_id.eq(users::id)))
-            .inner_join(residents::table.on(users::entity_id.eq(residents::id)))
-            .inner_join(parcels::table.on(users::entity_id.eq(residents::id)))
-            .filter(users::entity_type.eq(UserTypes::Resident))
-            .filter(user_roles::role.eq(UserRoles::Resident))
-            .into_boxed();
+        let mut query = CommonAreaModel::table().into_boxed();
 
         match user_role.role {
             UserRoles::Root => {}
-            UserRoles::Admin => {
-                query = query.filter(user_roles::community_id.eq(user_role.community_id))
-            }
-            UserRoles::Resident => {
-                query = query.filter(user_roles::community_id.eq(user_role.community_id))
+            UserRoles::Admin | UserRoles::Resident => {
+                query =
+                    query.filter(common_areas::community_id.eq(user_role.community_id.unwrap()));
             }
         }
 
-        query
-            .select(parcels::all_columns)
-            .count()
-            .get_result::<i64>(conn)
+        query.count().get_result::<i64>(conn)
     }
 
     pub fn db_read_all_matching_by_range(

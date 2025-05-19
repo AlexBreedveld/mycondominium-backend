@@ -69,7 +69,7 @@ pub async fn request_password_reset(
 
         let email = SmtpEmailPayload {
             to: email,
-            subject: "Redefinição de Senha".to_string(),
+            subject: "Redefinição de Senha - MyCondominium".to_string(),
             body: template_data,
         };
 

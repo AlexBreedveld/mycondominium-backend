@@ -158,6 +158,34 @@ pub fn parcel_route() -> actix_web::Scope {
         )
 }
 
+pub fn reservation_route() -> actix_web::Scope {
+    web::scope("/api/reservation")
+        .route(
+            "/list",
+            web::get().to(crate::services::reservation_service::get_reservation::get_reservations),
+        )
+        .route(
+            "/get/{id}",
+            web::get()
+                .to(crate::services::reservation_service::get_reservation::get_reservation_by_id),
+        )
+        .route(
+            "/new",
+            web::post()
+                .to(crate::services::reservation_service::upsert_reservation::new_reservation),
+        )
+        .route(
+            "/update/{id}",
+            web::put()
+                .to(crate::services::reservation_service::upsert_reservation::update_reservation),
+        )
+        .route(
+            "/delete/{id}",
+            web::delete()
+                .to(crate::services::reservation_service::upsert_reservation::delete_reservation),
+        )
+}
+
 pub fn resident_route() -> actix_web::Scope {
     web::scope("/api/resident")
         .route(

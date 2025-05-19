@@ -86,6 +86,7 @@ async fn main() {
                     .service(maintenance_schedule_route())
                     .service(parcel_route())
                     .service(common_area_route())
+                    .service(reservation_route())
                     .service(
                         SwaggerUi::new("/docs-v1/{_:.*}")
                             .url("/api-docs/openapi.json", ApiDoc::openapi()),
