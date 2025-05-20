@@ -92,7 +92,7 @@ diesel::table! {
     invoices (id) {
         id -> Uuid,
         resident_id -> Uuid,
-        community_id -> Nullable<Uuid>,
+        community_id -> Uuid,
         issue_date -> Date,
         due_date -> Date,
         amount -> Numeric,

@@ -106,6 +106,30 @@ pub fn community_route() -> actix_web::Scope {
         )
 }
 
+pub fn invoice_route() -> actix_web::Scope {
+    web::scope("/api/invoice")
+        .route(
+            "/list",
+            web::get().to(crate::services::invoice_service::get_invoice::get_invoices),
+        )
+        .route(
+            "/get/{id}",
+            web::get().to(crate::services::invoice_service::get_invoice::get_invoice_by_id),
+        )
+        .route(
+            "/new",
+            web::post().to(crate::services::invoice_service::upsert_invoice::new_invoice),
+        )
+        .route(
+            "/update/{id}",
+            web::put().to(crate::services::invoice_service::upsert_invoice::update_invoice),
+        )
+        .route(
+            "/delete/{id}",
+            web::delete().to(crate::services::invoice_service::upsert_invoice::delete_invoice),
+        )
+}
+
 pub fn maintenance_schedule_route() -> actix_web::Scope {
     web::scope("/api/maintenance_schedule")
         .route(

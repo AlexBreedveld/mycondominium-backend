@@ -1,9 +1,7 @@
 CREATE TABLE invoices (
     id UUID PRIMARY KEY,
     resident_id UUID NOT NULL REFERENCES residents(id) ON DELETE CASCADE,
-    community_id uuid
-        constraint invoices_communities_id_fk
-            references public.communities,
+    community_id uuid NOT NULL REFERENCES communities(id) ON DELETE CASCADE,
     issue_date DATE NOT NULL DEFAULT CURRENT_DATE,
     due_date DATE NOT NULL,
     amount NUMERIC(10, 2) NOT NULL,
