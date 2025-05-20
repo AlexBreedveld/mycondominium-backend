@@ -68,7 +68,7 @@ tests:
     - curl -s -X GET https://git.al3xdev.com/api/v4/projects/187/releases | jq --arg target_commit "${CI_COMMIT_SHA}" 'any(.[]; .commit.id == $target_commit)' > .pipeline_re_run_status
     - if [ $(cat ./.pipeline_re_run_status) == "true" ]; then echo "Skipping because this is a re-run"; exit 0; fi
     - if [ ${SKIP_BUILD} == "true" ]; then echo "Skipping because of SKIP_BUILD set to true"; exit 0; fi
-    - cargo test --verbose
+    - cargo test -- --nocapture
   artifacts:
     paths:
       - .pipeline_re_run_status
