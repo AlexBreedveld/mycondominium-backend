@@ -114,7 +114,7 @@ impl UserModel {
                 UserTypes::Resident => {
                     match resident_model::ResidentModel::db_read_by_id(
                         conn,
-                        user_obj.admin_id.unwrap(),
+                        user_obj.resident_id.unwrap(),
                     ) {
                         Ok(res) => Ok(UserModelEntityResult {
                             user: user_obj,
