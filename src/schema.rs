@@ -77,8 +77,9 @@ diesel::table! {
 diesel::table! {
     incidents (id) {
         id -> Uuid,
-        resident_id -> Nullable<Uuid>,
-        community_id -> Nullable<Uuid>,
+        resident_id -> Uuid,
+        community_id -> Uuid,
+        name -> Text,
         description -> Text,
         #[max_length = 20]
         status -> Varchar,

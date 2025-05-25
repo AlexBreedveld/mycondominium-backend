@@ -106,6 +106,30 @@ pub fn community_route() -> actix_web::Scope {
         )
 }
 
+pub fn incident_route() -> actix_web::Scope {
+    web::scope("/api/incident")
+        .route(
+            "/list",
+            web::get().to(crate::services::incident_service::get_incident::get_incidents),
+        )
+        .route(
+            "/get/{id}",
+            web::get().to(crate::services::incident_service::get_incident::get_incident_by_id),
+        )
+        .route(
+            "/new",
+            web::post().to(crate::services::incident_service::upsert_incident::new_incident),
+        )
+        .route(
+            "/update/{id}",
+            web::put().to(crate::services::incident_service::upsert_incident::update_incident),
+        )
+        .route(
+            "/delete/{id}",
+            web::delete().to(crate::services::incident_service::upsert_incident::delete_incident),
+        )
+}
+
 pub fn invoice_route() -> actix_web::Scope {
     web::scope("/api/invoice")
         .route(
