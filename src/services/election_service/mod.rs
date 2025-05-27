@@ -1,5 +1,7 @@
 pub mod get_election;
+pub mod upsert_candidate;
 pub mod upsert_election;
+pub mod upsert_vote;
 
 use super::prelude::*;
 type ElectionListHttpResponse = HttpResponseObject<Vec<election_model::ElectionModelResult>>;
@@ -13,6 +15,10 @@ type ElectionGetHttpResponse = HttpResponseObject<election_model::ElectionModelR
         upsert_election::new_election,
         upsert_election::update_election,
         upsert_election::delete_election,
+        upsert_candidate::new_election_candidate,
+        upsert_candidate::update_election_candidate,
+        upsert_candidate::delete_election_candidate,
+        upsert_vote::new_election_vote,
     ),
     components(schemas(
         election_model::ElectionModel,

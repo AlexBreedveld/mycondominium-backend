@@ -128,6 +128,25 @@ pub fn election_route() -> actix_web::Scope {
             "/delete/{id}",
             web::delete().to(crate::services::election_service::upsert_election::delete_election),
         )
+        .route(
+            "/candidate/new",
+            web::post()
+                .to(crate::services::election_service::upsert_candidate::new_election_candidate),
+        )
+        .route(
+            "/candidate/update/{id}",
+            web::put()
+                .to(crate::services::election_service::upsert_candidate::update_election_candidate),
+        )
+        .route(
+            "/candidate/delete/{id}",
+            web::delete()
+                .to(crate::services::election_service::upsert_candidate::delete_election_candidate),
+        )
+        .route(
+            "/vote",
+            web::post().to(crate::services::election_service::upsert_vote::new_election_vote),
+        )
 }
 
 pub fn incident_route() -> actix_web::Scope {
