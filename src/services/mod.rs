@@ -1,14 +1,18 @@
 pub mod admin_service;
 pub mod api;
 pub mod auth_service;
+pub mod common_area_service;
 pub mod community_service;
+pub mod incident_service;
+pub mod invoice_service;
 pub mod maintenance_schedule_service;
 pub mod parcel_service;
-mod prelude;
+pub mod prelude;
+pub mod reservation_service;
 pub mod resident_service;
 pub mod vehicle_service;
 
-pub use crate::services::prelude::*;
+pub use prelude::*;
 use utoipa::openapi::security::{ApiKey, ApiKeyValue};
 
 #[derive(OpenApi)]
@@ -25,10 +29,14 @@ use utoipa::openapi::security::{ApiKey, ApiKeyValue};
         (path = "/api/resident", api = resident_service::ResidentApi),
         (path = "/api/admin", api = admin_service::AdminApi),
         (path = "/api/auth", api = auth_service::AuthApi),
+        (path = "/api/common_area", api = common_area_service::CommonAreaApi),
         (path = "/api/community", api = community_service::CommunityApi),
         (path = "/api/vehicle", api = vehicle_service::VehicleApi),
         (path = "/api/maintenance_schedule", api = maintenance_schedule_service::MaintenanceScheduleApi),
         (path = "/api/parcel", api = parcel_service::ParcelApi),
+        (path = "/api/reservation", api = reservation_service::ReservationApi),
+        (path = "/api/invoice", api = invoice_service::InvoiceApi),
+        (path = "/api/incident", api = incident_service::IncidentApi),
     )
 )]
 pub struct ApiDoc;

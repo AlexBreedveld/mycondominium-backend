@@ -34,7 +34,7 @@ pub async fn get_communities(
     let conn = &mut establish_connection_pg(&conf);
 
     match authenticate_user(req.clone(), conn, conf) {
-        Ok((role, claims, token)) => {
+        Ok((role, _claims, _token)) => {
             if role.role != UserRoles::Root {
                 return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
                     error: true,
@@ -56,6 +56,7 @@ pub async fn get_communities(
     {
         Ok(count) => count,
         Err(e) => {
+            log::error!("Error getting total items: {}", e);
             return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
                 error: true,
                 message: format!("Error getting total items: {}", e),
@@ -87,10 +88,13 @@ pub async fn get_communities(
                     object: Some(res),
                 })
         }
-        Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
-            error: true,
-            message: format!("Error getting communities: {}", e),
-        }),
+        Err(e) => {
+            log::error!("Error getting communities: {}", e);
+            HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+                error: true,
+                message: format!("Error getting communities: {}", e),
+            })
+        }
     }
 }
 
@@ -131,7 +135,7 @@ pub async fn get_community_by_id(
     };
 
     match authenticate_user(req.clone(), conn, conf) {
-        Ok((role, claims, token)) => {
+        Ok((role, _claims, _token)) => {
             if !(role.role == UserRoles::Root
                 || (role.role == UserRoles::Admin && role.community_id == Some(id)))
             {
@@ -155,9 +159,12 @@ pub async fn get_community_by_id(
             message: "Got admin successfully".to_string(),
             object: Some(user_req),
         }),
-        Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
-            error: true,
-            message: format!("Error getting admin: {}", e),
-        }),
+        Err(e) => {
+            log::error!("Error getting admin: {}", e);
+            HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+                error: true,
+                message: format!("Error getting admin: {}", e),
+            })
+        }
     }
 }

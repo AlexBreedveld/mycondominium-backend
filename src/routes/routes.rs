@@ -34,6 +34,51 @@ pub fn auth_route() -> actix_web::Scope {
             "/auth",
             web::get().to(crate::services::auth_service::auth::auth),
         )
+        .route(
+            "/signout",
+            web::get().to(crate::services::auth_service::auth::sign_out),
+        )
+        .route(
+            "/new_admin_self_service",
+            web::post()
+                .to(crate::services::auth_service::new_admin_self_service::new_admin_self_service),
+        )
+        .route(
+            "/request_password_reset",
+            web::post().to(crate::services::auth_service::password_reset::request_password_reset),
+        )
+        .route(
+            "/password_reset",
+            web::post().to(crate::services::auth_service::password_reset::password_reset),
+        )
+}
+
+pub fn common_area_route() -> actix_web::Scope {
+    web::scope("/api/common_area")
+        .route(
+            "/list",
+            web::get().to(crate::services::common_area_service::get_common_area::get_common_areas),
+        )
+        .route(
+            "/get/{id}",
+            web::get()
+                .to(crate::services::common_area_service::get_common_area::get_common_area_by_id),
+        )
+        .route(
+            "/new",
+            web::post()
+                .to(crate::services::common_area_service::upsert_common_area::new_common_area),
+        )
+        .route(
+            "/update/{id}",
+            web::put()
+                .to(crate::services::common_area_service::upsert_common_area::update_common_area),
+        )
+        .route(
+            "/delete/{id}",
+            web::delete()
+                .to(crate::services::common_area_service::upsert_common_area::delete_common_area),
+        )
 }
 
 pub fn community_route() -> actix_web::Scope {
@@ -58,6 +103,54 @@ pub fn community_route() -> actix_web::Scope {
             "/delete/{id}",
             web::delete()
                 .to(crate::services::community_service::upsert_community::delete_community),
+        )
+}
+
+pub fn incident_route() -> actix_web::Scope {
+    web::scope("/api/incident")
+        .route(
+            "/list",
+            web::get().to(crate::services::incident_service::get_incident::get_incidents),
+        )
+        .route(
+            "/get/{id}",
+            web::get().to(crate::services::incident_service::get_incident::get_incident_by_id),
+        )
+        .route(
+            "/new",
+            web::post().to(crate::services::incident_service::upsert_incident::new_incident),
+        )
+        .route(
+            "/update/{id}",
+            web::put().to(crate::services::incident_service::upsert_incident::update_incident),
+        )
+        .route(
+            "/delete/{id}",
+            web::delete().to(crate::services::incident_service::upsert_incident::delete_incident),
+        )
+}
+
+pub fn invoice_route() -> actix_web::Scope {
+    web::scope("/api/invoice")
+        .route(
+            "/list",
+            web::get().to(crate::services::invoice_service::get_invoice::get_invoices),
+        )
+        .route(
+            "/get/{id}",
+            web::get().to(crate::services::invoice_service::get_invoice::get_invoice_by_id),
+        )
+        .route(
+            "/new",
+            web::post().to(crate::services::invoice_service::upsert_invoice::new_invoice),
+        )
+        .route(
+            "/update/{id}",
+            web::put().to(crate::services::invoice_service::upsert_invoice::update_invoice),
+        )
+        .route(
+            "/delete/{id}",
+            web::delete().to(crate::services::invoice_service::upsert_invoice::delete_invoice),
         )
 }
 
@@ -113,6 +206,34 @@ pub fn parcel_route() -> actix_web::Scope {
         )
 }
 
+pub fn reservation_route() -> actix_web::Scope {
+    web::scope("/api/reservation")
+        .route(
+            "/list",
+            web::get().to(crate::services::reservation_service::get_reservation::get_reservations),
+        )
+        .route(
+            "/get/{id}",
+            web::get()
+                .to(crate::services::reservation_service::get_reservation::get_reservation_by_id),
+        )
+        .route(
+            "/new",
+            web::post()
+                .to(crate::services::reservation_service::upsert_reservation::new_reservation),
+        )
+        .route(
+            "/update/{id}",
+            web::put()
+                .to(crate::services::reservation_service::upsert_reservation::update_reservation),
+        )
+        .route(
+            "/delete/{id}",
+            web::delete()
+                .to(crate::services::reservation_service::upsert_reservation::delete_reservation),
+        )
+}
+
 pub fn resident_route() -> actix_web::Scope {
     web::scope("/api/resident")
         .route(
@@ -142,6 +263,35 @@ pub fn resident_route() -> actix_web::Scope {
         .route(
             "/invite/new",
             web::post().to(crate::services::resident_service::invite_resident::new_resident_invite),
+        )
+        .route(
+            "/invite/list",
+            web::get().to(crate::services::resident_service::invite_resident::get_resident_invites),
+        )
+        .route(
+            "/invite/get/{id}",
+            web::get()
+                .to(crate::services::resident_service::invite_resident::get_resident_invite_by_id),
+        )
+        .route(
+            "/invite/view/{key}",
+            web::get()
+                .to(crate::services::resident_service::invite_resident::get_resident_invite_by_key),
+        )
+        .route(
+            "/invite/count",
+            web::get()
+                .to(crate::services::resident_service::invite_resident::count_resident_invite),
+        )
+        .route(
+            "/invite/delete/{id}",
+            web::delete()
+                .to(crate::services::resident_service::invite_resident::delete_resident_invite),
+        )
+        .route(
+            "/invite/signup",
+            web::post()
+                .to(crate::services::resident_service::invite_resident::new_resident_by_invite),
         )
 }
 

@@ -1,8 +1,4 @@
 use super::prelude::*;
-use crate::models::resident_model::{ResidentModel, ResidentModelResult};
-use crate::models::user_role_model::UserRoleModel;
-use crate::services::UserRoles;
-use diesel::prelude::*;
 
 #[derive(
     Queryable,

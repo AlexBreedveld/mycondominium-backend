@@ -1,9 +1,7 @@
-use crate::internal::roles;
 use crate::models::auth_model::TokenClaims;
 use crate::models::auth_token_model;
 use crate::models::auth_token_model::{AuthTokenModel, FromUaParser, UserAgent};
 use crate::models::user_role_model::UserRoleModel;
-use crate::schema::user_roles::dsl::user_roles;
 use crate::services::DatabaseTrait;
 use diesel::{ExpressionMethods, PgConnection, QueryDsl, RunQueryDsl};
 use std::io::ErrorKind;
@@ -17,10 +15,7 @@ pub fn hash_password(password: String) -> Result<String, std::io::Error> {
 
     match argon2.hash_password(password.as_bytes(), &salt) {
         Ok(hash) => Ok(hash.to_string()),
-        Err(_) => Err(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            "Error hashing password:".to_string(),
-        )),
+        Err(_) => Err(std::io::Error::other("Error hashing password:".to_string())),
     }
 }
 
@@ -50,9 +45,9 @@ pub fn check_password(password: String, hashed_password: String) -> Result<bool,
     let argon2 = argon2::Argon2::default();
     let parsed_hash = match password_hash::PasswordHash::new(&hashed_password) {
         Ok(hash) => hash,
-        Err(_) => {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::Other,
+        Err(e) => {
+            log::error!("Error parsing hashed password: {}", e);
+            return Err(std::io::Error::other(
                 "Error parsing hashed password".to_string(),
             ));
         }
@@ -70,8 +65,7 @@ pub fn generate_jwt_token(
         Ok(val) => val,
         Err(_) => {
             log::error!("AUTH_TOKEN_EXPIRATION_DAYS environment variable not found.");
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::Other,
+            return Err(std::io::Error::other(
                 "AUTH_TOKEN_EXPIRATION_DAYS environment variable not found".to_string(),
             ));
         }
@@ -80,8 +74,7 @@ pub fn generate_jwt_token(
         Ok(val) => val,
         Err(_) => {
             log::error!("Could not parse AUTH_TOKEN_EXPIRATION_DAYS as an integer.");
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::Other,
+            return Err(std::io::Error::other(
                 "AUTH_TOKEN_EXPIRATION_DAYS could not be parsed as an integer".to_string(),
             ));
         }
@@ -90,8 +83,7 @@ pub fn generate_jwt_token(
         Ok(val) => val,
         Err(_) => {
             log::error!("AUTH_TOKEN_SECRET_KEY environment variable not found.");
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::Other,
+            return Err(std::io::Error::other(
                 "AUTH_TOKEN_SECRET_KEY environment variable not found".to_string(),
             ));
         }
@@ -159,7 +151,7 @@ pub fn validate_token_from_header(
             let token = header.to_str().unwrap_or("");
             match validate_token_no_env(token, secret_key) {
                 Ok(claims) => Ok(claims),
-                Err(e) => Err(std::io::Error::new(
+                Err(_) => Err(std::io::Error::new(
                     std::io::ErrorKind::PermissionDenied,
                     "Error validating token".to_string(),
                 )),
@@ -252,26 +244,22 @@ pub fn authenticate_user(
                     {
                         Ok(role) => Ok((role, claims, token)),
                         Err(e) => {
-                            return Err(std::io::Error::new(
-                                std::io::ErrorKind::Other,
-                                "Error getting user role".to_string(),
-                            ));
+                            log::error!("Error getting user role: {}", e);
+                            Err(std::io::Error::other("Error getting user role".to_string()))
                         }
                     }
                 }
                 Err(e) => {
-                    return Err(std::io::Error::new(
-                        std::io::ErrorKind::Other,
+                    log::error!("Error reading token from database: {}", e);
+                    Err(std::io::Error::other(
                         "Error reading token from database".to_string(),
-                    ));
+                    ))
                 }
             }
         }
         Err(e) => {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::PermissionDenied,
-                "Invalid token".to_string(),
-            ));
+            log::error!("Invalid token: {}", e);
+            Err(std::io::Error::other("Invalid token".to_string()))
         }
     }
 }

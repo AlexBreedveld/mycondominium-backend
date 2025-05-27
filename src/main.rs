@@ -8,8 +8,7 @@ use clap::Parser;
 use diesel_migrations::MigrationHarness;
 use dotenvy::dotenv;
 use mycondominium_backend::internal::config::model::MyCondominiumConfig;
-use mycondominium_backend::internal::rabbitmq::rabbitmq_client::RabbitMqClient;
-use mycondominium_backend::internal::smtp::smtp_service::listen_and_send_emails;
+use mycondominium_backend::internal::scheduled_tasks::scheduled_tasks_service::scheduled_tasks_service;
 use mycondominium_backend::routes::routes::*;
 use mycondominium_backend::services::ApiDoc;
 use mycondominium_backend::{MIGRATIONS, establish_connection_pg};
@@ -59,19 +58,7 @@ async fn main() {
             conn.run_pending_migrations(MIGRATIONS)
                 .expect("Failed to run database migrations");
 
-            let rabbitmq_conn_smtp =
-                match RabbitMqClient::new(&conf.rabbitmq, "mycondominium_smtp".to_string()).await {
-                    Ok(rmq_conn) => rmq_conn,
-                    Err(e) => {
-                        log::error!("Failed to instantiate connection with RabbitMQ: {}", e);
-                        panic!("Failed to instantiate connection with RabbitMQ: {}", e);
-                    }
-                };
-            let conf_clone = conf.clone();
-
-            let smtp_config = conf_clone.clone().smtp.clone();
-
-            tokio::spawn(listen_and_send_emails(rabbitmq_conn_smtp, smtp_config));
+            tokio::spawn(scheduled_tasks_service(conf.clone()));
 
             let conf_clone = conf.clone();
 
@@ -98,6 +85,10 @@ async fn main() {
                     .service(vehicle_route())
                     .service(maintenance_schedule_route())
                     .service(parcel_route())
+                    .service(common_area_route())
+                    .service(reservation_route())
+                    .service(invoice_route())
+                    .service(incident_route())
                     .service(
                         SwaggerUi::new("/docs-v1/{_:.*}")
                             .url("/api-docs/openapi.json", ApiDoc::openapi()),

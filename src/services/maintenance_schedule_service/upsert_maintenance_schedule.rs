@@ -1,5 +1,4 @@
 use super::*;
-use crate::utilities::user_utils::check_email_exist;
 
 #[utoipa::path(
     post,
@@ -25,7 +24,7 @@ pub async fn new_maintenance_schedule(
 
     let body = body.into_inner();
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf.clone()) {
+    let (role, _claims, _token) = match authenticate_user(req.clone(), conn, conf.clone()) {
         Ok((role, claims, token)) => {
             if role.role == UserRoles::Root || role.role == UserRoles::Admin {
                 (role, claims, token)
@@ -71,6 +70,7 @@ pub async fn new_maintenance_schedule(
     match new_obj.db_insert(conn) {
         Ok(_) => (),
         Err(e) => {
+            log::error!("Error creating Maintenance Schedule: {}", e);
             return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
                 error: true,
                 message: format!("Error creating Maintenance Schedule: {}", e),
@@ -112,7 +112,7 @@ pub async fn update_maintenance_schedule(
     let conn = &mut establish_connection_pg(&conf);
     let body = body.into_inner();
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf.clone()) {
+    let (role, _claims, _token) = match authenticate_user(req.clone(), conn, conf.clone()) {
         Ok((role, claims, token)) => {
             if role.role == UserRoles::Root || role.role == UserRoles::Admin {
                 (role, claims, token)
@@ -145,6 +145,7 @@ pub async fn update_maintenance_schedule(
         match maintenance_schedule_model::MaintenanceScheduleModel::db_read_by_id(conn, id) {
             Ok(user_req) => user_req,
             Err(e) => {
+                log::error!("Error updating Maintenance Schedule: {}", e);
                 return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
                     error: true,
                     message: "Error updating Maintenance Schedule".to_string(),
@@ -183,10 +184,13 @@ pub async fn update_maintenance_schedule(
             error: false,
             message: "Maintenance Schedule updated successfully".to_string(),
         }),
-        Err(e) => HttpResponse::Ok().json(HttpResponseObjectEmpty {
-            error: true,
-            message: format!("Error creating Maintenance Schedule: {}", e),
-        }),
+        Err(e) => {
+            log::error!("Error creating Maintenance Schedule: {}", e);
+            HttpResponse::Ok().json(HttpResponseObjectEmpty {
+                error: true,
+                message: format!("Error creating Maintenance Schedule: {}", e),
+            })
+        }
     }
 }
 
@@ -214,7 +218,7 @@ pub async fn delete_maintenance_schedule(
 ) -> HttpResponse {
     let conn = &mut establish_connection_pg(&conf);
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf.clone()) {
+    let (role, _claims, _token) = match authenticate_user(req.clone(), conn, conf.clone()) {
         Ok((role, claims, token)) => {
             if role.role == UserRoles::Root || role.role == UserRoles::Admin {
                 (role, claims, token)
@@ -247,6 +251,7 @@ pub async fn delete_maintenance_schedule(
         match maintenance_schedule_model::MaintenanceScheduleModel::db_read_by_id(conn, id) {
             Ok(user_req) => user_req,
             Err(e) => {
+                log::error!("Error updating Maintenance Schedule: {}", e);
                 return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
                     error: true,
                     message: "Error updating Maintenance Schedule".to_string(),
@@ -268,9 +273,12 @@ pub async fn delete_maintenance_schedule(
             error: false,
             message: "Maintenance Schedule deleted successfully".to_string(),
         }),
-        Err(e) => HttpResponse::Ok().json(HttpResponseObjectEmpty {
-            error: true,
-            message: format!("Error deleting Maintenance Schedule: {}", e),
-        }),
+        Err(e) => {
+            log::error!("Error deleting Maintenance Schedule: {}", e);
+            HttpResponse::Ok().json(HttpResponseObjectEmpty {
+                error: true,
+                message: format!("Error deleting Maintenance Schedule: {}", e),
+            })
+        }
     }
 }

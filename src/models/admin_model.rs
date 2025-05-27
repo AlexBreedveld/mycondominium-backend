@@ -1,9 +1,4 @@
 use super::prelude::*;
-use crate::internal::roles::UserRoles;
-use crate::models::user_model::{UserModel, UserModelResult};
-use crate::models::user_role_model::UserRoleModel;
-use db_ops_derive::DbOps;
-use diesel::{QueryResult, RunQueryDsl};
 
 #[derive(
     Queryable,
@@ -41,6 +36,15 @@ pub struct AdminModelNew {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Validate, ToSchema)]
+pub struct AdminModelNewSelfService {
+    pub first_name: String,
+    pub last_name: String,
+    pub phone: Option<String>,
+    pub email: String,
+    pub password: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Validate, ToSchema)]
 pub struct AdminModelResult {
     pub admin: AdminModel,
     pub user: UserModelResult,
@@ -49,7 +53,7 @@ pub struct AdminModelResult {
 
 impl AdminModel {
     pub fn new_id_user(conn: &mut PgConnection) -> uuid::Uuid {
-        let mut uuid_new = uuid::Uuid::new_v4();
+        let uuid_new = uuid::Uuid::new_v4();
         let mut exists = true;
         let mut tries = 0;
 
@@ -60,7 +64,7 @@ impl AdminModel {
                 .get_result::<i64>(conn)
             {
                 Ok(count) => count != 0,
-                Err(e) => {
+                Err(_) => {
                     tries += 1;
                     true
                 }
@@ -72,7 +76,7 @@ impl AdminModel {
                 .get_result::<i64>(conn)
             {
                 Ok(count) => count != 0,
-                Err(e) => {
+                Err(_) => {
                     tries += 1;
                     true
                 }
@@ -91,7 +95,7 @@ impl AdminModel {
         conn: &mut PgConnection,
         per_page: i64,
         offset: i64,
-    ) -> diesel::QueryResult<Vec<AdminModelResult>> {
+    ) -> QueryResult<Vec<AdminModelResult>> {
         use crate::schema::{admins, user_roles, users};
 
         let mut query = user_roles::table
@@ -153,25 +157,25 @@ impl AdminModel {
         &self,
         id: uuid::Uuid,
         conn: &mut PgConnection,
-    ) -> diesel::QueryResult<AdminModelResult> {
-        let self_user = crate::models::user_model::UserModel::table()
+    ) -> QueryResult<AdminModelResult> {
+        let self_user = UserModel::table()
             .filter(users::admin_id.eq(self.id))
-            .first::<crate::models::user_model::UserModel>(conn)?;
+            .first::<UserModel>(conn)?;
 
-        let self_role = crate::models::user_role_model::UserRoleModel::table()
+        let self_role = UserRoleModel::table()
             .filter(user_roles::user_id.eq(self_user.id))
-            .first::<crate::models::user_role_model::UserRoleModel>(conn)?;
+            .first::<UserRoleModel>(conn)?;
 
-        let admin = crate::models::admin_model::AdminModel::db_read_by_id(conn, id)?;
+        let admin = AdminModel::db_read_by_id(conn, id)?;
 
-        let user = crate::models::user_model::UserModel::table()
+        let user = UserModel::table()
             .filter(users::entity_id.eq(admin.id))
             .filter(users::entity_type.eq("admin"))
-            .first::<crate::models::user_model::UserModel>(conn)?;
+            .first::<UserModel>(conn)?;
 
-        let role = crate::models::user_role_model::UserRoleModel::table()
+        let role = UserRoleModel::table()
             .filter(user_roles::user_id.eq(user.id))
-            .first::<crate::models::user_role_model::UserRoleModel>(conn)?;
+            .first::<UserRoleModel>(conn)?;
 
         if self_role.role == UserRoles::Root
             || (self_role.role == UserRoles::Admin && self_role.community_id == role.community_id)

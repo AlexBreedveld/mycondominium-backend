@@ -1,11 +1,15 @@
 pub use crate::establish_connection_pg;
 pub use crate::internal::config::model::*;
+pub use crate::internal::rabbitmq::rabbitmq_client::RabbitMqClient;
 pub use crate::internal::roles::UserRoles;
+pub use crate::internal::smtp::smtp_client::SmtpEmailPayload;
+pub use crate::internal::smtp::smtp_templates::{SmtpTemplate, SmtpTemplateData};
 pub use crate::internal::user_types::UserTypes;
 pub use crate::models::prelude::*;
 pub use crate::models::*;
 pub use crate::types::*;
 pub use crate::utilities::auth_utils::*;
+pub use crate::utilities::user_utils::{check_email_exist, user_check_email_valid};
 pub use actix_web::http::header;
 pub use actix_web::{HttpRequest, HttpResponse, web};
 pub use db_ops_derive::DbOps;

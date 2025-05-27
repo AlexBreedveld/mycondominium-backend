@@ -1,10 +1,6 @@
 use super::prelude::*;
-use crate::models::user_role_model::UserRoleModel;
+use super::*;
 use crate::services::UserRoles;
-use diesel::backend::Backend;
-use diesel::deserialize::FromSql;
-use diesel::serialize::{Output, ToSql};
-use diesel::{AsExpression, FromSqlRow, deserialize, serialize};
 use validator::ValidateLength;
 
 #[derive(
@@ -54,7 +50,7 @@ pub enum MaintenanceScheduleStatus {
 
 impl MaintenanceScheduleModel {
     pub fn db_read_by_id_matching_community(
-        user_role: UserRoleModel,
+        user_role: user_role_model::UserRoleModel,
         conn: &mut PgConnection,
         id: uuid::Uuid,
     ) -> diesel::QueryResult<MaintenanceScheduleModel> {
@@ -73,7 +69,7 @@ impl MaintenanceScheduleModel {
     }
 
     pub fn db_count_all_matching_community(
-        user_role: UserRoleModel,
+        user_role: user_role_model::UserRoleModel,
         status: MaintenanceScheduleStatus,
         conn: &mut PgConnection,
     ) -> diesel::QueryResult<i64> {
@@ -98,7 +94,7 @@ impl MaintenanceScheduleModel {
     }
 
     pub fn db_read_all_matching_community_by_range(
-        user_role: UserRoleModel,
+        user_role: user_role_model::UserRoleModel,
         conn: &mut PgConnection,
         per_page: i64,
         offset: i64,
@@ -116,7 +112,6 @@ impl MaintenanceScheduleModel {
                 query =
                     query.filter(maintenance_schedules::community_id.eq(user_role.community_id));
             }
-            _ => return Err(diesel::result::Error::NotFound), // Early return for unauthorized roles
         }
 
         // Fetch data with limit/offset (pagination)

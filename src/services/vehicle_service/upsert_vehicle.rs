@@ -23,7 +23,7 @@ pub async fn new_vehicle(
     let conn = &mut establish_connection_pg(&conf);
     let body = body.into_inner();
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf) {
+    let (role, _claims, _token) = match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => (role, claims, token),
         Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
@@ -88,10 +88,13 @@ pub async fn new_vehicle(
             message: "Vehicle created successfully".to_string(),
             entity_id: Some(new_vehicle.id),
         }),
-        Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
-            error: true,
-            message: format!("Error creating vehicle: {}", e),
-        }),
+        Err(e) => {
+            log::error!("Error creating vehicle: {}", e);
+            HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: format!("Error creating vehicle: {}", e),
+            })
+        }
     }
 }
 
@@ -123,7 +126,7 @@ pub async fn update_vehicle(
     let id = id.into_inner();
     let body = body.into_inner();
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf) {
+    let (role, _claims, _token) = match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => (role, claims, token),
         Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
@@ -162,6 +165,7 @@ pub async fn update_vehicle(
         {
             Ok(community_id) => community_id,
             Err(e) => {
+                log::error!("Error checking resident's community: {}", e);
                 return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
                     error: true,
                     message: format!("Error checking resident's community: {}", e),
@@ -185,6 +189,7 @@ pub async fn update_vehicle(
     let existing_vehicle = match vehicle_model::VehicleModel::db_read_by_id(conn, id) {
         Ok(vehicle) => vehicle,
         Err(e) => {
+            log::error!("Error getting vehicle: {}", e);
             return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
                 error: true,
                 message: format!("Error getting vehicle: {}", e),
@@ -207,10 +212,13 @@ pub async fn update_vehicle(
             error: false,
             message: "Vehicle updated successfully".to_string(),
         }),
-        Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
-            error: true,
-            message: format!("Error updating vehicle: {}", e),
-        }),
+        Err(e) => {
+            log::error!("Error updating vehicle: {}", e);
+            HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: format!("Error updating vehicle: {}", e),
+            })
+        }
     }
 }
 
@@ -239,7 +247,7 @@ pub async fn delete_vehicle(
     let conn = &mut establish_connection_pg(&conf);
     let id = id.into_inner();
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf) {
+    let (role, _claims, _token) = match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => (role, claims, token),
         Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
@@ -263,6 +271,7 @@ pub async fn delete_vehicle(
     let vehicle = match vehicle_model::VehicleModel::db_read_by_id(conn, id) {
         Ok(vehicle) => vehicle,
         Err(e) => {
+            log::error!("Error getting vehicle: {}", e);
             return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
                 error: true,
                 message: format!("Error getting vehicle: {}", e),
@@ -285,6 +294,7 @@ pub async fn delete_vehicle(
         {
             Ok(community_id) => community_id,
             Err(e) => {
+                log::error!("Error checking resident's community: {}", e);
                 return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
                     error: true,
                     message: format!("Error checking resident's community: {}", e),
@@ -310,9 +320,12 @@ pub async fn delete_vehicle(
             error: false,
             message: "Vehicle deleted successfully".to_string(),
         }),
-        Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
-            error: true,
-            message: format!("Error deleting vehicle: {}", e),
-        }),
+        Err(e) => {
+            log::error!("Error deleting vehicle: {}", e);
+            HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: format!("Error deleting vehicle: {}", e),
+            })
+        }
     }
 }

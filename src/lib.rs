@@ -9,7 +9,6 @@ pub mod utilities;
 use crate::internal::config::model::ConfigRabbitmq;
 use crate::internal::config::model::MyCondominiumConfig;
 use diesel_migrations::{EmbeddedMigrations, embed_migrations};
-use std::env;
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 

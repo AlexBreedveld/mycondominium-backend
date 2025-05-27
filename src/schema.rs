@@ -43,7 +43,7 @@ diesel::table! {
         #[max_length = 100]
         name -> Varchar,
         description -> Nullable<Text>,
-        community_id -> Nullable<Uuid>,
+        community_id -> Uuid,
         created_at -> Timestamp,
     }
 }
@@ -77,8 +77,9 @@ diesel::table! {
 diesel::table! {
     incidents (id) {
         id -> Uuid,
-        resident_id -> Nullable<Uuid>,
-        community_id -> Nullable<Uuid>,
+        resident_id -> Uuid,
+        community_id -> Uuid,
+        name -> Text,
         description -> Text,
         #[max_length = 20]
         status -> Varchar,
@@ -92,7 +93,7 @@ diesel::table! {
     invoices (id) {
         id -> Uuid,
         resident_id -> Uuid,
-        community_id -> Nullable<Uuid>,
+        community_id -> Uuid,
         issue_date -> Date,
         due_date -> Date,
         amount -> Numeric,
@@ -132,13 +133,23 @@ diesel::table! {
 }
 
 diesel::table! {
+    password_reset (id) {
+        id -> Uuid,
+        email -> Text,
+        user_id -> Uuid,
+        token -> Text,
+        created_at -> Timestamp,
+    }
+}
+
+diesel::table! {
     reservations (id) {
         id -> Uuid,
         resident_id -> Uuid,
         common_area_id -> Uuid,
         reservation_date -> Timestamp,
-        start_time -> Time,
-        end_time -> Time,
+        start_time -> Timestamp,
+        end_time -> Timestamp,
         #[max_length = 20]
         status -> Varchar,
         created_at -> Timestamp,
@@ -234,6 +245,7 @@ diesel::joinable!(invoices -> communities (community_id));
 diesel::joinable!(invoices -> residents (resident_id));
 diesel::joinable!(maintenance_schedules -> communities (community_id));
 diesel::joinable!(parcels -> residents (resident_id));
+diesel::joinable!(password_reset -> users (user_id));
 diesel::joinable!(reservations -> common_areas (common_area_id));
 diesel::joinable!(reservations -> residents (resident_id));
 diesel::joinable!(resident_invites -> communities (community_id));
@@ -256,6 +268,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     invoices,
     maintenance_schedules,
     parcels,
+    password_reset,
     reservations,
     resident_invites,
     residents,

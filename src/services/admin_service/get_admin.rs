@@ -34,7 +34,7 @@ pub async fn get_admins(
     let conn = &mut establish_connection_pg(&conf);
 
     let admin_role = match authenticate_user(req.clone(), conn, conf) {
-        Ok((role, claims, token)) => {
+        Ok((role, _claims, _token)) => {
             if role.role == UserRoles::Root || role.role == UserRoles::Admin {
                 role
             } else {
@@ -113,10 +113,13 @@ pub async fn get_admins(
                     object: Some(res),
                 })
         }
-        Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
-            error: true,
-            message: format!("Error getting admins: {}", e),
-        }),
+        Err(e) => {
+            log::error!("Error getting admins: {}", e);
+            HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+                error: true,
+                message: format!("Error getting admins: {}", e),
+            })
+        }
     }
 }
 
@@ -157,7 +160,7 @@ pub async fn get_admin_by_id(
     };
 
     let admin_role = match authenticate_user(req.clone(), conn, conf) {
-        Ok((role, claims, token)) => {
+        Ok((role, _claims, _token)) => {
             if role.role == UserRoles::Root || role.role == UserRoles::Admin {
                 role
             } else {
@@ -178,6 +181,7 @@ pub async fn get_admin_by_id(
     let admin_user = match user_model::UserModel::db_read_by_id(conn, admin_role.user_id) {
         Ok(admin_user) => admin_user,
         Err(e) => {
+            log::error!("Error getting admin user: {}", e);
             return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
                 error: true,
                 message: "Error getting admin user".to_string(),
@@ -188,6 +192,7 @@ pub async fn get_admin_by_id(
     let admin = match admin_model::AdminModel::db_read_by_id(conn, admin_user.entity_id) {
         Ok(admin) => admin,
         Err(e) => {
+            log::error!("Error getting admin: {}", e);
             return HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
                 error: true,
                 message: "Error getting admin".to_string(),
@@ -201,9 +206,12 @@ pub async fn get_admin_by_id(
             message: "Got admin successfully".to_string(),
             object: Some(user_req),
         }),
-        Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
-            error: true,
-            message: format!("Error getting admin: {}", e),
-        }),
+        Err(e) => {
+            log::error!("Error getting admin: {}", e);
+            HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+                error: true,
+                message: format!("Error getting admin: {}", e),
+            })
+        }
     }
 }

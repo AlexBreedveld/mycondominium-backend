@@ -31,7 +31,7 @@ pub async fn get_parcels(
 
     let conn = &mut establish_connection_pg(&conf);
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf) {
+    let (role, _claims, _token) = match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => (role, claims, token),
         Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
@@ -44,6 +44,7 @@ pub async fn get_parcels(
     let total_items = match parcel_model::ParcelModel::db_count_all_matching(role.clone(), conn) {
         Ok(res) => res,
         Err(e) => {
+            log::error!("Error getting Parcels: {}", e);
             return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
                 error: true,
                 message: "Error getting Parcels".to_string(),
@@ -71,10 +72,13 @@ pub async fn get_parcels(
                     object: Some(res),
                 })
         }
-        Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
-            error: true,
-            message: format!("Error getting Parcels: {}", e),
-        }),
+        Err(e) => {
+            log::error!("Error getting Parcels: {}", e);
+            HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+                error: true,
+                message: format!("Error getting Parcels: {}", e),
+            })
+        }
     }
 }
 
@@ -109,12 +113,12 @@ pub async fn get_parcel_by_id(
         Err(_) => {
             return HttpResponse::BadRequest().json(HttpResponseObjectEmpty {
                 error: true,
-                message: "Invalid Maintenance Schedule ID format".to_string(),
+                message: "Invalid Parcel ID format".to_string(),
             });
         }
     };
 
-    let (role, claims, token) = match authenticate_user(req.clone(), conn, conf) {
+    let (role, _claims, _token) = match authenticate_user(req.clone(), conn, conf) {
         Ok((role, claims, token)) => (role, claims, token),
         Err(_) => {
             return HttpResponse::Unauthorized().json(HttpResponseObjectEmptyError {
@@ -130,9 +134,12 @@ pub async fn get_parcel_by_id(
             message: "Got Parcel successfully".to_string(),
             object: Some(user_req),
         }),
-        Err(e) => HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
-            error: true,
-            message: format!("Error getting Parcel: {}", e),
-        }),
+        Err(e) => {
+            log::error!("Error getting Parcel: {}", e);
+            HttpResponse::InternalServerError().json(HttpResponseObjectEmpty {
+                error: true,
+                message: format!("Error getting Parcel: {}", e),
+            })
+        }
     }
 }

@@ -1,12 +1,5 @@
 use super::prelude::*;
-use crate::models::maintenance_schedule_model::MaintenanceScheduleStatus;
-use crate::models::resident_model;
-use crate::models::user_role_model::UserRoleModel;
-use crate::services::{UserRoles, UserTypes, user_model};
-use diesel::backend::Backend;
-use diesel::deserialize::FromSql;
-use diesel::serialize::{Output, ToSql};
-use diesel::{AsExpression, FromSqlRow, deserialize, serialize};
+use super::*;
 
 #[derive(
     Queryable,
@@ -54,7 +47,7 @@ pub enum ParcelType {
 
 impl ParcelModel {
     pub fn db_read_by_id_matching_resident(
-        user_role: UserRoleModel,
+        user_role: user_role_model::UserRoleModel,
         conn: &mut PgConnection,
         id: uuid::Uuid,
     ) -> diesel::QueryResult<ParcelModel> {
@@ -101,7 +94,7 @@ impl ParcelModel {
             UserRoles::Admin => {
                 query = query.filter(user_roles::community_id.eq(user_role.community_id));
             }
-            UserRoles::Resident => query = query.filter(users::id.eq(user_role.id)),
+            UserRoles::Resident => query = query.filter(users::id.eq(user_role.user_id)),
         }
 
         query
@@ -128,7 +121,7 @@ impl ParcelModel {
             UserRoles::Admin => {
                 query = query.filter(user_roles::community_id.eq(user_role.community_id));
             }
-            UserRoles::Resident => query = query.filter(users::id.eq(user_role.id)),
+            UserRoles::Resident => query = query.filter(users::id.eq(user_role.user_id)),
         }
 
         query
