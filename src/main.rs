@@ -89,6 +89,7 @@ async fn main() {
                     .service(reservation_route())
                     .service(invoice_route())
                     .service(incident_route())
+                    .service(election_route())
                     .service(
                         SwaggerUi::new("/docs-v1/{_:.*}")
                             .url("/api-docs/openapi.json", ApiDoc::openapi()),

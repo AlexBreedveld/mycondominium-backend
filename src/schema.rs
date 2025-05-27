@@ -62,9 +62,18 @@ diesel::table! {
 }
 
 diesel::table! {
+    election_candidates (id) {
+        id -> Uuid,
+        election_id -> Uuid,
+        #[max_length = 150]
+        name -> Varchar,
+    }
+}
+
+diesel::table! {
     elections (id) {
         id -> Uuid,
-        community_id -> Nullable<Uuid>,
+        community_id -> Uuid,
         #[max_length = 150]
         title -> Varchar,
         description -> Nullable<Text>,
@@ -228,9 +237,8 @@ diesel::table! {
     votes (id) {
         id -> Uuid,
         election_id -> Uuid,
-        resident_id -> Uuid,
-        #[max_length = 50]
-        vote_option -> Varchar,
+        user_id -> Uuid,
+        vote_option -> Uuid,
         voted_at -> Timestamp,
     }
 }
@@ -238,6 +246,7 @@ diesel::table! {
 diesel::joinable!(announcements -> communities (community_id));
 diesel::joinable!(auth_tokens -> users (user_id));
 diesel::joinable!(common_areas -> communities (community_id));
+diesel::joinable!(election_candidates -> elections (election_id));
 diesel::joinable!(elections -> communities (community_id));
 diesel::joinable!(incidents -> communities (community_id));
 diesel::joinable!(incidents -> residents (resident_id));
@@ -254,8 +263,9 @@ diesel::joinable!(user_roles -> users (user_id));
 diesel::joinable!(users -> admins (admin_id));
 diesel::joinable!(users -> residents (resident_id));
 diesel::joinable!(vehicles -> residents (resident_id));
+diesel::joinable!(votes -> election_candidates (vote_option));
 diesel::joinable!(votes -> elections (election_id));
-diesel::joinable!(votes -> residents (resident_id));
+diesel::joinable!(votes -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     admins,
@@ -263,6 +273,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     auth_tokens,
     common_areas,
     communities,
+    election_candidates,
     elections,
     incidents,
     invoices,

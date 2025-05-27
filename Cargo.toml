@@ -1,6 +1,6 @@
 [package]
 name = "mycondominium-backend"
-version = "0.1.5"
+version = "0.1.6"
 edition = "2024"
 
 [dependencies]
@@ -10,12 +10,12 @@ chrono = { version = "0.4.40", features = ["serde"] }
 diesel = { version = "2.2.8", features = ["postgres", "uuid", "chrono", "serde_json", "numeric"] }
 diesel_migrations = "2.2.0"
 dotenvy = "0.15.7"
-serde = { version =  "1.0.219", features = ["derive"] }
+serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
 tokio = { version = "1.44.0", features = ["full"] }
 utoipa = { version = "5.3.1", features = ["chrono", "uuid", "actix_extras", "decimal"] }
-uuid = { version =  "1.15.1", features = ["serde", "v4"] }
-validator = { version =  "0.20.0", features = ["validator_derive"] }
+uuid = { version = "1.15.1", features = ["serde", "v4"] }
+validator = { version = "0.20.0", features = ["validator_derive"] }
 validator_derive = "0.20.0"
 log = "0.4.26"
 clap = { version = "4.5.32", features = ["derive"] }

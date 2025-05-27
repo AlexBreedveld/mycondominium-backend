@@ -106,6 +106,30 @@ pub fn community_route() -> actix_web::Scope {
         )
 }
 
+pub fn election_route() -> actix_web::Scope {
+    web::scope("/api/election")
+        .route(
+            "/list",
+            web::get().to(crate::services::election_service::get_election::get_elections),
+        )
+        .route(
+            "/get/{id}",
+            web::get().to(crate::services::election_service::get_election::get_election_by_id),
+        )
+        .route(
+            "/new",
+            web::post().to(crate::services::election_service::upsert_election::new_election),
+        )
+        .route(
+            "/update/{id}",
+            web::put().to(crate::services::election_service::upsert_election::update_election),
+        )
+        .route(
+            "/delete/{id}",
+            web::delete().to(crate::services::election_service::upsert_election::delete_election),
+        )
+}
+
 pub fn incident_route() -> actix_web::Scope {
     web::scope("/api/incident")
         .route(
