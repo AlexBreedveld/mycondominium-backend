@@ -1,4 +1,5 @@
 pub mod get_election;
+pub mod get_vote;
 pub mod upsert_candidate;
 pub mod upsert_election;
 pub mod upsert_vote;
@@ -19,6 +20,7 @@ type ElectionGetHttpResponse = HttpResponseObject<election_model::ElectionModelR
         upsert_candidate::update_election_candidate,
         upsert_candidate::delete_election_candidate,
         upsert_vote::new_election_vote,
+        get_vote::get_can_vote,
     ),
     components(schemas(
         election_model::ElectionModel,

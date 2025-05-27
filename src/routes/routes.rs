@@ -147,6 +147,10 @@ pub fn election_route() -> actix_web::Scope {
             "/vote",
             web::post().to(crate::services::election_service::upsert_vote::new_election_vote),
         )
+        .route(
+            "/vote/{id}",
+            web::get().to(crate::services::election_service::get_vote::get_can_vote),
+        )
 }
 
 pub fn incident_route() -> actix_web::Scope {

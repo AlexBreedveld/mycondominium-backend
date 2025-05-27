@@ -175,7 +175,7 @@ pub async fn update_election(
         return HttpResponse::BadRequest().json(validation_errors);
     }
 
-    let mut new_obj = election_model::ElectionModel {
+    let new_obj = election_model::ElectionModel {
         id: curr_obj.id,
         community_id: body.community_id,
         title: body.title,

@@ -66,6 +66,24 @@ pub async fn new_election_vote(
         voted_at: chrono::Utc::now().naive_utc(),
     };
 
+    match election_model::ElectionModel::can_user_vote(role, conn, election.id) {
+        Ok(can_vote) => {
+            if !can_vote {
+                return HttpResponse::BadRequest().json(HttpResponseObjectEmptyError {
+                    error: true,
+                    message: "User has already voted".to_string(),
+                });
+            }
+        }
+        Err(e) => {
+            log::error!("Error checking if user can vote: {}", e);
+            return HttpResponse::InternalServerError().json(HttpResponseObjectEmptyError {
+                error: true,
+                message: format!("Error checking if user can vote: {}", e),
+            });
+        }
+    }
+
     match new_obj.db_insert(conn) {
         Ok(_) => (),
         Err(e) => {
